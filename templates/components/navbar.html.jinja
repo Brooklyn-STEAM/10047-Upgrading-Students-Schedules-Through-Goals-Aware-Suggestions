@@ -1,0 +1,89 @@
+<nav class="bg-green-600 text-white">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="flex justify-between items-center h-16">
+
+      <!-- Left: Logo -->
+      <div class="flex items-center">
+        <a href="{{ url_for('home') }}" class="text-xl font-bold tracking-wide">
+          CourseNavigator
+        </a>
+      </div>
+
+      <!-- Middle / Right: Links -->
+      <div class="hidden md:flex items-center space-x-6">
+
+        <a href="{{ url_for('home') }}" class="hover:text-green-200 transition">
+          Home
+        </a>
+
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('dashboard') }}" class="hover:text-green-200 transition">
+            Dashboard
+          </a>
+
+          <a href="{{ url_for('academic_record') }}" class="hover:text-green-200 transition">
+            Academic Record
+          </a>
+
+          <a href="{{ url_for('recommendations') }}" class="hover:text-green-200 transition">
+            Recommendations
+          </a>
+
+          <a href="{{ url_for('preferences') }}" class="hover:text-green-200 transition">
+            Preferences
+          </a>
+        {% endif %}
+      </div>
+
+      <!-- Right: Profile Dropdown -->
+      <div class="relative">
+        <button id="profileBtn" class="flex items-center focus:outline-none">
+          <img
+            src="{{ url_for('static', filename='img/default-avatar.png') }}"
+            alt="Profile"
+            class="w-9 h-9 rounded-full border-2 border-white"
+          >
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div
+          id="profileMenu"
+          class="hidden absolute right-0 mt-2 w-40 bg-white text-gray-700 rounded-md shadow-lg py-2"
+        >
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('profile') }}" class="block px-4 py-2 hover:bg-gray-100">
+              My Profile
+            </a>
+            <a href="{{ url_for('logout') }}" class="block px-4 py-2 hover:bg-gray-100">
+              Log Out
+            </a>
+          {% else %}
+            <a href="{{ url_for('login') }}" class="block px-4 py-2 hover:bg-gray-100">
+              Sign In
+            </a>
+            <a href="{{ url_for('register') }}" class="block px-4 py-2 hover:bg-gray-100">
+              Sign Up
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</nav>
+
+<!-- Dropdown Script -->
+<script>
+  const profileBtn = document.getElementById("profileBtn");
+  const profileMenu = document.getElementById("profileMenu");
+
+  profileBtn.addEventListener("click", () => {
+    profileMenu.classList.toggle("hidden");
+  });
+
+  window.addEventListener("click", (e) => {
+    if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+      profileMenu.classList.add("hidden");
+    }
+  });
+</script>
