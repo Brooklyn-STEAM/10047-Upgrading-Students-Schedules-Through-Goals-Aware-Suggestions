@@ -29,6 +29,30 @@ class User:
     def get_id(self):
         return str(self.id) 
 
+@login_manager.user_loader
+def load_user(user_id):
+    connection = connect_db()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM `User` WHERE `ID` = %s", (user_id))
+    result = cursor.fetchone()
+    connection.close()
+
+    if result is None:
+        return None
+    return User(result)
+
+
+def connect_db():
+    conn = pymysql.connect(
+        host = "db.steamcenter.tech",
+        username = config.username,
+        password = config.password,
+        database = "course_track",
+        autocommit = True,
+        cursorclass = pymysql.cursors.DictCursor 
+    )
+    return conn
+
 
 @app.route("/")
 def index():
