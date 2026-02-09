@@ -57,3 +57,7 @@ def connect_db():
 @app.route("/")
 def index():
     return render_template("homepage.html.jinja")
+
+@app.route("/theerror")
+def not_found():
+    return render_template("404.html.jinja")
