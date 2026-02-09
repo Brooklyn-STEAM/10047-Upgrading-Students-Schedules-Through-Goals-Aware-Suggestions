@@ -96,3 +96,6 @@ def login():
                 return redirect("/login")
 
     return render_template("login.html.jinja")
+@app.route("/theerror")
+def not_found():
+    return render_template("404.html.jinja")
