@@ -57,3 +57,42 @@ def connect_db():
 @app.route("/")
 def index():
     return render_template("homepage.html.jinja")
+
+
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        connection = connect_db()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(
+            "SELECT * FROM `User` WHERE `Email` = %s",
+            (email,)
+        )
+
+        result = cursor.fetchone()
+
+        cursor.close()
+        connection.close()
+
+        if result is None:
+            flash("No user found")
+        elif password != result['Password']:  # plain-text check
+            flash("Incorrect password")
+        else:
+            login_user(User(result))  # Your user class
+            role = result.get('Role')
+
+            if role == 'student':
+                return redirect("/student_dashboard")
+            elif role == 'counselor':
+                return redirect("/counselor_dashboard")
+            else:
+                flash("Invalid role")
+                return redirect("/login")
+
+    return render_template("login.html.jinja")
