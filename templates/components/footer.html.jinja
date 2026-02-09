@@ -1,0 +1,85 @@
+<style>
+    .footer-link {
+        position: relative;
+        display: inline-block;
+    }
+
+    .footer-link::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -4px;
+        width: 0;
+        height: 2px;
+        background-color: #a7f3d0;
+        /* green-200 */
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+    }
+
+    .footer-link:hover::after {
+        width: 100%;
+    }
+</style>
+
+
+<footer class="bg-emerald-900 text-green-100 mt-16">
+    <div class="max-w-7xl mx-auto px-6 py-10">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            <!-- App Info -->
+            <div>
+                <a href="/" class="footer-link text-lg font-semibold text-white">
+                    CourseTrack
+                </a>
+                <p class="text-sm text-green-200 mt-2">
+                    Helping students choose courses aligned with their future academic and career goals.
+                </p>
+            </div>
+
+            <!-- Quick Links -->
+            <div>
+                <a href="#top" class="footer-link text-lg font-semibold text-white mb-2 inline-block">
+                    Quick Links
+                </a>
+
+                <ul class="space-y-2 text-sm mt-2">
+                    <li><a href="/dashboard" class="footer-link">Dashboard</a></li>
+                    <li><a href="/academicrecord" class="footer-link">Academic Record</a></li>
+                    <li><a href="/recommendation" class="footer-link">Recommendations</a></li>
+                    <li><a href="/preference" class="footer-link">Preferences</a></li>
+                </ul>
+            </div>
+
+
+            <!-- Contact -->
+            <div>
+                <a href="/contact" class="footer-link text-lg font-semibold text-white inline-block mb-2">
+                    Contacts
+                </a>
+
+                <p class="text-sm text-green-200">
+                    haq.wazih@gmail.com
+                </p>
+                <p class="text-sm text-green-200">
+                    kaelguerrero22@gmail.com
+                </p>
+                <p class="text-sm text-green-200">
+                    liampustam@gmail.com
+                </p>
+
+                <p class="text-sm text-green-200 mt-2">
+                    Academic Project – 2026
+                </p>
+            </div>
+
+
+        </div>
+
+        <div class="border-t border-emerald-700 mt-8 pt-4 text-center text-sm text-green-300">
+            © 2026 CourseTrack. For educational use only.
+        </div>
+
+    </div>
+</footer>
