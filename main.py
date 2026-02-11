@@ -1,8 +1,6 @@
-from flask import Flask, render_template, request, flash, redirect, abort
-from flask_login import LoginManager, login_user, current_user, logout_user, login_required
-
+from flask import Flask, render_template , request, flash ,redirect, abort
 import pymysql
-
+from flask_login import LoginManager, login_user , logout_user, login_required, current_user
 from dynaconf import Dynaconf
 
 app = Flask(__name__)
@@ -44,12 +42,12 @@ def load_user(user_id):
 
 def connect_db():
     conn = pymysql.connect(
-        host = "db.steamcenter.tech",
-        username = config.username,
-        password = config.password,
-        database = "course_track",
-        autocommit = True,
-        cursorclass = pymysql.cursors.DictCursor 
+        host="db.steamcenter.tech",
+        user=config.username,     # <-- changed from 'username' to 'user'
+        password=config.password,
+        database="course_track",
+        autocommit=True,
+        cursorclass=pymysql.cursors.DictCursor
     )
     return conn
 
@@ -67,7 +65,7 @@ def login():
         password = request.form['password']
 
         connection = connect_db()
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor()
 
         cursor.execute(
             "SELECT * FROM `User` WHERE `Email` = %s",
@@ -93,9 +91,77 @@ def login():
                 return redirect("/counselor_dashboard")
             else:
                 flash("Invalid role")
-                return redirect("/login")
+                return redirect("/login.html.jinja")
 
-    return render_template("login.html.jinja")
+    return render_template("/login.html.jinja")
+
+
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        role = request.form['role']  # 'student' or 'counselor'
+
+
+        connection = connect_db()
+        cursor = connection.cursor()
+
+
+        # Check if user already exists
+        cursor.execute("SELECT * FROM `User` WHERE `Email` = %s", (email,))
+        existing_user = cursor.fetchone()
+
+
+        if existing_user:
+            flash("Email already registered")
+            cursor.close()
+            connection.close()
+            return redirect("/signup")
+
+
+        # Insert new user
+        cursor.execute(
+            "INSERT INTO `User` (Name, Email, Password, Role) VALUES (%s, %s, %s, %s)",
+            (name, email, password, role)
+        )
+        connection.commit()
+
+
+        # Get the new user's ID
+        user_id = cursor.lastrowid
+        cursor.close()
+        connection.close()
+
+
+        # Optional: create a StudentProfile if role is student
+        if role == 'student':
+            connection = connect_db()
+            cursor = connection.cursor()
+            cursor.execute(
+                "INSERT INTO `StudentProfile` (UserID, Name) VALUES (%s, %s)",
+                (user_id, name)
+            )
+            connection.commit()
+            cursor.close()
+            connection.close()
+
+
+        flash("Account created successfully! Please log in.")
+        return redirect("/login.html.jinja")
+
+
+    return render_template("register.html.jinja")
+
+
+
+
+
+
+
+
 @app.route("/theerror")
 def not_found():
     return render_template("404.html.jinja")
