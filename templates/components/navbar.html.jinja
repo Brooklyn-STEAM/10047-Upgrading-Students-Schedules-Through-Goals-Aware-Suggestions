@@ -9,34 +9,57 @@
 
       <!-- Right side (Desktop) -->
       <div class="hidden md:flex items-center ml-auto space-x-6">
-        <a href="/dashboard" 
-         class="relative py-1 transition text-white
-         after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-         after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-         after:transition-all after:duration-300
-         hover:after:w-full">Dashboard</a>
+        {% if current_user.is_authenticated %}
+        <!-- Dashboard -->
+        {% if current_user.role == 'student' %}
+        <a href="/student/dashboard" class="relative py-1 transition text-white
+               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
+               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
+               after:transition-all after:duration-300
+               hover:after:w-full">Dashboard</a>
 
-        <a href=" /academicrecord" 
-         class="relative py-1 transition text-white
-         after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-         after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-         after:transition-all after:duration-300
-         hover:after:w-full">Academic Record</a>
+        <a href="/student/academicrecord" class="relative py-1 transition text-white
+               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
+               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
+               after:transition-all after:duration-300
+               hover:after:w-full">Academic Record</a>
 
-        <a href="/recommendations" 
-         class="relative py-1 transition text-white
-         after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-         after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-         after:transition-all after:duration-300
-         hover:after:w-full">Recommendations</a>
+        <a href="/student/recommendation" class="relative py-1 transition text-white
+               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
+               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
+               after:transition-all after:duration-300
+               hover:after:w-full">Recommendations</a>
 
-        <a href="/preference" 
-         class="relative py-1 transition text-white
-         after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-         after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-         after:transition-all after:duration-300
-         hover:after:w-full">Preferences</a>
-        
+        <a href="/student/preference" class="relative py-1 transition text-white
+               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
+               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
+               after:transition-all after:duration-300
+               hover:after:w-full">Preferences</a>
+        {% else %}
+        <a href="/counselor/dashboard" class="relative py-1 transition text-white
+               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
+               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
+               after:transition-all after:duration-300
+               hover:after:w-full">Dashboard</a>
+
+        <a href="/counselor/academicrecord" class="relative py-1 transition text-white
+               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
+               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
+               after:transition-all after:duration-300
+               hover:after:w-full">Academic Record</a>
+
+        <a href="/counselor/recommendation" class="relative py-1 transition text-white
+               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
+               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
+               after:transition-all after:duration-300
+               hover:after:w-full">Recommendations</a>
+
+        <a href="/counselor/preference" class="relative py-1 transition text-white
+               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
+               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
+               after:transition-all after:duration-300
+               hover:after:w-full">Preferences</a>
+        {% endif %}
 
         <!-- Profile Dropdown -->
         <div class="relative">
@@ -46,14 +69,14 @@
 
           <div id="profileMenu"
             class="hidden absolute right-0 mt-2 w-40 bg-white text-gray-700 rounded-md shadow-lg py-2">
-            <a href="/profile" class="block px-4 py-2 hover:bg-gray-100">
-              My Profile
-            </a>
-            <a href="/logout" class="block px-4 py-2 hover:bg-gray-100">
-              Log Out
-            </a>
+            <a href="/profile" class="block px-4 py-2 hover:bg-gray-100">My Profile</a>
+            <a href="/logout" class="block px-4 py-2 hover:bg-gray-100">Log Out</a>
           </div>
         </div>
+        {% else %}
+        <a href="/login" class="py-1 px-3 rounded hover:bg-green-600 transition">Log In</a>
+        <a href="/register" class="py-1 px-3 rounded hover:bg-green-600 transition">Register</a>
+        {% endif %}
       </div>
 
       <!-- Mobile menu button -->
@@ -69,20 +92,28 @@
 
   <!-- Mobile Menu -->
   <div id="mobileMenu" class="hidden md:hidden bg-emerald-700 px-4 pb-4 space-y-2">
-    <a href="/" class="block hover:text-green-200">Home</a>
-    <a href="/dashboard" class="block hover:text-green-200">Dashboard</a>
-    <a href="/academicrecord" class="block hover:text-green-200">Academic Record</a>
-    <a href="/recommendation" class="block hover:text-green-200">Recommendations</a>
-    <a href="/preference" class="block hover:text-green-200">Preferences</a>
-
+    {% if current_user.is_authenticated %}
+    {% if current_user.role == 'student' %}
+    <a href="/student/dashboard" class="block hover:text-green-200">Dashboard</a>
+    <a href="/student/academicrecord" class="block hover:text-green-200">Academic Record</a>
+    <a href="/student/recommendation" class="block hover:text-green-200">Recommendations</a>
+    <a href="/student/preference" class="block hover:text-green-200">Preferences</a>
+    {% else %}
+    <a href="/counselor/dashboard" class="block hover:text-green-200">Dashboard</a>
+    <a href="/counselor/academicrecord" class="block hover:text-green-200">Academic Record</a>
+    <a href="/counselor/recommendation" class="block hover:text-green-200">Recommendations</a>
+    <a href="/counselor/preference" class="block hover:text-green-200">Preferences</a>
+    {% endif %}
     <hr class="border-emerald-600">
-
     <a href="/profile" class="block hover:text-green-200">My Profile</a>
     <a href="/logout" class="block hover:text-green-200">Log Out</a>
+    {% else %}
+    <a href="/login" class="block hover:text-green-200">Log In</a>
+    <a href="/register" class="block hover:text-green-200">Register</a>
+    {% endif %}
   </div>
 </nav>
 
-<!-- Scripts -->
 <script>
   const profileBtn = document.getElementById("profileBtn");
   const profileMenu = document.getElementById("profileMenu");
