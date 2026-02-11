@@ -23,7 +23,6 @@ class User:
     def __init__(self, result):
         self.name = result['Name']
         self.email = result['Email']
-        self.address = result['Address']
         self.id = result['ID']
         self.role = result['Role']
         
@@ -78,7 +77,6 @@ def login():
 
         result = cursor.fetchone()
 
-        cursor.close()
         connection.close()
 
         if result is None:
@@ -87,15 +85,8 @@ def login():
             flash("Incorrect password")
         else:
             login_user(User(result))  # Your user class
-            role = result.get('Role')
+            return redirect("/")
 
-            if role == 'student':
-                return redirect("/")
-            elif role == 'counselor':
-                return redirect("/")
-            else:
-                flash("Invalid role")
-                return redirect("/login.html.jinja")
 
     return render_template("/login.html.jinja")
 
@@ -166,65 +157,6 @@ def register():
 
 
 
-    return render_template("login.html.jinja")
-
-@app.route("/register", methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
-        role = request.form['role']  # 'student' or 'counselor'
-
-
-        connection = connect_db()
-        cursor = connection.cursor()
-
-
-        # Check if user already exists
-        cursor.execute("SELECT * FROM `User` WHERE `Email` = %s", (email,))
-        existing_user = cursor.fetchone()
-
-
-        if existing_user:
-            flash("Email already registered")
-            cursor.close()
-            connection.close()
-            return redirect("/signup")
-
-
-        # Insert new user
-        cursor.execute(
-            "INSERT INTO `User` (Name, Email, Password, Role) VALUES (%s, %s, %s, %s)",
-            (name, email, password, role)
-        )
-        connection.commit()
-
-
-        # Get the new user's ID
-        user_id = cursor.lastrowid
-        cursor.close()
-        connection.close()
-
-
-        # Optional: create a StudentProfile if role is student
-        if role == 'student':
-            connection = connect_db()
-            cursor = connection.cursor()
-            cursor.execute(
-                "INSERT INTO `StudentProfile` (UserID, Name) VALUES (%s, %s)",
-                (user_id, name)
-            )
-            connection.commit()
-            cursor.close()
-            connection.close()
-
-
-        flash("Account created successfully! Please log in.")
-        return redirect("/login.html.jinja")
-
-
-    return render_template("register.html.jinja")
 
 #Dashboard for students.
 @app.route("/student/dashboard")
