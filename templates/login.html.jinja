@@ -12,11 +12,11 @@
   <div class="w-full max-w-md p-8 bg-white shadow-md rounded-lg">
     <h2 class="text-2xl font-bold text-primary mb-6 text-center">Login</h2>
     
-    <form class="space-y-4">
-      <input type="email" placeholder="Email" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"/>
-      <input type="password" placeholder="Password" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"/>
+    <form method="post" class="space-y-4">
+      <input type="email" name="email" placeholder="Email" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"/>
+      <input type="password" name="password" placeholder="Password"class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"/>
       <button type="submit" class="w-full py-2 bg-primary text-black rounded-md bg-emerald-500 transition">
-        Log In
+        <i data-lucide="send"></i> Login
       </button>
     </form>
         <p class="text-center text-gray-500 text-sm">
