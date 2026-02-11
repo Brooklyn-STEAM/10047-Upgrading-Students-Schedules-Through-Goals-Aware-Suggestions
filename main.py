@@ -165,3 +165,7 @@ def register():
 @app.route("/theerror")
 def not_found():
     return render_template("404.html.jinja")
+
+@app.route("/recommendations")
+def recommendations():
+    return render_template("recommendation.html.jinja")

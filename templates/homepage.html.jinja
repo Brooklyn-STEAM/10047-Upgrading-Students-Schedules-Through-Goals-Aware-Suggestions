@@ -8,7 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 
-<body class="min-h-screen bg-lime-50 text-gray-800" id="top">
+<body class="min-h-screen bg-lime-50 text-gray-800 flex flex-col" id="top">
   {% include "components/navbar.html.jinja" %}
   <header class="bg-emerald-400 text-white py-6">
     <div class="container mx-auto text-center">
@@ -16,7 +16,7 @@
       <p class="text-lg mt-2">Empowering Education Through Technology</p>
     </div>
   </header>
-  <main class="container mx-auto mt-10 px-4">
+  <main class="container mx-auto px-4 flex-grow my-10">
     <section class="text-center">
       <h2 class="text-2xl font-semibold mb-4">Welcome to CourseTracker</h2>
       <p class="text-lg mb-6">
@@ -46,7 +46,5 @@
     </section>
   </main>
   {% include "components/footer.html.jinja" %}
-
 </body>
-
 </html>
