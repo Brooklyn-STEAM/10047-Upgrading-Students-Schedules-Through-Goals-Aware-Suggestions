@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+  <body class="bg-lime-50 text-gray-800 min-h-screen flex flex-col">
+    {% include "components/navbar.html.jinja" %}
+
+   <div class="max-w-6xl mx-auto bg-white shadow-lg rounded-lg flex-grow p-6 mt-10 mb-10">
+    
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">Student Applications</h1>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+        
+        <!-- Table Head -->
+        <thead class="bg-green-200 text-gray-700 uppercase text-sm">
+          <tr>
+            <th class="py-3 px-4 text-left">Name</th>
+            <th class="py-3 px-4 text-left">Grade</th>
+            <th class="py-3 px-4 text-left">School ID</th>
+            <th class="py-3 px-4 text-left">Message</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <!-- Table Body -->
+        <tbody class="text-gray-700">
+          <tr class="border-t hover:bg-gray-50">
+            <td class="py-3 px-4">John Doe</td>
+            <td class="py-3 px-4">10</td>
+            <td class="py-3 px-4">SCH-00123</td>
+            <td class="py-3 px-4">Interested in science club activities.</td>
+            <td class="py-3 px-4">
+            <div>
+              <a href="#" class="text-white bg-emerald-400 p-2 hover:bg-emerald-500 rounded">Add Application</a>
+            </div>
+            </td>
+          </tr>
+
+          <tr class="border-t hover:bg-gray-50">
+            <td class="py-3 px-4">Sarah Lee</td>
+            <td class="py-3 px-4">11</td>
+            <td class="py-3 px-4">SCH-00456</td>
+            <td class="py-3 px-4">Looking forward to joining the debate team.</td>
+            <td class="py-3 px-4">
+            <div>
+              <a href="#" class="text-white bg-emerald-400 p-2 hover:bg-emerald-500 rounded">Add Application</a>
+            </div>
+            </td>
+          </tr>
+
+          <tr class="border-t hover:bg-gray-50">
+            <td class="py-3 px-4">Michael Smith</td>
+            <td class="py-3 px-4">12</td>
+            <td class="py-3 px-4">SCH-00789</td>
+            <td class="py-3 px-4">Requesting information about scholarship programs.</td>
+            <td class="py-3 px-4">
+            <div>
+              <a href="#" class="text-white bg-emerald-400 p-2 hover:bg-emerald-500 rounded">Add Application</a>
+            </div>
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
+    </div>
+
+  </div>
+
+    {% include "components/footer.html.jinja" %}
+  </body>
+</html>
