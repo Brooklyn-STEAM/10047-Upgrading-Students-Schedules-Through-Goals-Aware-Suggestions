@@ -151,6 +151,12 @@ def register():
     return render_template("register.html.jinja")
 
 
+@app.route("/logout", methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    flash("Successfully logged out")
+    return redirect ("/login")
 
 
 
