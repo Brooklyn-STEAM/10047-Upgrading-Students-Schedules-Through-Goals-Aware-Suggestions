@@ -188,8 +188,22 @@ def counselor_dashboard():
 def not_found():
     return render_template("404.html.jinja")
 
-@app.route("/recommendations")
+@app.route("/student/recommendation")
 def recommendations():
     return render_template("recommendation.html.jinja")
 
+@app.route("/student/recommendation/addcounselor")
+@login_required
+def add_counselor():
+    if current_user.role != "student":
+        return redirect("/theerror")
 
+    return render_template("addcounselor.html.jinja")
+
+@app.route("/student/recommendation/addapplication")
+@login_required
+def add_application():
+    if current_user.role != "student":
+        return redirect("/theerror")
+
+    return render_template("addapplication.html.jinja")

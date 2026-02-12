@@ -8,6 +8,7 @@
     <link href= "/static/styles.css" rel="stylesheet" >
   </head>
 <body class="min-h-screen bg-lime-50 flex items-center justify-center p-6">
+  {% include "components/navbar.html.jinja" %}
   <form method="POST" class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md space-y-6">
     <h2 class="text-2xl font-bold text-gray-800 text-center">Create Account</h2>
 
@@ -59,6 +60,7 @@
       Already have an account? <a href="/login" class="text-emerald-500 hover:underline">Log in</a>
     </p>
   </form>
+  {% include "components/footer.html.jinja" %}
 </body>
 
 </html>
