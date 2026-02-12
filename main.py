@@ -28,7 +28,11 @@ class User:
         
 
     def get_id(self):
-        return str(self.id) 
+        return str(self.id)
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html.jinja'), 404 
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -204,8 +208,25 @@ def counselor_dashboard():
 def not_found():
     return render_template("404.html.jinja")
 
-@app.route("/recommendations")
+@app.route("/student/recommendation")
 def recommendations():
     return render_template("recommendation.html.jinja")
 
+@app.route("/counselor/recommendation")
+def counselor_recommendations():
+    return render_template("counselorrecommendation.html.jinja")
 
+@app.route("/student/recommendation/addcounselor")
+@login_required
+def add_counselor():
+    if current_user.role != "student":
+        abort(404)
+
+    return render_template("addcounselor.html.jinja")
+
+@app.route("/counselor/recommendation/addapplication")
+@login_required
+def add_application():
+    if current_user.role != "counselor":
+        abort(404)
+    return render_template("addapplication.html.jinja")

@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  </head>
+    <body class="bg-lime-50 text-gray-800 min-h-screen flex flex-col">
+    {% include "components/navbar.html.jinja" %}
+    <main class="container mx-auto my-10 px-4 py-8 flex-grow">
+    <form class="space-y-6 bg-white p-6 rounded-lg shadow-md">
+
+      <!-- Counselor Information -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Counselor Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">
+              First Name
+            </label>
+            <input type="text" placeholder="John"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">
+              Last Name
+            </label>
+            <input type="text" placeholder="Doe"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-600 mb-1">
+              Email Address
+            </label>
+            <input type="email" placeholder="counselor@example.com"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-600 mb-1">
+              Phone Number
+            </label>
+            <input type="tel" placeholder="+1 234 567 890"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- School Information -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">School / Organization</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">
+              School Name
+            </label>
+            <input type="text" placeholder="ABC High School"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1">
+              Position / Title
+            </label>
+            <input type="text" placeholder="School Counselor"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <!-- Relationship Details -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Relationship Details</h3>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            How long have you known this counselor?
+          </label>
+          <input type="text" placeholder="e.g., 3 years"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Additional Notes (Optional)
+          </label>
+          <textarea rows="4" placeholder="Add any message or context for your counselor..."
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+
+      <!-- Submission Method -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Submission Method</h3>
+
+        <div class="flex items-center gap-6">
+          <label class="flex items-center gap-2">
+            <input type="radio" name="submission" class="text-blue-600 focus:ring-blue-500">
+            <span class="text-sm text-gray-700">Email Invitation</span>
+          </label>
+
+          <label class="flex items-center gap-2">
+            <input type="radio" name="submission" class="text-blue-600 focus:ring-blue-500">
+            <span class="text-sm text-gray-700">Upload Letter Manually</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-end gap-4 pt-4">
+        <button type="reset"
+          class="px-6 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition">
+          Cancel
+        </button>
+
+        <button type="submit"
+          class="px-6 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md">
+          Add Counselor
+        </button>
+      </div>
+
+    </form>
+    </main>
+
+    {% include "components/footer.html.jinja" %}
+    </body>
+</html>
