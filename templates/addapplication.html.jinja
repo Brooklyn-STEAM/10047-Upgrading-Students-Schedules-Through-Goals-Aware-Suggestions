@@ -5,8 +5,9 @@
   <title>Add Application - Recommendation Form</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
-
+<body class="bg-lime-50 min-h-screen flex flex-col  ">
+{% include "components/navbar.html.jinja" %}
+<main class="flex-grow flex items-center justify-center">
   <div class="bg-white shadow-xl rounded-2xl w-full max-w-4xl p-8">
     
     <h2 class="text-2xl font-bold text-gray-800 mb-6">
@@ -132,7 +133,7 @@
         </button>
 
         <button type="submit"
-          class="px-6 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-md">
+          class="px-6 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md">
           Save Application
         </button>
       </div>
@@ -140,6 +141,7 @@
     </form>
 
   </div>
-
+  </main>
+{% include "components/footer.html.jinja" %}
 </body>
 </html>
