@@ -8,43 +8,90 @@
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 
-<body class="min-h-screen bg-lime-50 text-gray-800 flex flex-col" id="top">
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col" id="top">
   {% include "components/navbar.html.jinja" %}
-  <header class="bg-emerald-400 text-white py-6">
-    <div class="container mx-auto text-center">
-      <h1 class="text-4xl font-bold">CourseTracker</h1>
-      <p class="text-lg mt-2">Empowering Education Through Technology</p>
+
+  <!-- HERO SECTION -->
+  <header class="bg-emerald-800 text-white py-20 shadow-md">
+    <div class="container mx-auto text-center px-6">
+      <h1 class="text-5xl font-bold mb-4 tracking-tight">
+        CourseTrack
+      </h1>
+      <p class="text-xl text-emerald-100 mb-8">
+        Empowering Education Through Technology
+      </p>
+
+      <a href="/login"
+         class="inline-block bg-white text-emerald-800 font-semibold 
+                px-8 py-3 rounded-lg shadow-lg 
+                hover:bg-emerald-100 hover:scale-105 
+                transition duration-200">
+        Get Started
+      </a>
     </div>
   </header>
-  <main class="container mx-auto px-4 flex-grow my-10">
-    <section class="text-center">
-      <h2 class="text-2xl font-semibold mb-4">Welcome to CourseTracker</h2>
-      <p class="text-lg mb-6">
-        Discover how technology can enhance your learning experience. Track your courses, set goals, and achieve success
-        with ease.
+
+  <main class="container mx-auto px-6 flex-grow my-16">
+
+    <!-- Intro Section -->
+    <section class="text-center max-w-3xl mx-auto mb-16">
+      <h2 class="text-3xl font-bold text-emerald-900 mb-4">
+        Welcome to CourseTrack
+      </h2>
+      <p class="text-lg text-gray-700 leading-relaxed">
+        Track your academic progress, set meaningful goals, and receive
+        personalized course recommendations — all in one powerful platform.
       </p>
-      <a href="/login" class="bg-emerald-400 text-white px-6 py-3 rounded-lg shadow hover:bg-emerald-500">
-        Login!
-      </a>
     </section>
-    <section class="mt-12">
-      <h3 class="text-xl font-semibold mb-4">Features</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h4 class="text-lg font-bold mb-2">Track Your Progress</h4>
-          <p>Monitor your course completion and stay on top of your goals.</p>
+
+    <!-- Features -->
+    <section>
+      <h3 class="text-2xl font-semibold text-emerald-900 text-center mb-10">
+        Features
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-white p-8 rounded-xl shadow-md 
+                    hover:shadow-xl hover:-translate-y-2 
+                    transition duration-300">
+          <h4 class="text-lg font-bold text-emerald-800 mb-3">
+            Track Your Progress
+          </h4>
+          <p class="text-gray-600">
+            Monitor course completion and stay aligned with your academic goals.
+          </p>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h4 class="text-lg font-bold mb-2">Set Achievable Goals</h4>
-          <p>Define your learning objectives and work towards them step by step.</p>
+
+        <div class="bg-white p-8 rounded-xl shadow-md 
+                    hover:shadow-xl hover:-translate-y-2 
+                    transition duration-300">
+          <h4 class="text-lg font-bold text-emerald-800 mb-3">
+            Set Achievable Goals
+          </h4>
+          <p class="text-gray-600">
+            Define clear learning objectives and accomplish them step by step.
+          </p>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h4 class="text-lg font-bold mb-2">Personalized Suggestions</h4>
-          <p>Receive tailored recommendations to improve your learning journey.</p>
+
+        <div class="bg-white p-8 rounded-xl shadow-md 
+                    hover:shadow-xl hover:-translate-y-2 
+                    transition duration-300">
+          <h4 class="text-lg font-bold text-emerald-800 mb-3">
+            Personalized Suggestions
+          </h4>
+          <p class="text-gray-600">
+            Get tailored recommendations based on your academic interests.
+          </p>
         </div>
       </div>
     </section>
+
   </main>
+
   {% include "components/footer.html.jinja" %}
 </body>
+
+
+
+
 </html>
