@@ -90,9 +90,9 @@ def login():
         else:
             login_user(User(result))  # Your user class
             if current_user.role == "student":
-                return redirect("/sdashboard")
+                return redirect("/student/dashboard")
             elif current_user.role == "counselor":
-                return redirect("/cdashboard")
+                return redirect("/counselor/dashboard")
             else:
                 return redirect("/")
 
@@ -224,4 +224,6 @@ def student_academicrecord():
         return redirect("/student/academic_record")
 
     return render_template("student_academic_record.html.jinja")
+
+
 
