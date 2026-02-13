@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+ <head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+ </head>
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+
+  {% include "components/navbar.html.jinja" %}
+
+  <main class="flex-grow flex justify-center px-6 py-12">
+    <div class="w-full max-w-4xl">
+
+      <!-- Header Section -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-emerald-900">
+          Welcome back, Mr. {{ current_user.name }}
+        </h1>
+        <p class="text-emerald-700 mt-2">
+          Here are your assigned students:
+        </p>
+      </div>
+
+      <!-- Student List Card -->
+      <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
+
+        {% if current_user.role == "counselor" %}
+          <div class="grid gap-4">
+            {% for x in user %}
+              {% if x["Role"] == "student" %}
+                <a href="/user/{{ x['ID'] }}"
+                   class="flex justify-between items-center p-5 
+                          rounded-lg border border-emerald-200 
+                          hover:bg-emerald-50 
+                          hover:shadow-md 
+                          hover:-translate-y-1
+                          transition-all duration-200">
+
+                  <span class="text-lg font-medium text-gray-800">
+                    {{ x["Name"] }}
+                  </span>
+
+                  <span class="text-emerald-600 font-semibold">
+                    View →
+                  </span>
+
+                </a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+      </div>
+
+    </div>
+  </main>
+
+  {% include "components/footer.html.jinja" %}
+
+</body>
+

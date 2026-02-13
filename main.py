@@ -28,7 +28,11 @@ class User:
         
 
     def get_id(self):
-        return str(self.id) 
+        return str(self.id)
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html.jinja'), 404 
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -85,7 +89,12 @@ def login():
             flash("Incorrect password")
         else:
             login_user(User(result))  # Your user class
-            return redirect("/")
+            if current_user.role == "student":
+                return redirect("/sdashboard")
+            elif current_user.role == "counselor":
+                return redirect("/cdashboard")
+            else:
+                return redirect("/")
 
 
     return render_template("/login.html.jinja")
@@ -145,7 +154,7 @@ def register():
 
 
         flash("Account created successfully! Please log in.")
-        return redirect("/login.html.jinja")
+        return redirect("/login")
 
 
     return render_template("register.html.jinja")
@@ -156,13 +165,7 @@ def register():
 def logout():
     logout_user()
     flash("Successfully logged out")
-    return redirect ("/login")
-
-
-
-
-
-
+    return redirect ("/")
 
 #Dashboard for students.
 @app.route("/student/dashboard")
@@ -171,7 +174,7 @@ def student_dashboard():
     if current_user.role != "student":
         return redirect("/theerror")
 
-    return render_template("student_dashboard.html.jinja")
+    return render_template("studentdashboard.html.jinja")
 
 #dashboard for counselors.
 @app.route("/counselor/dashboard")
@@ -179,8 +182,25 @@ def student_dashboard():
 def counselor_dashboard():
     if current_user.role != "counselor":
         return redirect("/theerror")
+    
+    connection = connect_db()
 
-    return render_template("counselor_dashboard.html.jinja")
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM `User` ")
+
+    result = cursor.fetchall()
+
+    connection.close()
+
+    return render_template("counselor_dashboard.html.jinja", user=result)
+
+
+
+
+
+
+
 
 
 #404 error page
@@ -188,10 +208,13 @@ def counselor_dashboard():
 def not_found():
     return render_template("404.html.jinja")
 
-@app.route("/recommendations")
+@app.route("/student/recommendation")
 def recommendations():
     return render_template("recommendation.html.jinja")
 
+@app.route("/counselor/recommendation")
+def counselor_recommendations():
+    return render_template("counselorrecommendation.html.jinja")
 
 @app.route('/student/academic_record', methods=['GET', 'POST'])
 @login_required
