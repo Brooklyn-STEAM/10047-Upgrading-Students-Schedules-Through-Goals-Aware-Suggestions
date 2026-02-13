@@ -154,7 +154,7 @@ def register():
 
 
         flash("Account created successfully! Please log in.")
-        return redirect("/login.html.jinja")
+        return redirect("/login")
 
 
     return render_template("register.html.jinja")
@@ -168,7 +168,7 @@ def logout():
     return redirect ("/")
 
 #Dashboard for students.
-@app.route("/sdashboard")
+@app.route("/student/dashboard")
 @login_required
 def student_dashboard():
     if current_user.role != "student":
@@ -177,7 +177,7 @@ def student_dashboard():
     return render_template("studentdashboard.html.jinja")
 
 #dashboard for counselors.
-@app.route("/cdashboard")
+@app.route("/counselor/dashboard")
 @login_required
 def counselor_dashboard():
     if current_user.role != "counselor":
