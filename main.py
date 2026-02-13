@@ -193,3 +193,12 @@ def recommendations():
     return render_template("recommendation.html.jinja")
 
 
+@app.route('/student/academic_record', methods=['GET', 'POST'])
+@login_required
+def student_academicrecord():
+    if request.method == "POST":
+        print(request.form)
+        return redirect("/student/academic_record")
+
+    return render_template("student_academic_record.html.jinja")
+

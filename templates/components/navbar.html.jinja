@@ -18,7 +18,7 @@
                after:transition-all after:duration-300
                hover:after:w-full">Dashboard</a>
 
-        <a href="/student/academicrecord" class="relative py-1 transition text-white
+        <a href="/student/academic_record" class="relative py-1 transition text-white
                after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
                after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
                after:transition-all after:duration-300
@@ -36,7 +36,7 @@
                after:transition-all after:duration-300
                hover:after:w-full">Dashboard</a>
 
-        <a href="/counselor/academicrecord" class="relative py-1 transition text-white
+        <a href="/counselor/academic_record" class="relative py-1 transition text-white
                after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
                after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
                after:transition-all after:duration-300
@@ -101,11 +101,11 @@
     
     {% if current_user.role == 'student' %}
     <a href="/student/dashboard" class="block hover:text-green-200">Dashboard</a>
-    <a href="/student/academicrecord" class="block hover:text-green-200">Academic Record</a>
+    <a href="/student/academic_record" class="block hover:text-green-200">Academic Record</a>
     <a href="/student/recommendation" class="block hover:text-green-200">Recommendations</a>
     {% else %}
     <a href="/counselor/dashboard" class="block hover:text-green-200">Dashboard</a>
-    <a href="/counselor/academicrecord" class="block hover:text-green-200">Academic Record</a>
+    <a href="/counselor/academic_record" class="block hover:text-green-200">Academic Record</a>
     <a href="/counselor/recommendation" class="block hover:text-green-200">Recommendations</a>
     {% endif %}
     <hr class="border-emerald-600">
