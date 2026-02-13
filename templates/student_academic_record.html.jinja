@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Student Academic Record</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+    {% include "components/navbar.html.jinja" %}
+
+    <div class="container mx-auto my-10 px-4 max-w-6xl">
+
+        <!-- STEP 1 -->
+        <div id="step1" class="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-4">Select Student Type</h2>
+            <select id="studentType" class="w-full border border-gray-300 rounded-md p-2 mb-4">
+                <option value="">Select</option>
+                <option value="hs">High School Student</option>
+                <option value="grad">High School Graduate / University Student</option>
+            </select>
+            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
+                onclick="goToStep2()">Next</button>
+        </div>
+
+        <!-- STEP 2 -->
+        <div id="step2" class="bg-white shadow-md rounded-lg p-6 mb-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">Select Current Grade</h2>
+            <select id="currentGrade" class="w-full border border-gray-300 rounded-md p-2 mb-4">
+                <option value="">Select Grade</option>
+                <option>9</option>
+                <option>10</option>
+                <option>11</option>
+                <option>12</option>
+            </select>
+            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
+                onclick="goToStep3()">Next</button>
+        </div>
+
+        <!-- STEP 3 -->
+        <div id="step3" class="bg-white shadow-md rounded-lg p-6 mb-6 hidden">
+            <h2 class="text-2xl font-bold mb-2">Customize Grading Scale</h2>
+            <p class="mb-4 text-gray-700">You can edit the default grading scale below.</p>
+
+            <div class="overflow-x-auto">
+                <table id="scaleTable" class="min-w-full border border-gray-200">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left">Minimum %</th>
+                            <th class="px-4 py-2 text-left">Letter Grade</th>
+                            <th class="px-4 py-2 text-left">Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="border px-4 py-2"><input value="97"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><input value="A+"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                        </tr>
+                        <tr>
+                            <td class="border px-4 py-2"><input value="93"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><input value="A"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                        </tr>
+                        <tr>
+                            <td class="border px-4 py-2"><input value="90"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><input value="A-"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                        </tr>
+                        <tr>
+                            <td class="border px-4 py-2"><input value="87"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><input value="B+"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                        </tr>
+                        <tr>
+                            <td class="border px-4 py-2"><input value="83"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><input value="B"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                        </tr>
+                        <tr>
+                            <td class="border px-4 py-2"><input value="80"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><input value="B-"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                        </tr>
+                        <tr>
+                            <td class="border px-4 py-2"><input value="70"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><input value="C"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                        </tr>
+                        <tr>
+                            <td class="border px-4 py-2"><input value="60"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><input value="D"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                        </tr>
+                        <tr>
+                            <td class="border px-4 py-2"><input value="0"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><input value="F"
+                                    class="w-full border border-gray-300 rounded p-1"></td>
+                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-4 rounded" onclick="addScaleRow()">+
+                Add Scale Row</button>
+            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 mt-4 ml-2 rounded"
+                onclick="startTranscript()">Continue</button>
+        </div>
+
+        <!-- STEP 4 -->
+        <div id="transcriptSection" class="hidden relative">
+            <div class="flex justify-end mb-2">
+                <button id="addGradeBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded hidden"
+                    onclick="addNextGrade()">Add Grade</button>
+            </div>
+            <div id="transcriptContainer" class="space-y-4"></div>
+            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 mt-4 rounded"
+                onclick="saveChanges()">Save</button>
+        </div>
+
+    </div>
+
+    <script>
+        let gradingScale = [];
+        let gradesShown = []; // Track which grades are visible
+
+        // STEP NAVIGATION
+        function goToStep2() {
+            if (!studentType.value) { alert("Select student type"); return; }
+            step1.classList.add("hidden");
+
+            if (studentType.value === "hs") {
+                step2.classList.remove("hidden");
+            } else {
+                step3.classList.remove("hidden");
+            }
+        }
+
+        function goToStep3() {
+            if (studentType.value === "hs" && !currentGrade.value) {
+                alert("Select current grade");
+                return;
+            }
+            step2.classList.add("hidden");
+            step3.classList.remove("hidden");
+        }
+
+        function startTranscript() {
+            buildScale();
+            step3.classList.add("hidden");
+            transcriptSection.classList.remove("hidden");
+            buildTranscript();
+        }
+
+        function buildScale() {
+            gradingScale = [];
+            const rows = document.querySelectorAll("#scaleTable tbody tr");
+            rows.forEach(row => {
+                const min = parseFloat(row.children[0].children[0].value);
+                const letter = row.children[1].children[0].value;
+                if (!isNaN(min) && letter) {
+                    gradingScale.push({ min, letter });
+                }
+            });
+            gradingScale.sort((a, b) => b.min - a.min);
+        }
+
+        function calculateLetter(mark) {
+            for (let rule of gradingScale) {
+                if (mark >= rule.min) return rule.letter;
+            }
+            return "";
+        }
+
+        function addScaleRow() {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+            <td class="border px-4 py-2"><input class="w-full border border-gray-300 rounded p-1"></td>
+            <td class="border px-4 py-2"><input class="w-full border border-gray-300 rounded p-1"></td>
+            <td class="border px-4 py-2"><button onclick="removeScale(this)" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+        `;
+            document.querySelector("#scaleTable tbody").appendChild(row);
+        }
+
+        function removeScale(btn) {
+            btn.parentElement.parentElement.remove();
+        }
+
+        // BUILD TRANSCRIPT
+        function buildTranscript() {
+            gradesShown = [];
+            const maxGrade = studentType.value === "grad" ? 12 : parseInt(currentGrade.value);
+            for (let g = 9; g <= maxGrade; g++) {
+                gradesShown.push(g);
+            }
+            rebuildTranscript();
+        }
+
+        function addGradeSection(g) {
+            const container = document.getElementById("transcriptContainer");
+            container.innerHTML += `
+        <div id="gradeSection${g}">
+            <div 
+    class="grade-header flex justify-between items-center bg-green-600 text-white px-4 py-2 font-bold cursor-pointer"
+    onclick="toggleGrade(${g})"
+>
+
+                <span>Grade ${g}</span>
+                <div class="flex items-center space-x-2">
+                    <button 
+    class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm"
+    onclick="event.stopPropagation(); removeGrade(${g})"
+>
+    Remove
+</button>
+
+                    <span id="arrow${g}">▼</span>
+
+                </div>
+            </div>
+            <div class="grade-content hidden bg-white shadow-md rounded p-4 mt-2" id="content${g}">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border border-gray-200">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="px-4 py-2 text-left">Subject</th>
+                                <th class="px-4 py-2 text-left">Marks (%)</th>
+                                <th class="px-4 py-2 text-left">Letter</th>
+                                <th class="px-4 py-2 text-left">Credits</th>
+                                <th class="px-4 py-2 text-left">Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody${g}"></tbody>
+                    </table>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-2 rounded" onclick="addRow(${g})">+ Add Subject</button>
+                <div class="gpa-display mt-2 font-bold">GPA: <span id="gpa${g}">0.00</span></div>
+            </div>
+        </div>
+        `;
+        }
+
+        // REBUILD TRANSCRIPT IN ORDER
+        function rebuildTranscript() {
+            const container = document.getElementById("transcriptContainer");
+            container.innerHTML = "";
+            gradesShown.sort((a, b) => a - b); // ascending
+            gradesShown.forEach(g => addGradeSection(g));
+            updateAddGradeButton();
+        }
+
+        function updateAddGradeButton() {
+            const btn = document.getElementById("addGradeBtn");
+            const missing = [9, 10, 11, 12].some(g => !gradesShown.includes(g));
+            btn.style.display = missing ? "inline-block" : "none";
+        }
+
+        function addNextGrade() {
+            // Add the first missing grade
+            for (let g = 9; g <= 12; g++) {
+                if (!gradesShown.includes(g)) {
+                    gradesShown.push(g);
+                    rebuildTranscript();
+                    break;
+                }
+            }
+        }
+
+        function removeGrade(g) {
+            if (confirm(`Are you sure you want to remove Grade ${g}? This cannot be undone.`)) {
+                gradesShown = gradesShown.filter(x => x !== g);
+                rebuildTranscript();
+            }
+        }
+
+        function toggleGrade(g) {
+            const content = document.getElementById("content" + g);
+            const arrow = document.getElementById("arrow" + g);
+            content.classList.toggle("hidden");
+            arrow.innerText = content.classList.contains("hidden") ? "▼" : "▲";
+        }
+
+        function addRow(g) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+            <td class="border px-4 py-2"><input class="w-full border border-gray-300 rounded p-1"></td>
+            <td class="border px-4 py-2"><input type="number" min="0" max="100" oninput="updateGrade(this,${g})" class="w-full border border-gray-300 rounded p-1"></td>
+            <td class="border px-4 py-2"><input readonly class="w-full border border-gray-300 rounded p-1 bg-gray-100"></td>
+            <td class="border px-4 py-2"><input type="number" step="0.5" oninput="updateGPA(${g})" class="w-full border border-gray-300 rounded p-1"></td>
+            <td class="border px-4 py-2"><button class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded" onclick="deleteRow(this,${g})">X</button></td>
+        `;
+            document.getElementById("tableBody" + g).appendChild(row);
+        }
+
+        function updateGrade(input, g) {
+            const mark = parseFloat(input.value);
+            const row = input.parentElement.parentElement;
+            if (!isNaN(mark)) {
+                row.children[2].children[0].value = calculateLetter(mark);
+            }
+            updateGPA(g);
+        }
+
+        function deleteRow(btn, g) {
+            btn.parentElement.parentElement.remove();
+            updateGPA(g);
+        }
+
+        function letterToPoint(letter) {
+            const scale = {
+                "A+": 4, "A": 4, "A-": 3.7,
+                "B+": 3.3, "B": 3, "B-": 2.7,
+                "C+": 2.3, "C": 2, "D": 1, "F": 0
+            };
+            return scale[letter] || 0;
+        }
+
+        function updateGPA(g) {
+            const rows = document.querySelectorAll("#tableBody" + g + " tr");
+            let total = 0, credits = 0;
+            rows.forEach(r => {
+                const letter = r.children[2].children[0].value;
+                const cred = parseFloat(r.children[3].children[0].value);
+                if (letter && !isNaN(cred)) {
+                    total += letterToPoint(letter) * cred;
+                    credits += cred;
+                }
+            });
+            const gpa = credits ? (total / credits).toFixed(2) : "0.00";
+            document.getElementById("gpa" + g).innerText = gpa;
+        }
+
+        function saveChanges() {
+            alert("Transcript ready for backend integration.");
+        }
+    </script>
+
+
+</body>
+
+</html>

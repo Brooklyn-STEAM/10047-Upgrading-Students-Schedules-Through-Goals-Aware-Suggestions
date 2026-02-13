@@ -216,17 +216,12 @@ def recommendations():
 def counselor_recommendations():
     return render_template("counselorrecommendation.html.jinja")
 
-@app.route("/student/recommendation/addcounselor")
+@app.route('/student/academic_record', methods=['GET', 'POST'])
 @login_required
-def add_counselor():
-    if current_user.role != "student":
-        abort(404)
+def student_academicrecord():
+    if request.method == "POST":
+        print(request.form)
+        return redirect("/student/academic_record")
 
-    return render_template("addcounselor.html.jinja")
+    return render_template("student_academic_record.html.jinja")
 
-@app.route("/counselor/recommendation/addapplication")
-@login_required
-def add_application():
-    if current_user.role != "counselor":
-        abort(404)
-    return render_template("addapplication.html.jinja")
