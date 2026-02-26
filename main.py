@@ -90,9 +90,9 @@ def login():
         else:
             login_user(User(result))  # Your user class
             if current_user.role == "student":
-                return redirect("/sdashboard")
+                return redirect("/student/dashboard")
             elif current_user.role == "counselor":
-                return redirect("/cdashboard")
+                return redirect("/counselor/dashboard")
             else:
                 return redirect("/")
 
@@ -169,12 +169,23 @@ def logout():
 
 #Dashboard for students.
 @app.route("/student/dashboard")
-@login_required
-def student_dashboard():
-    if current_user.role != "student":
-        return redirect("/theerror")
+def dashboard():
+    student = {
+        "grade": "N/A",
+        "gpa": "N/A",
+        "attendance":"N/A",
+        "next_class": "N/A",
+        "next_assignment": "N/A"
+    }
 
-    return render_template("studentdashboard.html.jinja")
+    courses = [
+        {"name": "Whatever", "grade": "N/A"},
+        {"name": "Whatever", "grade": "N/A"},
+        {"name": "Whatever", "grade": "N/A"},
+    ]
+
+    return render_template("studentdashboard.html.jinja", student=student, courses=courses)
+
 
 #dashboard for counselors.
 @app.route("/counselor/dashboard")
@@ -194,7 +205,6 @@ def counselor_dashboard():
     connection.close()
 
     return render_template("counselor_dashboard.html.jinja", user=result)
-
 
 
 
