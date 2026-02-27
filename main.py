@@ -187,12 +187,20 @@ def dashboard():
     return render_template("studentdashboard.html.jinja", student=student, courses=courses)
 
 
+@app.route("/student/recommendation")
+def recommendations():
+    return render_template("recommendation.html.jinja")
+
+@app.route("/student/recommendation/addcounselor")
+def add_counselor():
+    return render_template("addcounselor.html.jinja")
+
 #dashboard for counselors.
 @app.route("/counselor/dashboard")
 @login_required
 def counselor_dashboard():
     if current_user.role != "counselor":
-        return redirect("/theerror")
+        abort(404)
     
     connection = connect_db()
 
@@ -209,18 +217,21 @@ def counselor_dashboard():
 
 
 
+@app.route("/counselor/dashboard/<student_id>")
+def student_profile(student_id):
+   connection = connect_db()
 
+   cursor = connection.cursor()
 
+   cursor.execute("""
 
-
-#404 error page
-@app.route("/theerror")
-def not_found():
-    return render_template("404.html.jinja")
-
-@app.route("/student/recommendation")
-def recommendations():
-    return render_template("recommendation.html.jinja")
+    SELECT * FROM `User`
+    
+    WHERE `ID` = %s
+   """, (student_id))
+   result = cursor.fetchone()
+   connection.close()
+   return render_template("studentprofile.html.jinja", students=student_id , student=result)
 
 @app.route("/counselor/recommendation")
 def counselor_recommendations():
@@ -234,4 +245,10 @@ def student_academicrecord():
         return redirect("/student/academic_record")
 
     return render_template("student_academic_record.html.jinja")
+
+
+#404 error page
+@app.route("/theerror")
+def not_found():
+    return render_template("404.html.jinja")
 
