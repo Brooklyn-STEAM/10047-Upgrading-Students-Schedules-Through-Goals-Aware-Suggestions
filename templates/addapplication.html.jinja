@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <title>Add Application - Recommendation Form</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href= "/static/styles.css" rel="stylesheet" >
 </head>
-<body class="bg-lime-50 min-h-screen flex flex-col  ">
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
 {% include "components/navbar.html.jinja" %}
-<main class="flex-grow flex items-center justify-center">
+<main class="flex-grow flex items-center justify-center mb-10 mt-10">
   <div class="bg-white shadow-xl rounded-2xl w-full max-w-4xl p-8">
     
     <h2 class="text-2xl font-bold text-gray-800 mb-6">
-      Add Application for Recommendation
+      Add Application for {{ applicant["FirstName"] }}
     </h2>
 
     <form class="space-y-8">

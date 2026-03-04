@@ -95,9 +95,9 @@ def login():
         else:
             login_user(User(result))  # Your user class
             if current_user.role == "student":
-                return redirect("/sdashboard")
+                return redirect("/student/dashboard")
             elif current_user.role == "counselor":
-                return redirect("/cdashboard")
+                return redirect("/counselor/dashboard")
             else:
                 return redirect("/")
 
@@ -122,12 +122,27 @@ def register():
         if cursor.fetchone():
             flash("Email already registered")
             cursor.close()
-            conn.close()
-            return redirect("/signup")
+            connection.close()
+            return redirect("/login")
 
         # insert user
         cursor.execute("INSERT INTO `User` (Name, Email, Password, Role) VALUES (%s,%s,%s,%s)", (name,email,password,role))
         user_id = cursor.lastrowid
+        cursor.close()
+        connection.close()
+
+
+        # Optional: create a StudentProfile if role is student
+        if role == 'student':
+            connection = connect_db()
+            cursor = connection.cursor()
+            cursor.execute(
+                "INSERT INTO `StudentProfile` (UserID) VALUES (%s)",
+                (user_id)
+            )
+            connection.commit()
+            cursor.close()
+            connection.close()
 
         if role == "student":
             student_type = request.form['student_type']
@@ -143,6 +158,19 @@ def register():
 
     return render_template("register.html.jinja")
 
+@app.route("/myprofile")
+@login_required
+def my_profile():
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM `User` WHERE `ID` = %s", (current_user.id))
+    result = cursor.fetchone()
+
+    connection.close()
+
+    return render_template("myprofile.html.jinja", user=result)
+
 
 
 
@@ -155,19 +183,61 @@ def logout():
 
 #Dashboard for students.
 @app.route("/student/dashboard")
-@login_required
-def student_dashboard():
-    if current_user.role != "student":
-        return redirect("/theerror")
+def dashboard():
+    student = {
+        "grade": "N/A",
+        "gpa": "N/A",
+        "attendance":"N/A",
+        "next_class": "N/A",
+        "next_assignment": "N/A"
+    }
 
-    return render_template("studentdashboard.html.jinja")
+    courses = [
+        {"name": "Whatever", "grade": "N/A"},
+        {"name": "Whatever", "grade": "N/A"},
+        {"name": "Whatever", "grade": "N/A"},
+    ]
+
+    return render_template("studentdashboard.html.jinja", student=student, courses=courses)
+
+
+@app.route("/student/recommendation")
+def recommendations():
+    return render_template("recommendation.html.jinja")
+
+@app.route("/student/recommendation/addcounselor")
+def add_counselor():
+    return render_template("addcounselor.html.jinja")
+
+@app.route("/student/recommendation/addcounselor/processing", methods=['POST'])
+@login_required
+def add_counselor_form():
+    FirstName = request.form["firstname"]
+    LastName = request.form["lastname"]
+    Email = request.form["emailaddress"]
+    Grade = request.form["grade"]
+    Comments = request.form["comments"]
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO `Recommendation`
+        (`FirstName`, `LastName`, `Email`, `Grade`, `Comments`, `UserID`)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (FirstName, LastName, Email, Grade, Comments, current_user.id))
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/student/dashboard")
 
 #dashboard for counselors.
 @app.route("/counselor/dashboard")
 @login_required
 def counselor_dashboard():
     if current_user.role != "counselor":
-        return redirect("/theerror")
+        abort(404)
     
     connection = connect_db()
 
@@ -184,27 +254,41 @@ def counselor_dashboard():
 
 
 
+@app.route("/counselor/dashboard/<student_id>")
+def student_profile(student_id):
+   connection = connect_db()
 
+   cursor = connection.cursor()
 
+   cursor.execute("""
 
-
-
-#404 error page
-@app.route("/theerror")
-def not_found():
-    return render_template("404.html.jinja")
-
-@app.route("/student/recommendation")
-def recommendations():
-    if current_user.role != "student":
-        return redirect("/theerror")
-    return render_template("recommendation.html.jinja")
+    SELECT * FROM `User`
+    
+    WHERE `ID` = %s
+   """, (student_id))
+   result = cursor.fetchone()
+   connection.close()
+   return render_template("studentprofile.html.jinja", students=student_id , student=result)
 
 @app.route("/counselor/recommendation")
+@login_required
 def counselor_recommendations():
     if current_user.role != "counselor":
-        return redirect("/theerror")
-    return render_template("counselorrecommendation.html.jinja")
+        abort(404)
+    
+    connection = connect_db()
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT * FROM `Recommendation`
+        
+    """)
+
+    result = cursor.fetchall()
+
+    connection.close()
+    return render_template("counselorrecommendation.html.jinja", user=result)
 
 
 
@@ -219,90 +303,22 @@ def student_academicrecord():
 
     return render_template("student_academic_record.html.jinja")
 
-
-
-# the student transcript is saved into the database.
-@app.route("/save_transcript", methods=["POST"])
+@app.route("/counselor/recommendation/addapplication/<applicant_id>")
 @login_required
-def save_transcript():
-    try:
-        data = request.get_json()
-
-        if not data:
-            return jsonify({"status": "error", "message": "No data received"}), 400
-
-        # ✅ CONNECT TO DATABASE FIRST
-        conn = connect_db()
-        cursor = conn.cursor()
-
-        # ✅ Get StudentProfile ID for logged-in user
-        cursor.execute(
-            "SELECT ID FROM StudentProfile WHERE UserID = %s",
-            (current_user.id,)
-        )
-
-        result = cursor.fetchone()
-
-        if not result:
-            cursor.close()
-            conn.close()
-            return jsonify({"status": "error", "message": "Student profile not found"}), 400
-
-        student_profile_id = result[0]
-
-        transcript_gpa = data.get("GPA", None)
-        grades_data = data.get("Grades", [])
-
-        # 1️⃣ Insert Transcript
-        cursor.execute(
-            "INSERT INTO Transcript (StudentID, GPA) VALUES (%s, %s)",
-            (student_profile_id, transcript_gpa)
-        )
-        transcript_id = cursor.lastrowid
-
-        # 2️⃣ Insert Grades
-        for grade in grades_data:
-            grade_level = grade.get("GradeLevel")
-            grade_gpa = grade.get("GPA", None)
-
-            cursor.execute(
-                "INSERT INTO Grade (TranscriptID, GradeLevel, GPA) VALUES (%s, %s, %s)",
-                (transcript_id, grade_level, grade_gpa)
-            )
-            grade_id = cursor.lastrowid
-
-            # 3️⃣ Insert Subjects
-            for subject in grade.get("Subjects", []):
-                subject_name = subject.get("Name")
-                marks = subject.get("Marks")
-                letter = subject.get("Letter")
-                credits = subject.get("Credits")
-
-                cursor.execute(
-                    """
-                    INSERT INTO Subject 
-                    (GradeID, SubjectName, FinalGrade, Marks, Credits)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (grade_id, subject_name, letter, marks, credits)
-                )
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return jsonify({
-            "status": "success",
-            "message": "Transcript saved successfully."
-        })
-
-    except Exception as e:
-        print("FULL ERROR:", repr(e))
-    return jsonify({
-        "status": "error",
-        "message": repr(e)
-    }), 500
+def add_application(applicant_id):
+    connection = connect_db()
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT * FROM `Recommendation`
+        WHERE `ID` = %s
+    """, (applicant_id))
+    result = cursor.fetchone()
+    connection.close()
+    return render_template("addapplication.html.jinja" , applicant=result) 
 
 
-
+#404 error page
+@app.route("/theerror")
+def not_found():
+    return render_template("404.html.jinja")
 

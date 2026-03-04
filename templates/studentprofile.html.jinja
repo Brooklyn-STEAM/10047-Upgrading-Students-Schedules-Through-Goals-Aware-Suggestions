@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href= "/static/styles.css" rel="stylesheet" >
+</head>
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+    {% include "components/navbar.html.jinja" %}
+
+  <div class="bg-white shadow-xl rounded-2xl max-w-4xl w-full overflow-hidden mx-auto my-10">
+    
+    <div class="md:flex">
+      
+      <!-- LEFT SIDE -->
+      <div class="md:w-1/3 bg-blue-600 text-white flex flex-col items-center justify-center p-8">
+        <img 
+          src="https://via.placeholder.com/150" 
+          alt="Student Photo" 
+          class="w-32 h-32 rounded-full border-4 border-white shadow-lg"
+        >
+        <h1 class="text-2xl font-bold mt-4">Name: {{student["Name"]}}</h1>
+        <p class="text-lg mt-2">Grade: N/A</p>
+      </div>
+
+      <!-- RIGHT SIDE -->
+      <div class="md:w-2/3 p-8">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-6">
+          Additional Information
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          
+          <div>
+            <h3 class="font-semibold text-gray-700">Student ID</h3>
+            <p class="text-gray-600">ST12345</p>
+          </div>
+
+          <div>
+            <h3 class="font-semibold text-gray-700">Email</h3>
+            <p class="text-gray-600">{{student["Email"]}}</p>
+          </div>
+
+          <div>
+            <h3 class="font-semibold text-gray-700">Phone</h3>
+            <p class="text-gray-600">(123) 456-7890</p>
+          </div>
+
+          <div>
+            <h3 class="font-semibold text-gray-700">Address</h3>
+            <p class="text-gray-600">123 Main Street, City, Country</p>
+          </div>
+
+          <div class="sm:col-span-2">
+            <h3 class="font-semibold text-gray-700">About</h3>
+            <p class="text-gray-600">
+              Passionate about mathematics and science. Member of the robotics club and basketball team.
+            </p>
+          </div>
+
+        </div>
+
+        <div class="mt-8">
+          <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300">
+            Edit Profile
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+    {% include "components/footer.html.jinja" %}
+</body>
+</html>

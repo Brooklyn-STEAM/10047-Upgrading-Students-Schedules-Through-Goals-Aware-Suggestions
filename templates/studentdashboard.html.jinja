@@ -4,12 +4,93 @@
    <meta charset="UTF-8" />
    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+   <link href= "/static/styles.css" rel="stylesheet" >
  </head>
- <body class="bg-lime-50 min-h-screen flex flex-col">
+ <body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
    {% include "components/navbar.html.jinja" %}
-          <h1 class="text-sm text-emerald-200">Hello,</h1>
-        <p class="font-semibold text-white">
-          {{ current_user.name }}
+
+<main class="flex-grow flex justify-center px-6 py-12">
+  <div class="w-full max-w-4xl">
+
+    <!-- Header Section -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-emerald-900">
+        Welcome back, {{ current_user.name }}
+      </h1>
+      <p class="text-emerald-700 mt-2">
+        Grade {{ student.grade }} Student Dashboard
+      </p>
+    </div>
+
+    <!-- Today's Overview -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100 mb-6">
+      <h2 class="text-xl font-semibold text-emerald-800 mb-4">
+        Today's Overview
+      </h2>
+
+      <div class="space-y-2 text-gray-700">
+        <p><strong>Next Class:</strong> {{ student.next_class }}</p>
+        <p><strong>Upcoming Assignment:</strong> {{ student.next_assignment }}</p>
+      </div>
+    </div>
+
+    <!-- Academic Snapshot -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100 mb-6">
+      <h2 class="text-xl font-semibold text-emerald-800 mb-4">
+        Academic Snapshot
+      </h2>
+
+      <div class="grid grid-cols-2 gap-4 text-gray-700">
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">GPA</p>
+          <p class="text-2xl font-bold text-emerald-900">
+            {{ student.gpa }}
+          </p>
+        </div>
+
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">Attendance</p>
+          <p class="text-2xl font-bold text-emerald-900">
+            {{ student.attendance }}%
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Courses -->
+    <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
+      <h2 class="text-xl font-semibold text-emerald-800 mb-4">
+        My Courses
+      </h2>
+
+      <div class="grid gap-4">
+        {% for course in courses %}
+          <div class="flex justify-between items-center p-5 
+                      rounded-lg border border-emerald-200 
+                      hover:bg-emerald-50 
+                      hover:shadow-md 
+                      hover:-translate-y-1
+                      transition-all duration-200">
+
+            <span class="text-lg font-medium text-gray-800">
+              {{ course.name }}
+            </span>
+
+            <span class="text-emerald-600 font-semibold">
+              {{ course.grade }}
+            </span>
+
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</main>
+
+
+
    {% include "components/footer.html.jinja" %}
+
  </body>
 </html>
