@@ -123,7 +123,7 @@ def register():
             flash("Email already registered")
             cursor.close()
             connection.close()
-            return redirect("/signup")
+            return redirect("/login")
 
 
         # Insert new user
@@ -145,8 +145,8 @@ def register():
             connection = connect_db()
             cursor = connection.cursor()
             cursor.execute(
-                "INSERT INTO `StudentProfile` (UserID, Name) VALUES (%s, %s)",
-                (user_id, name)
+                "INSERT INTO `StudentProfile` (UserID) VALUES (%s)",
+                (user_id)
             )
             connection.commit()
             cursor.close()
@@ -158,6 +158,19 @@ def register():
 
 
     return render_template("register.html.jinja")
+
+@app.route("/myprofile")
+@login_required
+def my_profile():
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM `User` WHERE `ID` = %s", (current_user.id))
+    result = cursor.fetchone()
+
+    connection.close()
+
+    return render_template("myprofile.html.jinja", user=result)
 
 
 @app.route("/logout", methods=['GET', 'POST'])
