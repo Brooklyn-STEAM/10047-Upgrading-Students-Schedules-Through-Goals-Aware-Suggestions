@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+ <head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+   <link href= "/static/styles.css" rel="stylesheet" >
+ </head>
+ <body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+   {% include "components/navbar.html.jinja" %}
+
+<main class="flex-grow flex justify-center px-6 py-12">
+  <div class="w-full max-w-4xl">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-emerald-900">
+        Profile
+      </h1>
+      <p class="text-emerald-700 mt-2">
+        Manage your personal information
+      </p>
+    </div>
+
+    {% if current_user.role == 'student' %}
+
+    <!-- STUDENT PROFILE -->
+    <div class="bg-white rounded-xl shadow-lg p-8 border border-emerald-100">
+
+      <!-- Top Section -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div class="flex items-center gap-6">
+          <img class="w-24 h-24 rounded-full bg-emerald-100 border-4 border-emerald-200">
+          <div>
+            <h2 class="text-2xl font-bold text-emerald-900">
+              {{ current_user.name }}
+            </h2>
+            <p class="text-emerald-700">
+              
+            </p>
+          </div>
+        </div>
+
+        <button class="mt-6 md:mt-0 bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition">
+          Edit Profile
+        </button>
+      </div>
+
+      <!-- Info Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">Student ID</p>
+          <p class="text-lg font-semibold text-emerald-900">
+           N/A
+          </p>
+        </div>
+
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">Email</p>
+          <p class="text-lg font-semibold text-emerald-900">
+            {{ current_user.email }}
+          </p>
+        </div>
+
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">Phone</p>
+          <p class="text-lg font-semibold text-emerald-900">
+           N/A
+          </p>
+        </div>
+
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">Address</p>
+          <p class="text-lg font-semibold text-emerald-900">
+           N/A
+          </p>
+        </div>
+
+      </div>
+
+      <!-- About -->
+      <div class="mt-8">
+        <h3 class="text-xl font-semibold text-emerald-800 mb-3">
+          About
+        </h3>
+        <div class="bg-emerald-50 p-5 rounded-lg text-gray-700">
+        N/A
+        </div>
+      </div>
+
+    </div>
+
+    {% elif current_user.role == 'counselor' %}
+
+    <!-- COUNSELOR PROFILE -->
+    <div class="bg-white rounded-xl shadow-lg p-8 border border-emerald-100">
+
+      <!-- Top Section -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div class="flex items-center gap-6">
+          <img class="w-24 h-24 rounded-full bg-emerald-100 border-4 border-emerald-200">
+          <div>
+            <h2 class="text-2xl font-bold text-emerald-900">
+              {{ current_user.name }}
+            </h2>
+            <p class="text-emerald-700">
+              School Counselor
+            </p>
+          </div>
+        </div>
+
+        <button class="mt-6 md:mt-0 bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition">
+          Edit Profile
+        </button>
+      </div>
+
+      <!-- Info Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">Employee ID</p>
+          <p class="text-lg font-semibold text-emerald-900">
+            N/A
+          </p>
+        </div>
+
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">Email</p>
+          <p class="text-lg font-semibold text-emerald-900">
+            {{ current_user.email }}
+          </p>
+        </div>
+
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">Phone</p>
+          <p class="text-lg font-semibold text-emerald-900">
+          N/A
+            
+          </p>
+        </div>
+
+        <div class="p-4 bg-emerald-50 rounded-lg">
+          <p class="text-sm text-emerald-700">Office</p>
+          <p class="text-lg font-semibold text-emerald-900">
+            N/A
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Office Hours -->
+      <div class="mt-8">
+        <h3 class="text-xl font-semibold text-emerald-800 mb-3">
+          Office Hours
+        </h3>
+        <div class="bg-emerald-50 p-5 rounded-lg text-gray-700">
+        <p>N/A</p>
+          
+        </div>
+      </div>
+
+      <!-- Bio -->
+      <div class="mt-8">
+        <h3 class="text-xl font-semibold text-emerald-800 mb-3">
+          Professional Bio
+        </h3>
+        
+        <div class="bg-emerald-50 p-5 rounded-lg text-gray-700">
+          <p>N/A</p>
+        </div>
+      </div>
+
+    </div>
+
+    {% endif %}
+
+  </div>
+</main>
+
+{% include "components/footer.html.jinja" %}
+ </body>
+</html>
