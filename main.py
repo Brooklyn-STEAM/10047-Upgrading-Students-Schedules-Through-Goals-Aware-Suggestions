@@ -257,8 +257,24 @@ def student_profile(student_id):
    return render_template("studentprofile.html.jinja", students=student_id , student=result)
 
 @app.route("/counselor/recommendation")
+@login_required
 def counselor_recommendations():
-    return render_template("counselorrecommendation.html.jinja")
+    if current_user.role != "counselor":
+        abort(404)
+    
+    connection = connect_db()
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT * FROM `Recommendation`
+        
+    """)
+
+    result = cursor.fetchall()
+
+    connection.close()
+    return render_template("counselorrecommendation.html.jinja", user=result)
 
 @app.route('/student/academic_record', methods=['GET', 'POST'])
 @login_required
@@ -268,6 +284,19 @@ def student_academicrecord():
         return redirect("/student/academic_record")
 
     return render_template("student_academic_record.html.jinja")
+
+@app.route("/counselor/recommendation/addapplication/<applicant_id>")
+@login_required
+def add_application(applicant_id):
+    connection = connect_db()
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT * FROM `Recommendation`
+        WHERE `ID` = %s
+    """, (applicant_id))
+    result = cursor.fetchone()
+    connection.close()
+    return render_template("addapplication.html.jinja" , applicant=result) 
 
 
 #404 error page
