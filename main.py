@@ -208,6 +208,29 @@ def recommendations():
 def add_counselor():
     return render_template("addcounselor.html.jinja")
 
+@app.route("/student/recommendation/addcounselor/processing", methods=['POST'])
+@login_required
+def add_counselor_form():
+    FirstName = request.form["firstname"]
+    LastName = request.form["lastname"]
+    Email = request.form["emailaddress"]
+    Grade = request.form["grade"]
+    Comments = request.form["comments"]
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO `Recommendation`
+        (`FirstName`, `LastName`, `Email`, `Grade`, `Comments`, `UserID`)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (FirstName, LastName, Email, Grade, Comments, current_user.id))
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/student/dashboard")
+
 #dashboard for counselors.
 @app.route("/counselor/dashboard")
 @login_required
