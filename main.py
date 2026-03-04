@@ -118,45 +118,39 @@ def register():
         cursor = conn.cursor()
 
         # check duplicate
-        cursor.execute("SELECT * FROM `User` WHERE `Email`=%s", (email,))
+        cursor.execute("SELECT * FROM User WHERE Email=%s", (email,))
         if cursor.fetchone():
             flash("Email already registered")
             cursor.close()
-            connection.close()
+            conn.close()
             return redirect("/login")
 
         # insert user
-        cursor.execute("INSERT INTO `User` (Name, Email, Password, Role) VALUES (%s,%s,%s,%s)", (name,email,password,role))
+        cursor.execute(
+            "INSERT INTO User (Name, Email, Password, Role) VALUES (%s,%s,%s,%s)",
+            (name, email, password, role)
+        )
         user_id = cursor.lastrowid
-        cursor.close()
-        connection.close()
 
-
-        # Optional: create a StudentProfile if role is student
-        if role == 'student':
-            connection = connect_db()
-            cursor = connection.cursor()
-            cursor.execute(
-                "INSERT INTO `StudentProfile` (UserID) VALUES (%s)",
-                (user_id)
-            )
-            connection.commit()
-            cursor.close()
-            connection.close()
-
+        # insert student profile
         if role == "student":
             student_type = request.form['student_type']
-            grade_val = 12 if student_type=="Graduate" else int(request.form['grade'])
-            cursor.execute("INSERT INTO `StudentProfile` (UserID, Grade, StudentType, CreatedAt) VALUES (%s,%s,%s,NOW())",
-                           (user_id, grade_val, student_type))
-            conn.commit()
+            grade_val = 12 if student_type == "Graduate" else int(request.form['grade'])
 
+            cursor.execute("""
+                INSERT INTO StudentProfile (UserID, Grade, StudentType, CreatedAt)
+                VALUES (%s, %s, %s, NOW())
+            """, (user_id, grade_val, student_type))
+
+        conn.commit()
         cursor.close()
         conn.close()
+
         flash("Account created successfully! Please log in.")
         return redirect("/login")
 
     return render_template("register.html.jinja")
+    
 
 @app.route("/myprofile")
 @login_required
