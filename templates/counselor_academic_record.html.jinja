@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-6xl mx-auto mt-10 px-6">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">
+                Academic Record
+            </h1>
+            <p class="text-gray-600">
+                Student: {{ student.name }} | ID: {{ student.id }}
+            </p>
+        </div>
+
+        <div class="space-x-3">
+            <button id="editToggleBtn"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                Enable Editing
+            </button>
+
+            <button id="saveBtn"
+                class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                Save Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- Add Grade Button -->
+    <div class="flex justify-end mb-4">
+        <button id="addGradeBtn"
+            class="hidden bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
+            onclick="addNextGrade()">
+            + Add Grade
+        </button>
+    </div>
+
+    <!-- Transcript Container -->
+    <div id="transcriptContainer" class="space-y-6"></div>
+
+</div>
+
+<script>
+
+let editMode = false;
+let gradesShown = [9,10,11,12]; // For now static; later load from backend
+
+// ============================
+// EDIT MODE TOGGLE
+// ============================
+
+document.getElementById("editToggleBtn").addEventListener("click", function() {
+    editMode = !editMode;
+
+    this.innerText = editMode ? "Disable Editing" : "Enable Editing";
+
+    document.getElementById("saveBtn").classList.toggle("hidden", !editMode);
+    document.getElementById("addGradeBtn").classList.toggle("hidden", !editMode);
+
+    toggleInputs(editMode);
+});
+
+function toggleInputs(enable) {
+    document.querySelectorAll("input").forEach(input => {
+        input.disabled = !enable;
+    });
+
+    document.querySelectorAll(".remove-grade-btn").forEach(btn => {
+        btn.classList.toggle("hidden", !enable);
+    });
+
+    document.querySelectorAll(".add-subject-btn").forEach(btn => {
+        btn.classList.toggle("hidden", !enable);
+    });
+
+    document.querySelectorAll(".delete-row-btn").forEach(btn => {
+        btn.classList.toggle("hidden", !enable);
+    });
+}
+
+// ============================
+// BUILD TRANSCRIPT
+// ============================
+
+function buildTranscript() {
+    const container = document.getElementById("transcriptContainer");
+    container.innerHTML = "";
+
+    gradesShown.sort((a,b)=>a-b);
+
+    gradesShown.forEach(g => addGradeSection(g));
+}
+
+function addGradeSection(g) {
+    const container = document.getElementById("transcriptContainer");
+
+    container.innerHTML += `
+        <div id="gradeSection${g}">
+            <div onclick="toggleGrade(${g})"
+                class="flex justify-between items-center bg-slate-700 text-white px-4 py-3 font-semibold cursor-pointer rounded">
+                
+                <span>Grade ${g}</span>
+
+                <div class="flex items-center space-x-3">
+                    <button 
+                        class="remove-grade-btn hidden bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm"
+                        onclick="event.stopPropagation(); removeGrade(${g})">
+                        Remove
+                    </button>
+                    <span id="arrow${g}">▼</span>
+                </div>
+            </div>
+
+            <div id="content${g}" class="hidden bg-white shadow rounded p-4 mt-2">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border border-gray-200">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 text-left">Subject</th>
+                                <th class="px-4 py-2 text-left">Marks</th>
+                                <th class="px-4 py-2 text-left">Letter</th>
+                                <th class="px-4 py-2 text-left">Credits</th>
+                                <th class="px-4 py-2 text-left">Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody${g}"></tbody>
+                    </table>
+                </div>
+
+                <button 
+                    class="add-subject-btn hidden mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                    onclick="addRow(${g})">
+                    + Add Subject
+                </button>
+
+                <div class="mt-3 font-semibold">
+                    GPA: <span id="gpa${g}">0.00</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ============================
+// GRADE TOGGLE
+// ============================
+
+function toggleGrade(g) {
+    const content = document.getElementById("content"+g);
+    const arrow = document.getElementById("arrow"+g);
+
+    content.classList.toggle("hidden");
+    arrow.innerText = content.classList.contains("hidden") ? "▼" : "▲";
+}
+
+// ============================
+// ADD / REMOVE GRADE
+// ============================
+
+function addNextGrade() {
+    for (let g = 9; g <= 12; g++) {
+        if (!gradesShown.includes(g)) {
+            gradesShown.push(g);
+            buildTranscript();
+            toggleInputs(editMode);
+            break;
+        }
+    }
+}
+
+function removeGrade(g) {
+    if(confirm("Are you sure you want to remove this grade?")) {
+        gradesShown = gradesShown.filter(x => x !== g);
+        buildTranscript();
+        toggleInputs(editMode);
+    }
+}
+
+// ============================
+// SUBJECT ROWS
+// ============================
+
+function addRow(g) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+        <td class="border px-4 py-2">
+            <input class="w-full border rounded p-1" />
+        </td>
+        <td class="border px-4 py-2">
+            <input type="number" min="0" max="100" 
+                oninput="updateGPA(${g})"
+                class="w-full border rounded p-1" />
+        </td>
+        <td class="border px-4 py-2">
+            <input readonly class="w-full border rounded p-1 bg-gray-100" />
+        </td>
+        <td class="border px-4 py-2">
+            <input type="number" step="0.5" 
+                oninput="updateGPA(${g})"
+                class="w-full border rounded p-1" />
+        </td>
+        <td class="border px-4 py-2">
+            <button class="delete-row-btn hidden bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
+                onclick="deleteRow(this, ${g})">
+                X
+            </button>
+        </td>
+    `;
+    document.getElementById("tableBody"+g).appendChild(row);
+}
+
+function deleteRow(btn, g) {
+    btn.parentElement.parentElement.remove();
+    updateGPA(g);
+}
+
+// ============================
+// GPA
+// ============================
+
+function letterToPoint(letter) {
+    const scale = {
+        "A+": 4, "A": 4, "A-": 3.7,
+        "B+": 3.3, "B": 3, "B-": 2.7,
+        "C+": 2.3, "C": 2, "D": 1, "F": 0
+    };
+    return scale[letter] || 0;
+}
+
+function updateGPA(g) {
+    const rows = document.querySelectorAll("#tableBody"+g+" tr");
+    let total = 0, credits = 0;
+
+    rows.forEach(r => {
+        const mark = parseFloat(r.children[1].children[0].value);
+        const cred = parseFloat(r.children[3].children[0].value);
+
+        if (!isNaN(mark) && !isNaN(cred)) {
+            let letter = "";
+
+            if (mark >= 90) letter = "A";
+            else if (mark >= 80) letter = "B";
+            else if (mark >= 70) letter = "C";
+            else if (mark >= 60) letter = "D";
+            else letter = "F";
+
+            r.children[2].children[0].value = letter;
+
+            total += letterToPoint(letter) * cred;
+            credits += cred;
+        }
+    });
+
+    document.getElementById("gpa"+g).innerText =
+        credits ? (total/credits).toFixed(2) : "0.00";
+}
+
+// ============================
+
+buildTranscript();
+toggleInputs(false);
+
+</script>
+
+{% endblock %}

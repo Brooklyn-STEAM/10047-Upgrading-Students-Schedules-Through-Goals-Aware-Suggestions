@@ -360,9 +360,76 @@
             document.getElementById("gpa" + g).innerText = gpa;
         }
 
-        function saveChanges() {
-            alert("Transcript ready for backend integration.");
+        async function saveChanges() {
+            // 1️⃣ Gather all grades & subjects
+            let grades = [];
+
+            gradesShown.forEach(g => {
+                const subjects = [];
+                document.querySelectorAll(`#tableBody${g} tr`).forEach(row => {
+                    const name = row.children[0].children[0].value;
+                    const marks = parseFloat(row.children[1].children[0].value);
+                    const letter = row.children[2].children[0].value;
+                    const credits = parseFloat(row.children[3].children[0].value);
+                    if (name && !isNaN(marks) && letter && !isNaN(credits)) {
+                        subjects.push({
+                            Name: name,
+                            Marks: marks,
+                            Letter: letter,
+                            Credits: credits
+                        });
+                    }
+                });
+
+                if (subjects.length > 0) {
+                    // Calculate grade GPA
+                    let total = 0, creditsSum = 0;
+                    subjects.forEach(sub => {
+                        let point = letterToPoint(sub.Letter);
+                        total += point * sub.Credits;
+                        creditsSum += sub.Credits;
+                    });
+                    let gpa = creditsSum ? (total / creditsSum).toFixed(2) : 0;
+
+                    grades.push({
+                        GradeLevel: g,
+                        GPA: gpa,
+                        Subjects: subjects
+                    });
+                }
+            });
+
+            // 2️⃣ Calculate overall GPA
+            let total = 0, creditsSum = 0;
+            grades.forEach(gr => {
+                total += parseFloat(gr.GPA);
+                creditsSum++;
+            });
+            let overallGPA = creditsSum ? (total / creditsSum).toFixed(2) : 0;
+
+            // 3️⃣ Send to backend
+            try {
+                const response = await fetch("/save_transcript", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        GPA: overallGPA,
+                        Grades: grades
+                    })
+                });
+
+                const data = await response.json();
+                alert(data.message);
+                if (data.status === "success") {
+                    // Optional: disable further edits or redirect
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error saving transcript. See console.");
+            }
         }
+
+
     </script>
 
 
