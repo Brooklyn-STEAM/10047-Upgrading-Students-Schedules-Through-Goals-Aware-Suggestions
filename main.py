@@ -1,6 +1,11 @@
 from flask import Flask, render_template, request, flash, redirect, abort
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required, current_user
 
+from flask import request, redirect, url_for, flash
+from flask_login import current_user
+from flask import jsonify
+
+
 import pymysql
 from flask_login import LoginManager, login_user , logout_user, login_required, current_user
 from dynaconf import Dynaconf
@@ -107,34 +112,21 @@ def register():
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
-        role = request.form['role']  # 'student' or 'counselor'
+        role = request.form['role']
 
+        conn = connect_db()
+        cursor = conn.cursor()
 
-        connection = connect_db()
-        cursor = connection.cursor()
-
-
-        # Check if user already exists
-        cursor.execute("SELECT * FROM `User` WHERE `Email` = %s", (email,))
-        existing_user = cursor.fetchone()
-
-
-        if existing_user:
+        # check duplicate
+        cursor.execute("SELECT * FROM `User` WHERE `Email`=%s", (email,))
+        if cursor.fetchone():
             flash("Email already registered")
             cursor.close()
             connection.close()
             return redirect("/login")
 
-
-        # Insert new user
-        cursor.execute(
-            "INSERT INTO `User` (Name, Email, Password, Role) VALUES (%s, %s, %s, %s)",
-            (name, email, password, role)
-        )
-        connection.commit()
-
-
-        # Get the new user's ID
+        # insert user
+        cursor.execute("INSERT INTO `User` (Name, Email, Password, Role) VALUES (%s,%s,%s,%s)", (name,email,password,role))
         user_id = cursor.lastrowid
         cursor.close()
         connection.close()
@@ -152,10 +144,17 @@ def register():
             cursor.close()
             connection.close()
 
+        if role == "student":
+            student_type = request.form['student_type']
+            grade_val = 12 if student_type=="Graduate" else int(request.form['grade'])
+            cursor.execute("INSERT INTO `StudentProfile` (UserID, Grade, StudentType, CreatedAt) VALUES (%s,%s,%s,NOW())",
+                           (user_id, grade_val, student_type))
+            conn.commit()
 
+        cursor.close()
+        conn.close()
         flash("Account created successfully! Please log in.")
         return redirect("/login")
-
 
     return render_template("register.html.jinja")
 
@@ -171,6 +170,8 @@ def my_profile():
     connection.close()
 
     return render_template("myprofile.html.jinja", user=result)
+
+
 
 
 @app.route("/logout", methods=['GET', 'POST'])
@@ -288,6 +289,10 @@ def counselor_recommendations():
 
     connection.close()
     return render_template("counselorrecommendation.html.jinja", user=result)
+
+
+
+
 
 @app.route('/student/academic_record', methods=['GET', 'POST'])
 @login_required

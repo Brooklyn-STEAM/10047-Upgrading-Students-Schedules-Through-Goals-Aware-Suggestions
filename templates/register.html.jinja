@@ -10,74 +10,64 @@
   </head>
 <body class="min-h-screen bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center p-6">
 
-  <form method="POST"
-        class="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md space-y-6">
+  <form method="POST" class="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md space-y-6">
 
     <h2 class="text-3xl font-bold text-emerald-800 text-center">
       Create Account
     </h2>
 
     <!-- Full Name -->
-    <input 
-      name="name" 
-      type="text" 
-      placeholder="Full Name" 
-      required 
-      class="w-full px-4 py-3 border border-emerald-200 rounded-lg
-             focus:outline-none focus:ring-2 focus:ring-emerald-500
-             focus:border-emerald-500 transition"
-    />
+    <input name="name" type="text" placeholder="Full Name" required class="w-full px-4 py-3 border border-emerald-200 rounded-lg
+           focus:outline-none focus:ring-2 focus:ring-emerald-500" />
 
     <!-- Email -->
-    <input 
-      name="email" 
-      type="email" 
-      placeholder="Email" 
-      required 
-      class="w-full px-4 py-3 border border-emerald-200 rounded-lg
-             focus:outline-none focus:ring-2 focus:ring-emerald-500
-             focus:border-emerald-500 transition"
-    />
+    <input name="email" type="email" placeholder="Email" required class="w-full px-4 py-3 border border-emerald-200 rounded-lg
+           focus:outline-none focus:ring-2 focus:ring-emerald-500" />
 
     <!-- Password -->
-    <input 
-      name="password" 
-      type="password" 
-      placeholder="Password" 
-      required 
-      class="w-full px-4 py-3 border border-emerald-200 rounded-lg
-             focus:outline-none focus:ring-2 focus:ring-emerald-500
-             focus:border-emerald-500 transition"
-    />
+    <input name="password" type="password" placeholder="Password" required class="w-full px-4 py-3 border border-emerald-200 rounded-lg
+           focus:outline-none focus:ring-2 focus:ring-emerald-500" />
 
     <!-- Role -->
     <div>
-      <label for="role" class="block mb-2 font-medium text-gray-700">
-        Select Role
-      </label>
-
-      <select 
-        name="role" 
-        id="role" 
-        required 
-        class="w-full px-4 py-3 border border-emerald-200 rounded-lg
-               focus:outline-none focus:ring-2 focus:ring-emerald-500
-               focus:border-emerald-500 transition bg-white"
-      >
+      <label class="block mb-2 font-medium text-gray-700">Select Role</label>
+      <select name="role" id="role" required class="w-full px-4 py-3 border border-emerald-200 rounded-lg
+             focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
         <option value="student">Student</option>
         <option value="counselor">Counselor</option>
       </select>
     </div>
 
+    <!-- STUDENT ONLY SECTION -->
+    <div id="studentFields" class="space-y-4">
+
+      <!-- Student Type -->
+      <div>
+        <label class="block mb-2 font-medium text-gray-700">Student Type</label>
+        <select name="student_type" class="w-full px-4 py-3 border border-emerald-200 rounded-lg
+               focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+          <option value="High School">High School Student</option>
+          <option value="Graduate">Graduate</option>
+        </select>
+      </div>
+
+      <!-- Grade (only shown if not Graduate) -->
+      <div id="gradeSelect">
+        <label class="block mb-2 font-medium text-gray-700">Current Grade</label>
+        <select name="grade" class="w-full px-4 py-3 border border-emerald-200 rounded-lg
+               focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+          <option value="9">9th Grade</option>
+          <option value="10">10th Grade</option>
+          <option value="11">11th Grade</option>
+          <option value="12">12th Grade</option>
+        </select>
+      </div>
+
+    </div>
+
     <!-- Button -->
-    <button 
-      type="submit" 
-      class="w-full py-3 bg-emerald-700 text-white font-semibold 
-             rounded-lg shadow-md
-             hover:bg-emerald-800 hover:shadow-lg
-             hover:-translate-y-0.5
-             transition duration-200"
-    >
+    <button type="submit" class="w-full py-3 bg-emerald-700 text-white font-semibold rounded-lg
+           hover:bg-emerald-800 transition duration-200">
       Sign Up
     </button>
 
@@ -89,6 +79,35 @@
     </p>
 
   </form>
+
+  <script>
+    const roleSelect = document.getElementById("role");
+    const studentFields = document.getElementById("studentFields");
+    const studentType = document.querySelector("[name='student_type']");
+    const gradeSelect = document.getElementById("gradeSelect");
+
+    function toggleStudentFields() {
+      if (roleSelect.value === "student") {
+        studentFields.style.display = "block";
+        toggleGradeField();
+      } else {
+        studentFields.style.display = "none";
+      }
+    }
+
+    function toggleGradeField() {
+      if (studentType.value === "Graduate") {
+        gradeSelect.style.display = "none";
+      } else {
+        gradeSelect.style.display = "block";
+      }
+    }
+
+    roleSelect.addEventListener("change", toggleStudentFields);
+    studentType.addEventListener("change", toggleGradeField);
+
+    toggleStudentFields();
+  </script>
 
 </body>
 
