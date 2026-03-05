@@ -9,6 +9,7 @@ from flask import jsonify
 import pymysql
 from flask_login import LoginManager, login_user , logout_user, login_required, current_user
 from dynaconf import Dynaconf
+import json
 
 app = Flask(__name__)
 
@@ -288,14 +289,143 @@ def counselor_recommendations():
 
 
 
-@app.route('/student/academic_record', methods=['GET', 'POST'])
-@login_required
-def student_academicrecord():
-    if request.method == "POST":
-        print(request.form)
-        return redirect("/student/academic_record")
 
-    return render_template("student_academic_record.html.jinja")
+@app.route("/student/academic_record")
+@login_required
+def student_academic_record():
+    conn = connect_db()
+    cur = conn.cursor()
+
+    # find student profile
+    cur.execute("SELECT ID FROM StudentProfile WHERE UserID = %s", (current_user.id,))
+    profile = cur.fetchone()
+
+    transcript_data = None
+
+    if profile:
+        student_profile_id = profile["ID"]
+
+        # latest transcript
+        cur.execute("""
+            SELECT * FROM Transcript 
+            WHERE StudentID = %s 
+            ORDER BY CreatedAt DESC LIMIT 1
+        """, (student_profile_id,))
+        transcript = cur.fetchone()
+
+        if transcript:
+            transcript_id = transcript["ID"]
+
+            # load grades
+            cur.execute("SELECT * FROM Grade WHERE TranscriptID = %s", (transcript_id,))
+            grades = cur.fetchall()
+
+            grade_list = []
+
+            for g in grades:
+                grade_id = g["ID"]
+                grade_level = g["GradeLevel"]
+
+                # load subjects
+                cur.execute("SELECT * FROM Subject WHERE GradeID = %s", (grade_id,))
+                subjects = cur.fetchall()
+
+                subject_list = []
+                for s in subjects:
+                    subject_list.append({
+                    "Name": s["SubjectName"] or "",
+                    "Letter": s["FinalGrade"] or "",
+                    "Credits": float(s["Credits"]) if s["Credits"] is not None else 0,
+                    "Marks": s["Marks"] if s["Marks"] is not None else None
+                })
+
+
+                grade_list.append({
+                    "GradeLevel": grade_level,
+                    "Subjects": subject_list
+                })
+
+            transcript_data = {
+                "GPA": float(transcript["GPA"]) if transcript["GPA"] is not None else None,
+                "Grades": grade_list
+            }
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "student_academic_record.html.jinja",
+        transcript_json=json.dumps(transcript_data) if transcript_data else "null"
+    )
+
+
+#users transcript is saved in database.
+@app.route("/save_transcript", methods=["POST"])
+@login_required
+def save_transcript():
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"status": "error", "message": "No data received"}), 400
+
+        conn = connect_db()
+        cur = conn.cursor()
+
+        # find StudentProfile
+        cur.execute("SELECT ID FROM StudentProfile WHERE UserID = %s", (current_user.id,))
+        profile = cur.fetchone()
+
+        if not profile:
+            cur.close()
+            conn.close()
+            return jsonify({"status": "error", "message": "Student profile not found"}), 400
+
+        student_profile_id = profile["ID"]
+
+        overall_gpa = data.get("GPA", None)
+        grades_data = data.get("Grades", [])
+
+        # insert transcript
+        cur.execute(
+            "INSERT INTO Transcript (StudentID, CourseID, GPA, CreatedAt) "
+            "VALUES (%s, NULL, %s, NOW())",
+            (student_profile_id, overall_gpa)
+        )
+        transcript_id = cur.lastrowid
+
+        # insert grades + subjects
+        for grade in grades_data:
+            grade_level = grade.get("GradeLevel")
+
+            cur.execute(
+                "INSERT INTO Grade (TranscriptID, GradeLevel) VALUES (%s, %s)",
+                (transcript_id, grade_level)
+            )
+            grade_id = cur.lastrowid
+
+            for subject in grade.get("Subjects", []):
+                name = subject.get("Name")
+                letter = subject.get("Letter")
+                credits = subject.get("Credits")
+                marks = subject.get("Marks")
+
+                cur.execute(
+                    "INSERT INTO Subject (GradeID, SubjectName, FinalGrade, Credits, Marks) "
+                    "VALUES (%s, %s, %s, %s, %s)",
+                    (grade_id, name, letter, credits, marks)
+                )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"status": "success", "message": "Transcript saved successfully."})
+
+    except Exception as e:
+        print("FULL ERROR:", repr(e))
+        return jsonify({"status": "error", "message": "Server error: " + repr(e)}), 500
+
 
 @app.route("/counselor/recommendation/addapplication/<applicant_id>")
 @login_required
@@ -315,4 +445,8 @@ def add_application(applicant_id):
 @app.route("/theerror")
 def not_found():
     return render_template("404.html.jinja")
+
+
+
+
 
