@@ -438,13 +438,34 @@ def add_application(applicant_id):
     """, (applicant_id))
     result = cursor.fetchone()
     connection.close()
-    return render_template("addapplication.html.jinja" , applicant=result) 
+    return render_template("addapplication.html.jinja" , applicant=result)
+
+@app.route("/counselor/recommendation/addapplication/adding", methods=['POST'])
+@login_required
+def adding_app():
+    Major = request.form["Major"]
+    Application_type = request.form["Type"]
+    Comments = request.form["Comments"]
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO Application
+        (UserID, Major, Graduate, Comments)
+        VALUES (%s, %s, %s, %s)
+    """, (current_user.id, Major, Application_type, Comments))
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/counselor/dashboard")
 
 
 #404 error page
-@app.route("/theerror")
-def not_found():
-    return render_template("404.html.jinja")
+@app.errorhandler(404)
+def not_found(error):
+    return render_template("404.html.jinja"), 404
 
 
 
