@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Academic Record</title>
+    <title>CourseTrack - Student Academic Record</title>
     <!-- Tailwind CSS CDN -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -152,8 +153,13 @@
     </div>
 
     <script>
+
+        const savedTranscript = {{ transcript_json| safe}};
+
         let gradingScale = [];
         let gradesShown = []; // Track which grades are visible
+        let transcriptLoaded = false; //flag to detect whether transcript is loaded.
+
 
         // STEP NAVIGATION
         function goToStep2() {
@@ -206,10 +212,11 @@
         function addScaleRow() {
             const row = document.createElement("tr");
             row.innerHTML = `
-            <td class="border px-4 py-2"><input class="w-full border border-gray-300 rounded p-1"></td>
-            <td class="border px-4 py-2"><input class="w-full border border-gray-300 rounded p-1"></td>
-            <td class="border px-4 py-2"><button onclick="removeScale(this)" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-        `;
+    <td class="border px-4 py-2"><input class="w-full border border-gray-300 rounded p-1"></td>
+    <td class="border px-4 py-2"><input class="w-full border border-gray-300 rounded p-1"></td>
+    <td class="border px-4 py-2"><button onclick="removeScale(this)"
+            class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+    `;
             document.querySelector("#scaleTable tbody").appendChild(row);
         }
 
@@ -221,52 +228,43 @@
         function buildTranscript() {
             gradesShown = [];
             const maxGrade = studentType.value === "grad" ? 12 : parseInt(currentGrade.value);
-            for (let g = 9; g <= maxGrade; g++) {
-                gradesShown.push(g);
-            }
-            rebuildTranscript();
-        }
+            for (let g = 9; g <= maxGrade; g++) { gradesShown.push(g); } rebuildTranscript();
+        } function addGradeSection(g) {
+            const container = document.getElementById("transcriptContainer"); container.innerHTML += ` <div
+        id="gradeSection${g}">
+        <div class="grade-header flex justify-between items-center bg-green-600 text-white px-4 py-2 font-bold cursor-pointer"
+            onclick="toggleGrade(${g})">
 
-        function addGradeSection(g) {
-            const container = document.getElementById("transcriptContainer");
-            container.innerHTML += `
-        <div id="gradeSection${g}">
-            <div 
-    class="grade-header flex justify-between items-center bg-green-600 text-white px-4 py-2 font-bold cursor-pointer"
-    onclick="toggleGrade(${g})"
->
+            <span>Grade ${g}</span>
+            <div class="flex items-center space-x-2">
+                <button class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm"
+                    onclick="event.stopPropagation(); removeGrade(${g})">
+                    Remove
+                </button>
 
-                <span>Grade ${g}</span>
-                <div class="flex items-center space-x-2">
-                    <button 
-    class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm"
-    onclick="event.stopPropagation(); removeGrade(${g})"
->
-    Remove
-</button>
+                <span id="arrow${g}">▼</span>
 
-                    <span id="arrow${g}">▼</span>
-
-                </div>
             </div>
-            <div class="grade-content hidden bg-white shadow-md rounded p-4 mt-2" id="content${g}">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full border border-gray-200">
-                        <thead class="bg-gray-200">
-                            <tr>
-                                <th class="px-4 py-2 text-left">Subject</th>
-                                <th class="px-4 py-2 text-left">Marks (%)</th>
-                                <th class="px-4 py-2 text-left">Letter</th>
-                                <th class="px-4 py-2 text-left">Credits</th>
-                                <th class="px-4 py-2 text-left">Remove</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody${g}"></tbody>
-                    </table>
-                </div>
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-2 rounded" onclick="addRow(${g})">+ Add Subject</button>
-                <div class="gpa-display mt-2 font-bold">GPA: <span id="gpa${g}">0.00</span></div>
+        </div>
+        <div class="grade-content hidden bg-white shadow-md rounded p-4 mt-2" id="content${g}">
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-200">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left">Subject</th>
+                            <th class="px-4 py-2 text-left">Marks (%)</th>
+                            <th class="px-4 py-2 text-left">Letter</th>
+                            <th class="px-4 py-2 text-left">Credits</th>
+                            <th class="px-4 py-2 text-left">Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody${g}"></tbody>
+                </table>
             </div>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-2 rounded" onclick="addRow(${g})">+ Add
+                Subject</button>
+            <div class="gpa-display mt-2 font-bold">GPA: <span id="gpa${g}">0.00</span></div>
+        </div>
         </div>
         `;
         }
@@ -285,9 +283,83 @@
             const missing = [9, 10, 11, 12].some(g => !gradesShown.includes(g));
             btn.style.display = missing ? "inline-block" : "none";
         }
+        function generateGradeSectionHTML(g) {
+            return `
+        <div id="gradeSection${g}">
+            <div class="grade-header flex justify-between items-center bg-green-600 text-white px-4 py-2 font-bold cursor-pointer"
+                onclick="toggleGrade(${g})">
+
+                <span>Grade ${g}</span>
+                <div class="flex items-center space-x-2">
+                    <button class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm"
+                        onclick="event.stopPropagation(); removeGrade(${g})">
+                        Remove
+                    </button>
+
+                    <span id="arrow${g}">▼</span>
+                </div>
+            </div>
+
+            <div class="grade-content hidden bg-white shadow-md rounded p-4 mt-2" id="content${g}">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border border-gray-200">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="px-4 py-2 text-left">Subject</th>
+                                <th class="px-4 py-2 text-left">Marks (%)</th>
+                                <th class="px-4 py-2 text-left">Letter</th>
+                                <th class="px-4 py-2 text-left">Credits</th>
+                                <th class="px-4 py-2 text-left">Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody${g}"></tbody>
+                    </table>
+                </div>
+
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-2 rounded"
+                    onclick="addRow(${g})">+ Add Subject</button>
+
+                <div class="gpa-display mt-2 font-bold">GPA: <span id="gpa${g}">0.00</span></div>
+            </div>
+        </div>
+    `;
+        }
+
+        function insertGradeSectionInOrder(g) {
+            const container = document.getElementById("transcriptContainer");
+            const newSection = document.createElement("div");
+            newSection.id = `gradeSection${g}`;
+            newSection.innerHTML = generateGradeSectionHTML(g); // we’ll reuse your existing HTML builder
+
+            // Find the correct place to insert
+            const existingSections = Array.from(container.children);
+
+            for (let section of existingSections) {
+                const sectionGrade = parseInt(section.id.replace("gradeSection", ""));
+                if (g < sectionGrade) {
+                    container.insertBefore(newSection, section);
+                    return;
+                }
+            }
+
+            // If no earlier grade found → append at end
+            container.appendChild(newSection);
+        }
 
         function addNextGrade() {
-            // Add the first missing grade
+            if (transcriptLoaded) {
+                // Do NOT reset transcript
+                for (let g = 9; g <= 12; g++) {
+                    if (!gradesShown.includes(g)) {
+                        gradesShown.push(g);
+                        insertGradeSectionInOrder(g);
+                        break;
+                    }
+                }
+                return;
+            }
+
+            // Normal behavior for first-time users
             for (let g = 9; g <= 12; g++) {
                 if (!gradesShown.includes(g)) {
                     gradesShown.push(g);
@@ -298,11 +370,26 @@
         }
 
         function removeGrade(g) {
-            if (confirm(`Are you sure you want to remove Grade ${g}? This cannot be undone.`)) {
-                gradesShown = gradesShown.filter(x => x !== g);
-                rebuildTranscript();
+            if (!confirm(`Are you sure you want to remove Grade ${g}? This cannot be undone.`)) {
+                return;
             }
+
+            // Remove from list
+            gradesShown = gradesShown.filter(x => x !== g);
+
+            if (transcriptLoaded) {
+                // Remove ONLY the grade section from the DOM
+                const section = document.getElementById(`gradeSection${g}`);
+                if (section) section.remove();
+
+                updateAddGradeButton();
+                return;
+            }
+
+            // First-time user behavior
+            rebuildTranscript();
         }
+
 
         function toggleGrade(g) {
             const content = document.getElementById("content" + g);
@@ -315,11 +402,15 @@
             const row = document.createElement("tr");
             row.innerHTML = `
             <td class="border px-4 py-2"><input class="w-full border border-gray-300 rounded p-1"></td>
-            <td class="border px-4 py-2"><input type="number" min="0" max="100" oninput="updateGrade(this,${g})" class="w-full border border-gray-300 rounded p-1"></td>
-            <td class="border px-4 py-2"><input readonly class="w-full border border-gray-300 rounded p-1 bg-gray-100"></td>
-            <td class="border px-4 py-2"><input type="number" step="0.5" oninput="updateGPA(${g})" class="w-full border border-gray-300 rounded p-1"></td>
-            <td class="border px-4 py-2"><button class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded" onclick="deleteRow(this,${g})">X</button></td>
-        `;
+            <td class="border px-4 py-2"><input type="number" min="0" max="100" oninput="updateGrade(this,${g})"
+                    class="w-full border border-gray-300 rounded p-1"></td>
+            <td class="border px-4 py-2"><input readonly class="w-full border border-gray-300 rounded p-1 bg-gray-100">
+            </td>
+            <td class="border px-4 py-2"><input type="number" step="0.5" oninput="updateGPA(${g})"
+                    class="w-full border border-gray-300 rounded p-1"></td>
+            <td class="border px-4 py-2"><button class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
+                    onclick="deleteRow(this,${g})">X</button></td>
+            `;
             document.getElementById("tableBody" + g).appendChild(row);
         }
 
@@ -350,12 +441,14 @@
             const rows = document.querySelectorAll("#tableBody" + g + " tr");
             let total = 0, credits = 0;
             rows.forEach(r => {
-                const letter = r.children[2].children[0].value;
+                const letter = r.children[2].children[0].value || "";
                 const cred = parseFloat(r.children[3].children[0].value);
-                if (letter && !isNaN(cred)) {
+
+                if (!isNaN(cred) && cred > 0) {
                     total += letterToPoint(letter) * cred;
                     credits += cred;
                 }
+
             });
             const gpa = credits ? (total / credits).toFixed(2) : "0.00";
             document.getElementById("gpa" + g).innerText = gpa;
@@ -372,14 +465,15 @@
                     const marks = parseFloat(row.children[1].children[0].value);
                     const letter = row.children[2].children[0].value;
                     const credits = parseFloat(row.children[3].children[0].value);
-                    if (name && !isNaN(marks) && letter && !isNaN(credits)) {
+                    if (name) {
                         subjects.push({
                             Name: name,
-                            Marks: marks,
-                            Letter: letter,
-                            Credits: credits
+                            Marks: isNaN(marks) ? null : marks,
+                            Letter: letter || null,
+                            Credits: isNaN(credits) ? null : credits
                         });
                     }
+
                 });
 
                 if (subjects.length > 0) {
@@ -430,6 +524,46 @@
             }
         }
 
+        function loadSavedTranscript(data) {
+            transcriptLoaded = true;
+            buildScale();
+            if (!data || !data.Grades || data.Grades.length === 0) {
+                // No transcript → show Step 1
+                step1.classList.remove("hidden");
+                return;
+            }
+            // Skip steps 1–3
+            step1.classList.add("hidden");
+            step2.classList.add("hidden");
+            step3.classList.add("hidden");
+            transcriptSection.classList.remove("hidden");
+
+            // Build grade sections
+            gradesShown = data.Grades.map(g => g.GradeLevel);
+            rebuildTranscript();
+
+            // Fill subjects
+            data.Grades.forEach(g => {
+                const tbody = document.querySelector(`#tableBody${g.GradeLevel}`);
+
+                g.Subjects.forEach(sub => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                <td class="border px-4 py-2"><input value="${sub.Name}" class="w-full border rounded p-1"></td>
+                <td class="border px-4 py-2"><input type="number" value="${sub.Marks ?? ''}" class="w-full border rounded p-1"></td>
+                <td class="border px-4 py-2"><input value="${sub.Letter ?? ''}" readonly class="w-full border rounded p-1 bg-gray-100"></td>
+                <td class="border px-4 py-2"><input value="${sub.Credits ?? ''}" type="number" class="w-full border rounded p-1"></td>
+                <td class="border px-4 py-2"><button onclick="deleteRow(this, ${g.GradeLevel})" class="bg-red-600 text-white px-2 py-1 rounded">X</button></td>
+            `;
+                    tbody.appendChild(row);
+                });
+
+                updateGPA(g.GradeLevel);
+            });
+        }
+        if (savedTranscript) {
+            loadSavedTranscript(savedTranscript);
+        }
 
     </script>
 
