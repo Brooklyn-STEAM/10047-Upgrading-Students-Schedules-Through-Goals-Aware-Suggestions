@@ -7,7 +7,6 @@ from flask import jsonify
 
 
 import pymysql
-from flask_login import LoginManager, login_user , logout_user, login_required, current_user
 from dynaconf import Dynaconf
 import json
 
@@ -142,6 +141,12 @@ def register():
                 INSERT INTO StudentProfile (UserID, Grade, StudentType, CreatedAt)
                 VALUES (%s, %s, %s, NOW())
             """, (user_id, grade_val, student_type))
+            
+        elif role == "counselor":
+            cursor.execute("""
+                INSERT INTO CounselorProfile (UserID, CreatedAt)
+                VALUES (%s, NOW())
+            """, (user_id,))
 
         conn.commit()
         cursor.close()
@@ -155,16 +160,97 @@ def register():
 
 @app.route("/myprofile")
 @login_required
-def my_profile():
+def myprofile():
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)  # DictCursor is correct
 
-    cursor.execute("SELECT * FROM `User` WHERE `ID` = %s", (current_user.id))
-    result = cursor.fetchone()
+    profile = None
+
+    if current_user.role == "student":
+        cursor.execute("""
+            SELECT * FROM StudentProfile
+            WHERE UserID = %s
+        """, (current_user.id,))
+        profile = cursor.fetchone()
+
+    elif current_user.role == "counselor":
+        cursor.execute("""
+            SELECT * FROM CounselorProfile
+            WHERE UserID = %s
+        """, (current_user.id,))
+        profile = cursor.fetchone()
 
     connection.close()
 
-    return render_template("myprofile.html.jinja", user=result)
+    return render_template("myprofile.html.jinja", profile=profile)
+
+
+@app.route("/myprofile/edit", methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # Fetch existing profile for pre-filling form
+    profile = None
+    if current_user.role == "student":
+        cursor.execute("SELECT * FROM StudentProfile WHERE UserID=%s", (current_user.id,))
+        profile = cursor.fetchone()
+    elif current_user.role == "counselor":
+        cursor.execute("SELECT * FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
+        profile = cursor.fetchone()
+
+    if request.method == 'POST':
+        # Update User table
+        name = request.form['name']
+        email = request.form['email']
+
+        cursor.execute("""
+            UPDATE `User`
+            SET Name=%s, Email=%s
+            WHERE ID=%s
+        """, (name, email, current_user.id))
+
+        # STUDENT PROFILE
+        if current_user.role == "student":
+            phone = request.form.get("phone")
+            address = request.form.get("address")
+            bio = request.form.get("bio")
+
+            cursor.execute("""
+                UPDATE StudentProfile
+                SET Phone=%s, Address=%s, Bio=%s
+                WHERE UserID=%s
+            """, (phone, address, bio, current_user.id))
+
+        # COUNSELOR PROFILE
+        elif current_user.role == "counselor":
+            phone = request.form.get("phone")
+            office = request.form.get("office")
+            office_hours = request.form.get("office_hours")
+            bio = request.form.get("bio")
+
+            cursor.execute("SELECT * FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
+            existing = cursor.fetchone()
+
+            if existing:
+                cursor.execute("""
+                    UPDATE CounselorProfile
+                    SET Phone=%s, Office=%s, OfficeHours=%s, Bio=%s
+                    WHERE UserID=%s
+                """, (phone, office, office_hours, bio, current_user.id))
+            else:
+                cursor.execute("""
+                    INSERT INTO CounselorProfile (UserID, Phone, Office, OfficeHours, Bio)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (current_user.id, phone, office, office_hours, bio))
+
+        connection.commit()
+        connection.close()
+        return redirect("/myprofile")
+
+    connection.close()
+    return render_template("editmyprofile.html.jinja", profile=profile)
 
 
 
@@ -466,6 +552,10 @@ def adding_app():
 @app.errorhandler(404)
 def not_found(error):
     return render_template("404.html.jinja"), 404
+
+
+
+
 
 
 
