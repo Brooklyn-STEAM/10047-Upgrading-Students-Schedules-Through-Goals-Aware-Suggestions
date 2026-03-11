@@ -30,7 +30,8 @@
         {% if current_user.role == "counselor" %}
           <div class="grid gap-4">
             {% for x in user %}
-                <a href="/counselor/dashboard/{{ x['UserID'] }}"
+              {% if x["Role"] == "student" %}
+                <a href="/counselor/dashboard/{{ x['ID'] }}"
                    class="flex justify-between items-center p-5 
                           rounded-lg border border-emerald-200 
                           hover:bg-emerald-50 
@@ -39,7 +40,7 @@
                           transition-all duration-200">
 
                   <span class="text-lg font-medium text-gray-800">
-                    {{ x["FirstName"] }}
+                    {{ x["Name"] }}
                   </span>
 
                   <span class="text-emerald-600 font-semibold">
@@ -47,6 +48,7 @@
                   </span>
 
                 </a>
+              {% endif %}
             {% endfor %}
           </div>
         {% endif %}
