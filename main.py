@@ -319,26 +319,9 @@ def add_counselor():
         counselors=counselors
     )
 
-    connection = connect_db()
-    cursor = connection.cursor()
-
-    cursor.execute("""
-        SELECT * FROM Recommendation
-        WHERE UserID = %s
-    """, (current_user.id,))
-
-    recommendation = cursor.fetchone()
-
-    connection.close()
-
-    return render_template("addcounselor.html.jinja", data=recommendation)
-
 @app.route("/student/recommendation/addcounselor/processing", methods=["POST"])
 @login_required
 def add_counselor_form():
-
-    firstname = request.form["firstname"]
-    lastname = request.form["lastname"]
     counselor_id = request.form["counselor_id"] 
     grade = request.form["grade"]
     comments = request.form.get("comments")  
@@ -353,12 +336,13 @@ def add_counselor_form():
         WHERE UserID = %s
     """, (counselor_id, current_user.id))
 
-    # Save recommendation request
+    # Save recommendation request using INSERT ... SELECT
     cursor.execute("""
-        INSERT INTO Recommendation
-        (FirstName, LastName, Email, Grade, Comments, UserID)
-        VALUES (%s, %s, (SELECT Email FROM User WHERE ID = %s), %s, %s, %s)
-    """, (firstname, lastname, counselor_id, grade, comments, current_user.id))
+        INSERT INTO Recommendation (Email, Grade, Comments, UserID)
+        SELECT Email, %s, %s, %s
+        FROM User
+        WHERE ID = %s
+    """, (grade, comments, current_user.id, counselor_id))
 
     connection.commit()
     connection.close()
