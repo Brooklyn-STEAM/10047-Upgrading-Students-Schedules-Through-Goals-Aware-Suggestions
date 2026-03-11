@@ -319,7 +319,21 @@ def add_counselor():
         counselors=counselors
     )
 
-@app.route("/student/recommendation/addcounselor/processing", methods=['POST'])
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT * FROM Recommendation
+        WHERE UserID = %s
+    """, (current_user.id,))
+
+    recommendation = cursor.fetchone()
+
+    connection.close()
+
+    return render_template("addcounselor.html.jinja", data=recommendation)
+
+@app.route("/student/recommendation/addcounselor/processing", methods=["POST"])
 @login_required
 def add_counselor_form():
 
