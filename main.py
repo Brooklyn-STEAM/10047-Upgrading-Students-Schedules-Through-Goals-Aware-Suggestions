@@ -7,7 +7,6 @@ from flask import jsonify
 
 
 import pymysql
-from flask_login import LoginManager, login_user , logout_user, login_required, current_user
 from dynaconf import Dynaconf
 import json
 
@@ -142,6 +141,12 @@ def register():
                 INSERT INTO StudentProfile (UserID, Grade, StudentType, CreatedAt)
                 VALUES (%s, %s, %s, NOW())
             """, (user_id, grade_val, student_type))
+            
+        elif role == "counselor":
+            cursor.execute("""
+                INSERT INTO CounselorProfile (UserID, CreatedAt)
+                VALUES (%s, NOW())
+            """, (user_id,))
 
         conn.commit()
         cursor.close()
@@ -155,16 +160,97 @@ def register():
 
 @app.route("/myprofile")
 @login_required
-def my_profile():
+def myprofile():
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)  # DictCursor is correct
 
-    cursor.execute("SELECT * FROM `User` WHERE `ID` = %s", (current_user.id))
-    result = cursor.fetchone()
+    profile = None
+
+    if current_user.role == "student":
+        cursor.execute("""
+            SELECT * FROM StudentProfile
+            WHERE UserID = %s
+        """, (current_user.id,))
+        profile = cursor.fetchone()
+
+    elif current_user.role == "counselor":
+        cursor.execute("""
+            SELECT * FROM CounselorProfile
+            WHERE UserID = %s
+        """, (current_user.id,))
+        profile = cursor.fetchone()
 
     connection.close()
 
-    return render_template("myprofile.html.jinja", user=result)
+    return render_template("myprofile.html.jinja", profile=profile)
+
+
+@app.route("/myprofile/edit", methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # Fetch existing profile for pre-filling form
+    profile = None
+    if current_user.role == "student":
+        cursor.execute("SELECT * FROM StudentProfile WHERE UserID=%s", (current_user.id,))
+        profile = cursor.fetchone()
+    elif current_user.role == "counselor":
+        cursor.execute("SELECT * FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
+        profile = cursor.fetchone()
+
+    if request.method == 'POST':
+        # Update User table
+        name = request.form['name']
+        email = request.form['email']
+
+        cursor.execute("""
+            UPDATE `User`
+            SET Name=%s, Email=%s
+            WHERE ID=%s
+        """, (name, email, current_user.id))
+
+        # STUDENT PROFILE
+        if current_user.role == "student":
+            phone = request.form.get("phone")
+            address = request.form.get("address")
+            bio = request.form.get("bio")
+
+            cursor.execute("""
+                UPDATE StudentProfile
+                SET Phone=%s, Address=%s, Bio=%s
+                WHERE UserID=%s
+            """, (phone, address, bio, current_user.id))
+
+        # COUNSELOR PROFILE
+        elif current_user.role == "counselor":
+            phone = request.form.get("phone")
+            office = request.form.get("office")
+            office_hours = request.form.get("office_hours")
+            bio = request.form.get("bio")
+
+            cursor.execute("SELECT * FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
+            existing = cursor.fetchone()
+
+            if existing:
+                cursor.execute("""
+                    UPDATE CounselorProfile
+                    SET Phone=%s, Office=%s, OfficeHours=%s, Bio=%s
+                    WHERE UserID=%s
+                """, (phone, office, office_hours, bio, current_user.id))
+            else:
+                cursor.execute("""
+                    INSERT INTO CounselorProfile (UserID, Phone, Office, OfficeHours, Bio)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (current_user.id, phone, office, office_hours, bio))
+
+        connection.commit()
+        connection.close()
+        return redirect("/myprofile")
+
+    connection.close()
+    return render_template("editmyprofile.html.jinja", profile=profile)
 
 
 
@@ -197,12 +283,41 @@ def dashboard():
 
 
 @app.route("/student/recommendation")
+@login_required
 def recommendations():
-    return render_template("recommendation.html.jinja")
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT ID, Name, Email
+        FROM User
+        WHERE Role = 'counselor' """)
+
+    counselors = cursor.fetchall()
+    connection.close()
+
+    return render_template( "recommendation.html.jinja", counselors=counselors
+    )
+
 
 @app.route("/student/recommendation/addcounselor")
 @login_required
 def add_counselor():
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # Fetch all counselors
+    cursor.execute("SELECT ID, Name, Email FROM User WHERE Role='counselor'")
+    counselors = cursor.fetchall()
+
+    connection.close()
+
+    # Pass them to template
+    return render_template(
+        "addcounselor.html.jinja",
+        counselors=counselors
+    )
 
     connection = connect_db()
     cursor = connection.cursor()
@@ -222,41 +337,28 @@ def add_counselor():
 @login_required
 def add_counselor_form():
 
-    FirstName = request.form["firstname"]
-    LastName = request.form["lastname"]
-    Email = request.form["emailaddress"]
-    Grade = request.form["grade"]
-    Comments = request.form["comments"]
+    firstname = request.form["firstname"]
+    lastname = request.form["lastname"]
+    counselor_id = request.form["counselor_id"] 
+    grade = request.form["grade"]
+    comments = request.form.get("comments")  
 
     connection = connect_db()
     cursor = connection.cursor()
 
-    # Check if user already submitted
+    # Assign counselor to student
     cursor.execute("""
-        SELECT * FROM Recommendation
+        UPDATE StudentProfile
+        SET CounselorUserID = %s
         WHERE UserID = %s
-    """, (current_user.id,))
-    
-    existing = cursor.fetchone()
+    """, (counselor_id, current_user.id))
 
-    if existing:
-        # UPDATE existing record
-        cursor.execute("""
-            UPDATE Recommendation
-            SET FirstName=%s,
-                LastName=%s,
-                Email=%s,
-                Grade=%s,
-                Comments=%s
-        """, (FirstName, LastName, Email, Grade, Comments, current_user.id))
-
-    else:
-        # INSERT new record
-        cursor.execute("""
-            INSERT INTO Recommendation
-            (FirstName, LastName, Email, Grade, Comments,)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (FirstName, LastName, Email, Grade, Comments, current_user.id))
+    # Save recommendation request
+    cursor.execute("""
+        INSERT INTO Recommendation
+        (FirstName, LastName, Email, Grade, Comments, UserID)
+        VALUES (%s, %s, (SELECT Email FROM User WHERE ID = %s), %s, %s, %s)
+    """, (firstname, lastname, counselor_id, grade, comments, current_user.id))
 
     connection.commit()
     connection.close()
@@ -274,7 +376,7 @@ def counselor_dashboard():
 
     cursor = connection.cursor()
 
-    cursor.execute("SELECT * FROM `Recommendation` ")
+    cursor.execute("SELECT * FROM `StudentProfile` Join `User` ON `StudentProfile`.`UserID` = `User`.`ID` WHERE CounselorUserID = %s", (current_user.id,))
 
     result = cursor.fetchall()
 
@@ -502,6 +604,10 @@ def adding_app():
 @app.errorhandler(404)
 def not_found(error):
     return render_template("404.html.jinja"), 404
+
+
+
+
 
 
 
