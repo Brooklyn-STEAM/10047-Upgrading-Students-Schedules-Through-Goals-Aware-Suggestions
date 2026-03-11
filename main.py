@@ -201,12 +201,27 @@ def recommendations():
     return render_template("recommendation.html.jinja")
 
 @app.route("/student/recommendation/addcounselor")
+@login_required
 def add_counselor():
-    return render_template("addcounselor.html.jinja")
 
-@app.route("/student/recommendation/addcounselor/processing", methods=['POST'])
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT * FROM Recommendation
+        WHERE UserID = %s
+    """, (current_user.id,))
+
+    recommendation = cursor.fetchone()
+
+    connection.close()
+
+    return render_template("addcounselor.html.jinja", data=recommendation)
+
+@app.route("/student/recommendation/addcounselor/processing", methods=["POST"])
 @login_required
 def add_counselor_form():
+
     FirstName = request.form["firstname"]
     LastName = request.form["lastname"]
     Email = request.form["emailaddress"]
@@ -216,11 +231,32 @@ def add_counselor_form():
     connection = connect_db()
     cursor = connection.cursor()
 
+    # Check if user already submitted
     cursor.execute("""
-        INSERT INTO `Recommendation`
-        (`FirstName`, `LastName`, `Email`, `Grade`, `Comments`, `UserID`)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (FirstName, LastName, Email, Grade, Comments, current_user.id))
+        SELECT * FROM Recommendation
+        WHERE UserID = %s
+    """, (current_user.id,))
+    
+    existing = cursor.fetchone()
+
+    if existing:
+        # UPDATE existing record
+        cursor.execute("""
+            UPDATE Recommendation
+            SET FirstName=%s,
+                LastName=%s,
+                Email=%s,
+                Grade=%s,
+                Comments=%s
+        """, (FirstName, LastName, Email, Grade, Comments, current_user.id))
+
+    else:
+        # INSERT new record
+        cursor.execute("""
+            INSERT INTO Recommendation
+            (FirstName, LastName, Email, Grade, Comments,)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (FirstName, LastName, Email, Grade, Comments, current_user.id))
 
     connection.commit()
     connection.close()
@@ -238,7 +274,7 @@ def counselor_dashboard():
 
     cursor = connection.cursor()
 
-    cursor.execute("SELECT * FROM `User` ")
+    cursor.execute("SELECT * FROM `Recommendation` ")
 
     result = cursor.fetchall()
 

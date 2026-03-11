@@ -67,8 +67,8 @@
           <label class="block text-sm font-medium text-gray-600 mb-1">
             Additional Notes (Optional)
           </label>
-          <input name="comments" rows="4" placeholder="Add any message or context for your counselor..."
-            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          <textarea name="comments" rows="4" placeholder="Add any message or context for your counselor..."
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
         </div>
       </div>
 
@@ -79,9 +79,12 @@
           Clear
         </button>
 
-        <button type="submit"
-          class="px-6 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md">
-          Add Counselor
+        <button class="px-6 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md" type="submit">
+        {% if data %}
+        Update Counselor
+        {% else %}
+        Add Counselor
+        {% endif %}
         </button>
       </div>
 
