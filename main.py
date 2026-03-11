@@ -283,30 +283,68 @@ def dashboard():
 
 
 @app.route("/student/recommendation")
-def recommendations():
-    return render_template("recommendation.html.jinja")
-
-@app.route("/student/recommendation/addcounselor")
-def add_counselor():
-    return render_template("addcounselor.html.jinja")
-
-@app.route("/student/recommendation/addcounselor/processing", methods=['POST'])
 @login_required
-def add_counselor_form():
-    FirstName = request.form["firstname"]
-    LastName = request.form["lastname"]
-    Email = request.form["emailaddress"]
-    Grade = request.form["grade"]
-    Comments = request.form["comments"]
+def recommendations():
 
     connection = connect_db()
     cursor = connection.cursor()
 
     cursor.execute("""
-        INSERT INTO `Recommendation`
-        (`FirstName`, `LastName`, `Email`, `Grade`, `Comments`, `UserID`)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (FirstName, LastName, Email, Grade, Comments, current_user.id))
+        SELECT ID, Name, Email
+        FROM User
+        WHERE Role = 'counselor' """)
+
+    counselors = cursor.fetchall()
+    connection.close()
+
+    return render_template( "recommendation.html.jinja", counselors=counselors
+    )
+
+
+@app.route("/student/recommendation/addcounselor")
+@login_required
+def add_counselor():
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # Fetch all counselors
+    cursor.execute("SELECT ID, Name, Email FROM User WHERE Role='counselor'")
+    counselors = cursor.fetchall()
+
+    connection.close()
+
+    # Pass them to template
+    return render_template(
+        "addcounselor.html.jinja",
+        counselors=counselors
+    )
+
+@app.route("/student/recommendation/addcounselor/processing", methods=['POST'])
+@login_required
+def add_counselor_form():
+
+    firstname = request.form["firstname"]
+    lastname = request.form["lastname"]
+    counselor_id = request.form["counselor_id"] 
+    grade = request.form["grade"]
+    comments = request.form.get("comments")  
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    # Assign counselor to student
+    cursor.execute("""
+        UPDATE StudentProfile
+        SET CounselorUserID = %s
+        WHERE UserID = %s
+    """, (counselor_id, current_user.id))
+
+    # Save recommendation request
+    cursor.execute("""
+        INSERT INTO Recommendation
+        (FirstName, LastName, Email, Grade, Comments, UserID)
+        VALUES (%s, %s, (SELECT Email FROM User WHERE ID = %s), %s, %s, %s)
+    """, (firstname, lastname, counselor_id, grade, comments, current_user.id))
 
     connection.commit()
     connection.close()
@@ -324,7 +362,7 @@ def counselor_dashboard():
 
     cursor = connection.cursor()
 
-    cursor.execute("SELECT * FROM `User` ")
+    cursor.execute("SELECT * FROM `StudentProfile` Join `User` ON `StudentProfile`.`UserID` = `User`.`ID` WHERE CounselorUserID = %s", (current_user.id,))
 
     result = cursor.fetchall()
 
