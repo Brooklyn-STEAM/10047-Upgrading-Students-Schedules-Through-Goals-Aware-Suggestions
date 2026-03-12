@@ -291,14 +291,61 @@ def dashboard():
         "next_assignment": "N/A"
     }
 
+    # Load real student profile
+    cursor.execute("""
+        SELECT *
+        FROM StudentProfile
+        WHERE UserID = %s
+    """, (current_user.id,))
+    student = cursor.fetchone()
+
+    # If no profile exists yet, create a default one
+    if not student:
+        student = {
+            "Grade": "N/A",
+            "GPA": "N/A",
+            "Attendance": "N/A",
+            "Next_Class": "N/A",
+            "Next_Assignment": "N/A",
+            "AllowCounselorEdit": 0
+        }
+
+    # Load courses (you can replace this with real data later)
     courses = [
         {"name": "Whatever", "grade": "N/A"},
         {"name": "Whatever", "grade": "N/A"},
         {"name": "Whatever", "grade": "N/A"},
     ]
 
-    return render_template("studentdashboard.html.jinja", 
-    student=student, courses=courses, counselor_email= counselor_email, counselor_name=counselor_name )
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "studentdashboard.html.jinja",
+        student=student,
+        courses=courses
+    )
+
+@app.route("/student/toggle_counselor_edit", methods=["POST"])
+@login_required
+def toggle_counselor_edit():
+    allow_edit = 1 if request.form.get("allow_edit") == "1" else 0
+
+    conn = connect_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE StudentProfile
+        SET AllowCounselorEdit = %s
+        WHERE UserID = %s
+    """, (allow_edit, current_user.id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return redirect("/student/dashboard")
+
 
 
 @app.route("/student/recommendation")
@@ -360,6 +407,13 @@ def add_counselor_form():
         SET CounselorUserID = %s
         WHERE UserID = %s
     """, (counselor_id, current_user.id))
+
+    # 2. NEW: Insert into CounselorStudent (this is what makes the counselor see the student)
+    cursor.execute("""
+        INSERT INTO CounselorStudent (CounselorUserID, StudentUserID)
+        VALUES (%s, %s)
+    """, (counselor_id, current_user.id))
+
 
     # Save recommendation request using INSERT ... SELECT
     cursor.execute("""
@@ -644,6 +698,231 @@ def adding_app():
     connection.close()
 
     return redirect("/counselor/dashboard")
+
+
+
+
+
+#List students for counselor + render page
+@app.route("/counselor/academic_record")
+@login_required
+def counselor_academic_records():
+    # Ensure this user is a counselor
+    if current_user.role != "counselor":
+        abort(403)
+
+    conn = connect_db()
+    cur = conn.cursor()
+
+    # Get all students assigned to this counselor
+    cur.execute("""
+        SELECT 
+            cs.StudentUserID AS StudentUserID,
+            u.Name AS StudentName,
+            u.Email AS StudentEmail,
+            sp.Grade AS Grade,
+            sp.StudentType AS StudentType,
+            sp.AllowCounselorEdit AS AllowEdit
+        FROM CounselorStudent cs
+        JOIN User u ON cs.StudentUserID = u.ID
+        JOIN StudentProfile sp ON sp.UserID = u.ID
+        WHERE cs.CounselorUserID = %s
+        ORDER BY u.Name
+    """, (current_user.id,))
+    students = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "counselor_academic_record.html.jinja",
+        students=students
+    )
+
+
+
+
+
+#Fetch a specific student’s transcript (JSON)
+@app.route("/counselor/student_transcript/<int:student_user_id>")
+@login_required
+def counselor_student_transcript(student_user_id):
+    if current_user.role != "counselor":
+        abort(403)
+
+    conn = connect_db()
+    cur = conn.cursor()
+
+    # Ensure this student belongs to this counselor
+    cur.execute("""
+        SELECT 1
+        FROM CounselorStudent
+        WHERE CounselorUserID = %s AND StudentUserID = %s
+    """, (current_user.id, student_user_id))
+    link = cur.fetchone()
+    if not link:
+        cur.close()
+        conn.close()
+        abort(403)
+
+    # Get student profile
+    cur.execute("""
+        SELECT ID, Grade, StudentType, AllowCounselorEdit
+        FROM StudentProfile
+        WHERE UserID = %s
+    """, (student_user_id,))
+    profile = cur.fetchone()
+    if not profile:
+        cur.close()
+        conn.close()
+        return jsonify({"error": "Student profile not found"}), 404
+
+    student_profile_id = profile["ID"]
+
+    # Latest transcript
+    cur.execute("""
+        SELECT * FROM Transcript
+        WHERE StudentID = %s
+        ORDER BY CreatedAt DESC LIMIT 1
+    """, (student_profile_id,))
+    transcript = cur.fetchone()
+
+    transcript_data = None
+    if transcript:
+        transcript_id = transcript["ID"]
+
+        cur.execute("SELECT * FROM Grade WHERE TranscriptID = %s", (transcript_id,))
+        grades = cur.fetchall()
+
+        grade_list = []
+        for g in grades:
+            grade_id = g["ID"]
+            grade_level = g["GradeLevel"]
+
+            cur.execute("SELECT * FROM Subject WHERE GradeID = %s", (grade_id,))
+            subjects = cur.fetchall()
+
+            subject_list = []
+            for s in subjects:
+                subject_list.append({
+                    "Name": s["SubjectName"] or "",
+                    "Letter": s["FinalGrade"] or "",
+                    "Credits": float(s["Credits"]) if s["Credits"] is not None else 0,
+                    "Marks": s["Marks"] if s["Marks"] is not None else None,
+                    "Preference": s["Preference"] if s["Preference"] is not None else None
+                })
+
+            grade_list.append({
+                "GradeLevel": grade_level,
+                "Subjects": subject_list
+            })
+
+        transcript_data = {
+            "GPA": float(transcript["GPA"]) if transcript["GPA"] is not None else None,
+            "Grades": grade_list
+        }
+
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        "profile": {
+            "Grade": profile["Grade"],
+            "StudentType": profile["StudentType"],
+            "AllowCounselorEdit": bool(profile["AllowCounselorEdit"])
+        },
+        "transcript": transcript_data
+    })
+
+
+
+
+#Counselor saves transcript edits (if allowed)
+@app.route("/counselor/save_transcript/<int:student_user_id>", methods=["POST"])
+@login_required
+def counselor_save_transcript(student_user_id):
+    if current_user.role != "counselor":
+        abort(403)
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "No data received"}), 400
+
+    conn = connect_db()
+    cur = conn.cursor()
+
+    # Ensure relationship + get profile
+    cur.execute("""
+        SELECT sp.ID, sp.AllowCounselorEdit, sp.Grade
+        FROM CounselorStudent cs
+        JOIN StudentProfile sp ON sp.UserID = cs.StudentUserID
+        WHERE cs.CounselorUserID = %s AND cs.StudentUserID = %s
+    """, (current_user.id, student_user_id))
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        abort(403)
+
+    if not row["AllowCounselorEdit"]:
+        cur.close()
+        conn.close()
+        return jsonify({"status": "error", "message": "Student has not allowed counselor editing."}), 403
+
+    student_profile_id = row["ID"]
+    current_profile_grade = row["Grade"]
+
+    overall_gpa = data.get("GPA", None)
+    grades_data = data.get("Grades", [])
+
+    # Insert new transcript (same pattern as student)
+    cur.execute(
+        "INSERT INTO Transcript (StudentID, CourseID, GPA, CreatedAt) "
+        "VALUES (%s, NULL, %s, NOW())",
+        (student_profile_id, overall_gpa)
+    )
+    transcript_id = cur.lastrowid
+
+    max_grade_level = current_profile_grade
+
+    for grade in grades_data:
+        grade_level = grade.get("GradeLevel")
+        if grade_level and (max_grade_level is None or grade_level > max_grade_level):
+            max_grade_level = grade_level
+
+        cur.execute(
+            "INSERT INTO Grade (TranscriptID, GradeLevel) VALUES (%s, %s)",
+            (transcript_id, grade_level)
+        )
+        grade_id = cur.lastrowid
+
+        for subject in grade.get("Subjects", []):
+            cur.execute(
+                "INSERT INTO Subject (GradeID, SubjectName, FinalGrade, Credits, Marks, Preference) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (
+                    grade_id,
+                    subject.get("Name"),
+                    subject.get("Letter"),
+                    subject.get("Credits"),
+                    subject.get("Marks"),
+                    subject.get("Preference"),
+                )
+            )
+
+    # Optionally sync grade
+    cur.execute("""
+        UPDATE StudentProfile
+        SET Grade = %s
+        WHERE ID = %s
+    """, (max_grade_level, student_profile_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"status": "success", "message": "Transcript updated by counselor."})
+
 
 
 #404 error page
