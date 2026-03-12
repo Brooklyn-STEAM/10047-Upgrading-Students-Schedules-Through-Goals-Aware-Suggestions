@@ -18,7 +18,7 @@
       <!-- Header Section -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-emerald-900">
-          Welcome back, Mr. {{ current_user.name }}
+          Welcome back, {{ current_user.name }}
         </h1>
         <p class="text-emerald-700 mt-2">
           Here are your assigned students:
@@ -27,7 +27,6 @@
 
       <!-- Student List Card -->
       <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
-
         {% if current_user.role == "counselor" %}
           <div class="grid gap-4">
             {% for x in user %}
