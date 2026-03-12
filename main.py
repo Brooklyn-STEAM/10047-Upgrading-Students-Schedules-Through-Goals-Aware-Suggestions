@@ -262,36 +262,27 @@ def logout():
     flash("Successfully logged out")
     return redirect ("/")
 
-#Dashboard for students.
+# Dashboard for students.
 @app.route("/student/dashboard")
 @login_required
 def dashboard():
     
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
+    # 1. Load counselor info
     cursor.execute("""
-    SELECT User.Email, User.Name
-    FROM StudentProfile
-    JOIN User ON StudentProfile.CounselorUserID = User.ID
-    WHERE StudentProfile.UserID = %s
+        SELECT User.Email, User.Name
+        FROM StudentProfile
+        JOIN User ON StudentProfile.CounselorUserID = User.ID
+        WHERE StudentProfile.UserID = %s
     """, (current_user.id,))
     
     result = cursor.fetchone()
     counselor_email = result["Email"] if result else None
     counselor_name = result["Name"] if result else None
 
-    connection.close()
-
-    student = {
-        "grade": "N/A",
-        "gpa": "N/A",
-        "attendance":"N/A",
-        "next_class": "N/A",
-        "next_assignment": "N/A"
-    }
-
-    # Load real student profile
+    # 2. Load real student profile
     cursor.execute("""
         SELECT *
         FROM StudentProfile
@@ -299,7 +290,7 @@ def dashboard():
     """, (current_user.id,))
     student = cursor.fetchone()
 
-    # If no profile exists yet, create a default one
+    # 3. If no profile exists yet, create a default one
     if not student:
         student = {
             "Grade": "N/A",
@@ -310,7 +301,7 @@ def dashboard():
             "AllowCounselorEdit": 0
         }
 
-    # Load courses (you can replace this with real data later)
+    # 4. Placeholder courses
     courses = [
         {"name": "Whatever", "grade": "N/A"},
         {"name": "Whatever", "grade": "N/A"},
@@ -323,8 +314,11 @@ def dashboard():
     return render_template(
         "studentdashboard.html.jinja",
         student=student,
-        courses=courses
+        courses=courses,
+        counselor_name=counselor_name,
+        counselor_email=counselor_email
     )
+
 
 @app.route("/student/toggle_counselor_edit", methods=["POST"])
 @login_required
