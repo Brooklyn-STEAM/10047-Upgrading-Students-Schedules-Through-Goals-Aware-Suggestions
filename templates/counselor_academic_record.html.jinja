@@ -1,269 +1,528 @@
-{% extends "base.html" %}
-{% block content %}
+<!doctype html>
+<html lang="en">
 
-<title>CourseTrack - Academic Record</title>
-<link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CourseTrack - Counselor Academic Records</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 
-<div class="max-w-6xl mx-auto mt-10 px-6">
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
 
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">
-                Academic Record
-            </h1>
-            <p class="text-gray-600">
-                Student: {{ student.name }} | ID: {{ student.id }}
-            </p>
-        </div>
+    {% include "components/navbar.html.jinja" %}
 
-        <div class="space-x-3">
-            <button id="editToggleBtn"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                Enable Editing
-            </button>
+    <div class="container mx-auto my-6 px-4 max-w-6xl">
+        <h1 class="text-2xl font-bold mb-4">My Students' Academic Records</h1>
 
-            <button id="saveBtn"
-                class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-                Save Changes
-            </button>
+        <div class="flex flex-col md:flex-row gap-4">
+            <!-- Students list -->
+            <div class="md:w-1/3 bg-white shadow-md rounded-lg p-4 max-h-[70vh] overflow-y-auto">
+                <h2 class="text-lg font-semibold mb-3">Students</h2>
+
+                {% if students %}
+                <ul id="studentList" class="space-y-2">
+                    {% for s in students %}
+                    <li>
+                        <button
+                            class="w-full text-left border border-gray-200 rounded-md px-3 py-2 hover:bg-emerald-50 transition"
+                            onclick="selectStudent({{ s.StudentUserID }}, '{{ s.StudentName|e }}', {{ 1 if s.AllowEdit else 0 }})">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <div class="font-medium">{{ s.StudentName }}</div>
+                                    <div class="text-xs text-gray-500">{{ s.StudentEmail }}</div>
+                                    <div class="text-xs text-gray-500">
+                                        Grade: {{ s.Grade if s.Grade is not none else 'N/A' }} |
+                                        Type: {{ s.StudentType }}
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-xs px-2 py-1 rounded
+                                        {% if s.AllowEdit %} bg-green-100 text-green-700 {% else %} bg-gray-100 text-gray-500 {% endif %}">
+                                    {% if s.AllowEdit %}Edit allowed{% else %}View only{% endif %}
+                                </span>
+                            </div>
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-sm text-gray-600">No students assigned yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Transcript viewer -->
+            <div class="md:w-2/3 bg-white shadow-md rounded-lg p-4">
+                <div id="studentHeader" class="mb-4 hidden">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 id="studentName" class="text-xl font-semibold"></h2>
+                            <p id="studentMeta" class="text-sm text-gray-600"></p>
+                        </div>
+                        <div>
+                            <span id="editStatusBadge" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-500">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="noSelection" class="text-gray-500 text-sm">
+                    Select a student from the left to view their transcript.
+                </div>
+
+                <div id="transcriptWrapper" class="hidden">
+                    <!-- Controls -->
+                    <div class="flex justify-end gap-2 mb-3">
+                        <button id="toggleEditBtn"
+                            class="hidden bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded"
+                            onclick="toggleEditMode()">
+                            Enable Edit
+                        </button>
+                        <button id="saveBtn"
+                            class="hidden bg-green-700 hover:bg-green-800 text-white text-sm px-3 py-1 rounded"
+                            onclick="saveCounselorChanges()">
+                            Save Changes
+                        </button>
+                    </div>
+
+                    <!-- Transcript container -->
+                    <div id="transcriptContainer" class="space-y-4"></div>
+
+                    <!-- Overall GPA -->
+                    <div class="mt-4 font-semibold">
+                        Overall GPA: <span id="overallGpa">N/A</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Add Grade Button -->
-    <div class="flex justify-end mb-4">
-        <button id="addGradeBtn"
-            class="hidden bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
-            onclick="addNextGrade()">
-            + Add Grade
-        </button>
-    </div>
+    <script>
+        // Global state
+        let currentStudentId = null;
+        let currentStudentCanEdit = false;
+        let editMode = false;
+        let currentTranscript = null; // store loaded transcript
 
-    <!-- Transcript Container -->
-    <div id="transcriptContainer" class="space-y-6"></div>
+        // Select a student from the list
+        function selectStudent(studentUserId, studentName, allowEditFlag) {
+            currentStudentId = studentUserId;
+            currentStudentCanEdit = !!allowEditFlag;
+            editMode = false;
 
-</div>
+            // Reset UI
+            document.getElementById("noSelection").classList.add("hidden");
+            document.getElementById("transcriptWrapper").classList.remove("hidden");
+            document.getElementById("studentHeader").classList.remove("hidden");
+            document.getElementById("transcriptContainer").innerHTML = "";
+            document.getElementById("overallGpa").innerText = "N/A";
 
-<script>
+            // Header
+            document.getElementById("studentName").innerText = studentName;
+            document.getElementById("studentMeta").innerText = "";
+            const badge = document.getElementById("editStatusBadge");
+            const toggleEditBtn = document.getElementById("toggleEditBtn");
+            const saveBtn = document.getElementById("saveBtn");
 
-let editMode = false;
-let gradesShown = [9,10,11,12]; // For now static; later load from backend
+            if (currentStudentCanEdit) {
+                badge.innerText = "Edit allowed";
+                badge.className = "text-xs px-2 py-1 rounded bg-green-100 text-green-700";
+                toggleEditBtn.classList.remove("hidden");
+                saveBtn.classList.add("hidden");
+                toggleEditBtn.innerText = "Enable Edit";
+            } else {
+                badge.innerText = "View only";
+                badge.className = "text-xs px-2 py-1 rounded bg-gray-100 text-gray-500";
+                toggleEditBtn.classList.add("hidden");
+                saveBtn.classList.add("hidden");
+            }
 
-// ============================
-// EDIT MODE TOGGLE
-// ============================
+            // Fetch transcript
+            fetch(`/counselor/student_transcript/${studentUserId}`)
+                .then(res => res.json())
+                .then(data => {
+                    currentTranscript = data.transcript;
+                    // Show profile meta
+                    if (data.profile) {
+                        const grade = data.profile.Grade ?? "N/A";
+                        const type = data.profile.StudentType ?? "N/A";
+                        document.getElementById("studentMeta").innerText =
+                            `Grade: ${grade} | Type: ${type}`;
+                    }
 
-document.getElementById("editToggleBtn").addEventListener("click", function() {
-    editMode = !editMode;
+                    renderTranscript(data.transcript);
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error loading transcript.");
+                });
+        }
 
-    this.innerText = editMode ? "Disable Editing" : "Enable Editing";
+        // Render transcript into the container (read-only by default)
+        function renderTranscript(transcript) {
+            const container = document.getElementById("transcriptContainer");
+            container.innerHTML = "";
 
-    document.getElementById("saveBtn").classList.toggle("hidden", !editMode);
-    document.getElementById("addGradeBtn").classList.toggle("hidden", !editMode);
+            if (!transcript || !transcript.Grades || transcript.Grades.length === 0) {
+                container.innerHTML = "<p class='text-sm text-gray-500'>No transcript available for this student.</p>";
+                document.getElementById("overallGpa").innerText = "N/A";
+                return;
+            }
 
-    toggleInputs(editMode);
-});
+            // Overall GPA
+            document.getElementById("overallGpa").innerText =
+                transcript.GPA != null ? parseFloat(transcript.GPA).toFixed(2) : "N/A";
 
-function toggleInputs(enable) {
-    document.querySelectorAll("input").forEach(input => {
-        input.disabled = !enable;
-    });
+            // For each grade level
+            transcript.Grades.sort((a, b) => a.GradeLevel - b.GradeLevel);
+            transcript.Grades.forEach(g => {
+                const section = document.createElement("div");
+                section.className = "border border-gray-200 rounded-md";
 
-    document.querySelectorAll(".remove-grade-btn").forEach(btn => {
-        btn.classList.toggle("hidden", !enable);
-    });
+                section.innerHTML = `
+                    <div class="flex justify-between items-center bg-green-600 text-white px-4 py-2 font-bold">
+                        <span>Grade ${g.GradeLevel}</span>
+                    </div>
+                    <div class="bg-white rounded-b-md p-3">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border border-gray-200 text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">Subject</th>
+                                        <th class="px-3 py-2 text-left">Marks (%)</th>
+                                        <th class="px-3 py-2 text-left">Letter</th>
+                                        <th class="px-3 py-2 text-left">Credits</th>
+                                        <th class="px-3 py-2 text-left">Preference</th>
+                                        <th class="px-3 py-2 text-left edit-only hidden">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gradeBody-${g.GradeLevel}">
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded edit-only hidden"
+                                onclick="addRow(${g.GradeLevel})">
+                            + Add Subject
+                        </button>
+                        <div class="mt-2 font-semibold text-sm">
+                            GPA: <span id="gpa-${g.GradeLevel}">0.00</span>
+                        </div>
+                    </div>
+                `;
 
-    document.querySelectorAll(".add-subject-btn").forEach(btn => {
-        btn.classList.toggle("hidden", !enable);
-    });
+                container.appendChild(section);
 
-    document.querySelectorAll(".delete-row-btn").forEach(btn => {
-        btn.classList.toggle("hidden", !enable);
-    });
-}
+                const tbody = section.querySelector(`#gradeBody-${g.GradeLevel}`);
 
-// ============================
-// BUILD TRANSCRIPT
-// ============================
+                // Fill subjects
+                g.Subjects.forEach(sub => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="border px-3 py-2">
+                            <input class="w-full border border-gray-300 rounded p-1 text-sm"
+                                   value="${sub.Name || ''}" ${!editMode ? "readonly class='bg-gray-50 w-full border border-gray-200 rounded p-1 text-sm'" : ""}>
+                        </td>
+                        <td class="border px-3 py-2">
+                            <input type="number" min="0" max="100"
+                                   class="w-full border border-gray-300 rounded p-1 text-sm"
+                                   value="${sub.Marks ?? ''}"
+                                   ${!editMode ? "readonly class='bg-gray-50 w-full border border-gray-200 rounded p-1 text-sm'" : ""}
+                                   oninput="updateGrade(this, ${g.GradeLevel})">
+                        </td>
+                        <td class="border px-3 py-2">
+                            <input class="w-full border border-gray-300 rounded p-1 text-sm bg-gray-100"
+                                   value="${sub.Letter ?? ''}" readonly>
+                        </td>
+                        <td class="border px-3 py-2">
+                            <input type="number" step="0.5"
+                                   class="w-full border border-gray-300 rounded p-1 text-sm"
+                                   value="${sub.Credits ?? ''}"
+                                   ${!editMode ? "readonly class='bg-gray-50 w-full border border-gray-200 rounded p-1 text-sm'" : ""}
+                                   oninput="updateGPA(${g.GradeLevel})">
+                        </td>
+                        <td class="border px-3 py-2">
+                            <select class="w-full border border-gray-300 rounded p-1 text-sm" ${!editMode ? "disabled class='bg-gray-50 w-full border border-gray-200 rounded p-1 text-sm'" : ""}>
+                                <option value="">--</option>
+                                <option value="1" ${sub.Preference == 1 ? "selected" : ""}>1</option>
+                                <option value="2" ${sub.Preference == 2 ? "selected" : ""}>2</option>
+                                <option value="3" ${sub.Preference == 3 ? "selected" : ""}>3</option>
+                                <option value="4" ${sub.Preference == 4 ? "selected" : ""}>4</option>
+                                <option value="5" ${sub.Preference == 5 ? "selected" : ""}>5</option>
+                            </select>
+                        </td>
+                        <td class="border px-3 py-2 text-center edit-only hidden">
+                            <button class="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+                                    onclick="deleteRow(this, ${g.GradeLevel})">
+                                X
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
 
-function buildTranscript() {
-    const container = document.getElementById("transcriptContainer");
-    container.innerHTML = "";
+                updateGPA(g.GradeLevel);
+            });
 
-    gradesShown.sort((a,b)=>a-b);
+            applyEditModeToDOM();
+        }
 
-    gradesShown.forEach(g => addGradeSection(g));
-}
+        // Toggle edit mode (only if allowed)
+        function toggleEditMode() {
+            if (!currentStudentCanEdit) return;
 
-function addGradeSection(g) {
-    const container = document.getElementById("transcriptContainer");
+            editMode = !editMode;
+            document.getElementById("toggleEditBtn").innerText =
+                editMode ? "Disable Edit" : "Enable Edit";
 
-    container.innerHTML += `
-        <div id="gradeSection${g}">
-            <div onclick="toggleGrade(${g})"
-                class="flex justify-between items-center bg-slate-700 text-white px-4 py-3 font-semibold cursor-pointer rounded">
-                
-                <span>Grade ${g}</span>
+            const saveBtn = document.getElementById("saveBtn");
+            if (editMode) {
+                saveBtn.classList.remove("hidden");
+            } else {
+                saveBtn.classList.add("hidden");
+            }
 
-                <div class="flex items-center space-x-3">
-                    <button 
-                        class="remove-grade-btn hidden bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm"
-                        onclick="event.stopPropagation(); removeGrade(${g})">
-                        Remove
+            applyEditModeToDOM();
+        }
+
+        // Apply edit mode to all relevant elements
+        function applyEditModeToDOM() {
+            const editOnlyElems = document.querySelectorAll(".edit-only");
+            editOnlyElems.forEach(el => {
+                if (editMode && currentStudentCanEdit) {
+                    el.classList.remove("hidden");
+                } else {
+                    el.classList.add("hidden");
+                }
+            });
+
+            // Toggle readonly/disabled on inputs/selects
+            document.querySelectorAll("#transcriptContainer input, #transcriptContainer select").forEach(el => {
+                const isLetterField = el.closest("td")?.cellIndex === 2; // letter column
+
+                if (isLetterField) {
+                    // Letter is always readonly
+                    el.readOnly = true;
+                    el.disabled = false;
+                    el.classList.add("bg-gray-100");
+                    return;
+                }
+
+                if (!editMode || !currentStudentCanEdit) {
+                    if (el.tagName === "SELECT") {
+                        el.disabled = true;
+                    } else {
+                        el.readOnly = true;
+                    }
+                    el.classList.add("bg-gray-50");
+                } else {
+                    if (el.tagName === "SELECT") {
+                        el.disabled = false;
+                    } else {
+                        el.readOnly = false;
+                    }
+                    el.classList.remove("bg-gray-50");
+                }
+            });
+        }
+
+        // Add a new subject row to a grade
+        function addRow(gradeLevel) {
+            const tbody = document.getElementById(`gradeBody-${gradeLevel}`);
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="border px-3 py-2">
+                    <input class="w-full border border-gray-300 rounded p-1 text-sm">
+                </td>
+                <td class="border px-3 py-2">
+                    <input type="number" min="0" max="100"
+                           class="w-full border border-gray-300 rounded p-1 text-sm"
+                           oninput="updateGrade(this, ${gradeLevel})">
+                </td>
+                <td class="border px-3 py-2">
+                    <input class="w-full border border-gray-300 rounded p-1 text-sm bg-gray-100" readonly>
+                </td>
+                <td class="border px-3 py-2">
+                    <input type="number" step="0.5"
+                           class="w-full border border-gray-300 rounded p-1 text-sm"
+                           oninput="updateGPA(${gradeLevel})">
+                </td>
+                <td class="border px-3 py-2">
+                    <select class="w-full border border-gray-300 rounded p-1 text-sm">
+                        <option value="">--</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </td>
+                <td class="border px-3 py-2 text-center edit-only">
+                    <button class="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+                            onclick="deleteRow(this, ${gradeLevel})">
+                        X
                     </button>
-                    <span id="arrow${g}">▼</span>
-                </div>
-            </div>
-
-            <div id="content${g}" class="hidden bg-white shadow rounded p-4 mt-2">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full border border-gray-200">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="px-4 py-2 text-left">Subject</th>
-                                <th class="px-4 py-2 text-left">Marks</th>
-                                <th class="px-4 py-2 text-left">Letter</th>
-                                <th class="px-4 py-2 text-left">Credits</th>
-                                <th class="px-4 py-2 text-left">Remove</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody${g}"></tbody>
-                    </table>
-                </div>
-
-                <button 
-                    class="add-subject-btn hidden mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                    onclick="addRow(${g})">
-                    + Add Subject
-                </button>
-
-                <div class="mt-3 font-semibold">
-                    GPA: <span id="gpa${g}">0.00</span>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// ============================
-// GRADE TOGGLE
-// ============================
-
-function toggleGrade(g) {
-    const content = document.getElementById("content"+g);
-    const arrow = document.getElementById("arrow"+g);
-
-    content.classList.toggle("hidden");
-    arrow.innerText = content.classList.contains("hidden") ? "▼" : "▲";
-}
-
-// ============================
-// ADD / REMOVE GRADE
-// ============================
-
-function addNextGrade() {
-    for (let g = 9; g <= 12; g++) {
-        if (!gradesShown.includes(g)) {
-            gradesShown.push(g);
-            buildTranscript();
-            toggleInputs(editMode);
-            break;
+                </td>
+            `;
+            tbody.appendChild(row);
         }
-    }
-}
 
-function removeGrade(g) {
-    if(confirm("Are you sure you want to remove this grade?")) {
-        gradesShown = gradesShown.filter(x => x !== g);
-        buildTranscript();
-        toggleInputs(editMode);
-    }
-}
-
-// ============================
-// SUBJECT ROWS
-// ============================
-
-function addRow(g) {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-        <td class="border px-4 py-2">
-            <input class="w-full border rounded p-1" />
-        </td>
-        <td class="border px-4 py-2">
-            <input type="number" min="0" max="100" 
-                oninput="updateGPA(${g})"
-                class="w-full border rounded p-1" />
-        </td>
-        <td class="border px-4 py-2">
-            <input readonly class="w-full border rounded p-1 bg-gray-100" />
-        </td>
-        <td class="border px-4 py-2">
-            <input type="number" step="0.5" 
-                oninput="updateGPA(${g})"
-                class="w-full border rounded p-1" />
-        </td>
-        <td class="border px-4 py-2">
-            <button class="delete-row-btn hidden bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
-                onclick="deleteRow(this, ${g})">
-                X
-            </button>
-        </td>
-    `;
-    document.getElementById("tableBody"+g).appendChild(row);
-}
-
-function deleteRow(btn, g) {
-    btn.parentElement.parentElement.remove();
-    updateGPA(g);
-}
-
-// ============================
-// GPA
-// ============================
-
-function letterToPoint(letter) {
-    const scale = {
-        "A+": 4, "A": 4, "A-": 3.7,
-        "B+": 3.3, "B": 3, "B-": 2.7,
-        "C+": 2.3, "C": 2, "D": 1, "F": 0
-    };
-    return scale[letter] || 0;
-}
-
-function updateGPA(g) {
-    const rows = document.querySelectorAll("#tableBody"+g+" tr");
-    let total = 0, credits = 0;
-
-    rows.forEach(r => {
-        const mark = parseFloat(r.children[1].children[0].value);
-        const cred = parseFloat(r.children[3].children[0].value);
-
-        if (!isNaN(mark) && !isNaN(cred)) {
-            let letter = "";
-
-            if (mark >= 90) letter = "A";
-            else if (mark >= 80) letter = "B";
-            else if (mark >= 70) letter = "C";
-            else if (mark >= 60) letter = "D";
-            else letter = "F";
-
-            r.children[2].children[0].value = letter;
-
-            total += letterToPoint(letter) * cred;
-            credits += cred;
+        // Calculate letter from marks (simple mapping; you can sync with your scale if needed)
+        function calculateLetter(mark) {
+            if (mark >= 97) return "A+";
+            if (mark >= 93) return "A";
+            if (mark >= 90) return "A-";
+            if (mark >= 87) return "B+";
+            if (mark >= 83) return "B";
+            if (mark >= 80) return "B-";
+            if (mark >= 70) return "C";
+            if (mark >= 60) return "D";
+            return "F";
         }
-    });
 
-    document.getElementById("gpa"+g).innerText =
-        credits ? (total/credits).toFixed(2) : "0.00";
-}
+        function updateGrade(input, gradeLevel) {
+            const mark = parseFloat(input.value);
+            const row = input.closest("tr");
+            if (!isNaN(mark)) {
+                row.children[2].querySelector("input").value = calculateLetter(mark);
+            } else {
+                row.children[2].querySelector("input").value = "";
+            }
+            updateGPA(gradeLevel);
+        }
 
-// ============================
+        function deleteRow(btn, gradeLevel) {
+            btn.closest("tr").remove();
+            updateGPA(gradeLevel);
+        }
 
-buildTranscript();
-toggleInputs(false);
+        function letterToPoint(letter) {
+            const scale = {
+                "A+": 4, "A": 4, "A-": 3.7,
+                "B+": 3.3, "B": 3, "B-": 2.7,
+                "C+": 2.3, "C": 2, "D": 1, "F": 0
+            };
+            return scale[letter] || 0;
+        }
 
-</script>
+        function updateGPA(gradeLevel) {
+            const rows = document.querySelectorAll(`#gradeBody-${gradeLevel} tr`);
+            let total = 0, credits = 0;
 
-{% endblock %}
+            rows.forEach(r => {
+                const letter = r.children[2].querySelector("input").value || "";
+                const cred = parseFloat(r.children[3].querySelector("input").value);
+                if (!isNaN(cred) && cred > 0) {
+                    total += letterToPoint(letter) * cred;
+                    credits += cred;
+                }
+            });
+
+            const gpa = credits ? (total / credits).toFixed(2) : "0.00";
+            document.getElementById(`gpa-${gradeLevel}`).innerText = gpa;
+
+            // Recompute overall GPA
+            recomputeOverallGPA();
+        }
+
+        function recomputeOverallGPA() {
+            const gpaSpans = document.querySelectorAll("[id^='gpa-']");
+            let total = 0, count = 0;
+            gpaSpans.forEach(span => {
+                const val = parseFloat(span.innerText);
+                if (!isNaN(val)) {
+                    total += val;
+                    count++;
+                }
+            });
+            const overall = count ? (total / count).toFixed(2) : "0.00";
+            document.getElementById("overallGpa").innerText = overall;
+        }
+
+        // Collect data and send to backend
+        async function saveCounselorChanges() {
+            if (!currentStudentId || !currentStudentCanEdit) return;
+
+            const grades = [];
+            const gradeSections = document.querySelectorAll("#transcriptContainer tbody[id^='gradeBody-']");
+
+            gradeSections.forEach(tbody => {
+                const gradeLevel = parseInt(tbody.id.replace("gradeBody-", ""));
+                const subjects = [];
+
+                tbody.querySelectorAll("tr").forEach(row => {
+                    const name = row.children[0].querySelector("input").value.trim();
+                    const marks = parseFloat(row.children[1].querySelector("input").value);
+                    const letter = row.children[2].querySelector("input").value;
+                    const credits = parseFloat(row.children[3].querySelector("input").value);
+                    const preference = parseInt(row.children[4].querySelector("select").value);
+
+                    if (name) {
+                        subjects.push({
+                            Name: name,
+                            Marks: isNaN(marks) ? null : marks,
+                            Letter: letter || null,
+                            Credits: isNaN(credits) ? null : credits,
+                            Preference: isNaN(preference) ? null : preference
+                        });
+                    }
+                });
+
+                if (subjects.length > 0) {
+                    // Calculate GPA for this grade
+                    let total = 0, creditsSum = 0;
+                    subjects.forEach(sub => {
+                        const point = letterToPoint(sub.Letter);
+                        if (sub.Credits) {
+                            total += point * sub.Credits;
+                            creditsSum += sub.Credits;
+                        }
+                    });
+                    const gpa = creditsSum ? (total / creditsSum).toFixed(2) : 0;
+
+                    grades.push({
+                        GradeLevel: gradeLevel,
+                        GPA: gpa,
+                        Subjects: subjects
+                    });
+                }
+            });
+
+            // Overall GPA
+            let total = 0, count = 0;
+            grades.forEach(g => {
+                total += parseFloat(g.GPA);
+                count++;
+            });
+            const overallGPA = count ? (total / count).toFixed(2) : 0;
+
+            try {
+                const res = await fetch(`/counselor/save_transcript/${currentStudentId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        GPA: overallGPA,
+                        Grades: grades
+                    })
+                });
+
+                const data = await res.json();
+                alert(data.message || "Saved.");
+
+                if (data.status === "success") {
+                    // After saving, reload transcript in view-only mode
+                    editMode = false;
+                    document.getElementById("toggleEditBtn").innerText = "Enable Edit";
+                    document.getElementById("saveBtn").classList.add("hidden");
+                    selectStudent(currentStudentId, document.getElementById("studentName").innerText, currentStudentCanEdit ? 1 : 0);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error saving transcript.");
+            }
+        }
+    </script>
+
+</body>
+
+</html>
