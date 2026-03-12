@@ -266,8 +266,30 @@ def logout():
 @app.route("/student/dashboard")
 @login_required
 def dashboard():
+    
     connection = connect_db()
-    cursor = connection.cursor(pymysql.cursors.DictCursor)
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT User.Email, User.Name
+    FROM StudentProfile
+    JOIN User ON StudentProfile.CounselorUserID = User.ID
+    WHERE StudentProfile.UserID = %s
+    """, (current_user.id,))
+    
+    result = cursor.fetchone()
+    counselor_email = result["Email"] if result else None
+    counselor_name = result["Name"] if result else None
+
+    connection.close()
+
+    student = {
+        "grade": "N/A",
+        "gpa": "N/A",
+        "attendance":"N/A",
+        "next_class": "N/A",
+        "next_assignment": "N/A"
+    }
 
     # Load real student profile
     cursor.execute("""
@@ -348,19 +370,25 @@ def recommendations():
 @app.route("/student/recommendation/addcounselor")
 @login_required
 def add_counselor():
+
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    # Fetch all counselors
     cursor.execute("SELECT ID, Name, Email FROM User WHERE Role='counselor'")
     counselors = cursor.fetchall()
 
+    cursor.execute("""
+        SELECT * FROM Recommendation
+        WHERE UserID = %s
+    """, (current_user.id,))
+    recommendation = cursor.fetchone()
+
     connection.close()
 
-    # Pass them to template
     return render_template(
         "addcounselor.html.jinja",
-        counselors=counselors
+        counselors=counselors,
+        recommendation=recommendation
     )
 
 @app.route("/student/recommendation/addcounselor/processing", methods=["POST"])
@@ -394,6 +422,37 @@ def add_counselor_form():
         FROM User
         WHERE ID = %s
     """, (grade, comments, current_user.id, counselor_id))
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/student/dashboard")
+
+@app.route("/student/recommendation/update", methods=["POST"])
+@login_required
+def update_recommendation():
+
+    counselor_id = request.form["counselor_id"]
+    grade = request.form["grade"]
+    comments = request.form.get("comments")
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    # Update student profile counselor
+    cursor.execute("""
+        UPDATE StudentProfile
+        SET CounselorUserID = %s
+        WHERE UserID = %s
+    """, (counselor_id, current_user.id))
+
+    # Update recommendation
+    cursor.execute("""
+        UPDATE Recommendation
+        SET Grade = %s,
+            Comments = %s
+        WHERE UserID = %s
+    """, (grade, comments, current_user.id))
 
     connection.commit()
     connection.close()
