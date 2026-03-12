@@ -1,75 +1,102 @@
 <!doctype html>
 <html>
- <head>
-   <meta charset="UTF-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
-   <title>CourseTrack - Dashboard</title>
-   <link href= "/static/styles.css" rel="stylesheet" >
- </head>
- <body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
-   {% include "components/navbar.html.jinja" %}
 
-<main class="flex-grow flex justify-center px-6 py-12">
-  <div class="w-full max-w-4xl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+  <title>CourseTrack - Dashboard</title>
+  <link href="/static/styles.css" rel="stylesheet">
+</head>
 
-    <!-- Header Section -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-emerald-900">
-        Welcome back, {{ current_user.name }}
-      </h1>
-      <p class="text-emerald-700 mt-2">
-        Grade {{ student.grade }} Student Dashboard
-      </p>
-    </div>
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+  {% include "components/navbar.html.jinja" %}
 
-    <!-- Today's Overview -->
-    <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100 mb-6">
-      <h2 class="text-xl font-semibold text-emerald-800 mb-4">
-        Your counselor: 
-        Today's Overview
-      </h2>
+  <main class="flex-grow flex justify-center px-6 py-12">
+    <div class="w-full max-w-4xl">
 
-      <div class="space-y-2 text-gray-700">
-
-
-        <p><strong>Next Class:</strong> {{ student.next_class }}</p>
-        <p><strong>Upcoming Assignment:</strong> {{ student.next_assignment }}</p>
+      <!-- Header Section -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-emerald-900">
+          Welcome back, {{ current_user.name }}
+        </h1>
+        <p class="text-emerald-700 mt-2">
+          Grade {{ student.grade }} Student Dashboard
+        </p>
       </div>
-    </div>
 
-    <!-- Academic Snapshot -->
-    <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100 mb-6">
-      <h2 class="text-xl font-semibold text-emerald-800 mb-4">
-        Academic Snapshot
-      </h2>
+      <!-- Today's Overview -->
+      <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100 mb-6">
+        <h2 class="text-xl font-semibold text-emerald-800 mb-4">
+          Your counselor:
+          Today's Overview
+        </h2>
 
-      <div class="grid grid-cols-2 gap-4 text-gray-700">
-        <div class="p-4 bg-emerald-50 rounded-lg">
-          <p class="text-sm text-emerald-700">GPA</p>
-          <p class="text-2xl font-bold text-emerald-900">
-            {{ student.gpa }}
-          </p>
-        </div>
+        <div class="space-y-2 text-gray-700">
 
-        <div class="p-4 bg-emerald-50 rounded-lg">
-          <p class="text-sm text-emerald-700">Attendance</p>
-          <p class="text-2xl font-bold text-emerald-900">
-            {{ student.attendance }}%
-          </p>
+
+          <p><strong>Next Class:</strong> {{ student.next_class }}</p>
+          <p><strong>Upcoming Assignment:</strong> {{ student.next_assignment }}</p>
         </div>
       </div>
-    </div>
 
-    <!-- Courses -->
-    <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
-      <h2 class="text-xl font-semibold text-emerald-800 mb-4">
-        My Courses
-      </h2>
+      <!-- Academic Snapshot -->
+      <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100 mb-6">
+        <h2 class="text-xl font-semibold text-emerald-800 mb-4">
+          Academic Snapshot
+        </h2>
 
-      <div class="grid gap-4">
-        {% for course in courses %}
+        <div class="grid grid-cols-2 gap-4 text-gray-700">
+          <div class="p-4 bg-emerald-50 rounded-lg">
+            <p class="text-sm text-emerald-700">GPA</p>
+            <p class="text-2xl font-bold text-emerald-900">
+              {{ student.gpa }}
+            </p>
+          </div>
+
+          <div class="p-4 bg-emerald-50 rounded-lg">
+            <p class="text-sm text-emerald-700">Attendance</p>
+            <p class="text-2xl font-bold text-emerald-900">
+              {{ student.attendance }}%
+            </p>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Counselor Editing Permission -->
+      <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100 mb-6">
+        <h2 class="text-xl font-semibold text-emerald-800 mb-4">
+          Counselor Editing Permission
+        </h2>
+
+        <p class="text-sm text-gray-600 mb-3">
+          Allow your counselor to edit your academic transcript.
+        </p>
+
+        <form method="POST" action="/student/toggle_counselor_edit">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" name="allow_edit" value="1" {% if student.AllowCounselorEdit %}checked{% endif %}
+              class="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+            <span class="text-sm text-gray-700">Allow counselor to edit my transcript</span>
+          </label>
+
+          <button type="submit"
+            class="mt-4 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition">
+            Save
+          </button>
+        </form>
+      </div>
+
+      <!-- Courses -->
+      <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
+        <h2 class="text-xl font-semibold text-emerald-800 mb-4">
+          My Courses
+        </h2>
+
+        <div class="grid gap-4">
+          {% for course in courses %}
           <div class="flex justify-between items-center p-5 
                       rounded-lg border border-emerald-200 
                       hover:bg-emerald-50 
@@ -86,16 +113,17 @@
             </span>
 
           </div>
-        {% endfor %}
+          {% endfor %}
+        </div>
       </div>
+
     </div>
-
-  </div>
-</main>
+  </main>
 
 
 
-   {% include "components/footer.html.jinja" %}
+  {% include "components/footer.html.jinja" %}
 
- </body>
+</body>
+
 </html>
