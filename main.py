@@ -492,11 +492,13 @@ def student_academic_record():
                 subject_list = []
                 for s in subjects:
                     subject_list.append({
-                    "Name": s["SubjectName"] or "",
-                    "Letter": s["FinalGrade"] or "",
-                    "Credits": float(s["Credits"]) if s["Credits"] is not None else 0,
-                    "Marks": s["Marks"] if s["Marks"] is not None else None
-                })
+                        "Name": s["SubjectName"] or "",
+                        "Letter": s["FinalGrade"] or "",
+                        "Credits": float(s["Credits"]) if s["Credits"] is not None else 0,
+                        "Marks": s["Marks"] if s["Marks"] is not None else None,
+                        "Preference": s["Preference"] if s["Preference"] is not None else None
+                    })
+
 
 
                 grade_list.append({
@@ -568,11 +570,13 @@ def save_transcript():
                 letter = subject.get("Letter")
                 credits = subject.get("Credits")
                 marks = subject.get("Marks")
+                preference = subject.get("Preference")
+
 
                 cur.execute(
-                    "INSERT INTO Subject (GradeID, SubjectName, FinalGrade, Credits, Marks) "
-                    "VALUES (%s, %s, %s, %s, %s)",
-                    (grade_id, name, letter, credits, marks)
+                    "INSERT INTO Subject (GradeID, SubjectName, FinalGrade, Credits, Marks, Preference) "
+                    "VALUES (%s, %s, %s, %s, %s, %s)",
+                    (grade_id, name, letter, credits, marks, preference)
                 )
 
         conn.commit()
@@ -625,12 +629,6 @@ def adding_app():
 @app.errorhandler(404)
 def not_found(error):
     return render_template("404.html.jinja"), 404
-
-
-
-
-
-
 
 
 

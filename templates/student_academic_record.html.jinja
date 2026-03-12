@@ -255,6 +255,7 @@
                             <th class="px-4 py-2 text-left">Marks (%)</th>
                             <th class="px-4 py-2 text-left">Letter</th>
                             <th class="px-4 py-2 text-left">Credits</th>
+                            <th class="px-4 py-2 text-left">Preference (1–5)</th>
                             <th class="px-4 py-2 text-left">Remove</th>
                         </tr>
                     </thead>
@@ -309,6 +310,7 @@
                                 <th class="px-4 py-2 text-left">Marks (%)</th>
                                 <th class="px-4 py-2 text-left">Letter</th>
                                 <th class="px-4 py-2 text-left">Credits</th>
+                                <th class="px-4 py-2 text-left">Preference (1–5)</th>
                                 <th class="px-4 py-2 text-left">Remove</th>
                             </tr>
                         </thead>
@@ -401,18 +403,55 @@
         function addRow(g) {
             const row = document.createElement("tr");
             row.innerHTML = `
-            <td class="border px-4 py-2"><input class="w-full border border-gray-300 rounded p-1"></td>
-            <td class="border px-4 py-2"><input type="number" min="0" max="100" oninput="updateGrade(this,${g})"
-                    class="w-full border border-gray-300 rounded p-1"></td>
-            <td class="border px-4 py-2"><input readonly class="w-full border border-gray-300 rounded p-1 bg-gray-100">
-            </td>
-            <td class="border px-4 py-2"><input type="number" step="0.5" oninput="updateGPA(${g})"
-                    class="w-full border border-gray-300 rounded p-1"></td>
-            <td class="border px-4 py-2"><button class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
-                    onclick="deleteRow(this,${g})">X</button></td>
-            `;
+        <!-- Subject -->
+        <td class="border px-4 py-2">
+            <input class="w-full border border-gray-300 rounded p-1">
+        </td>
+
+        <!-- Marks -->
+        <td class="border px-4 py-2">
+            <input type="number" min="0" max="100"
+                oninput="updateGrade(this, ${g})"
+                class="w-full border border-gray-300 rounded p-1">
+        </td>
+
+        <!-- Letter -->
+        <td class="border px-4 py-2">
+            <input readonly
+                class="w-full border border-gray-300 rounded p-1 bg-gray-100">
+        </td>
+
+        <!-- Credits -->
+        <td class="border px-4 py-2">
+            <input type="number" step="0.5"
+                oninput="updateGPA(${g})"
+                class="w-full border border-gray-300 rounded p-1">
+        </td>
+
+        <!-- Preference -->
+        <td class="border px-4 py-2">
+            <select class="w-full border border-gray-300 rounded p-1">
+                <option value="">--</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+        </td>
+
+        <!-- Remove -->
+        <td class="border px-4 py-2">
+            <button class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded"
+                onclick="deleteRow(this, ${g})">X</button>
+        </td>
+    `;
+
             document.getElementById("tableBody" + g).appendChild(row);
         }
+
+
+
 
         function updateGrade(input, g) {
             const mark = parseFloat(input.value);
@@ -455,35 +494,43 @@
         }
 
         async function saveChanges() {
-            // 1️⃣ Gather all grades & subjects
             let grades = [];
 
+            // Loop through each grade level shown
             gradesShown.forEach(g => {
                 const subjects = [];
+
+                // Get all rows for this grade
                 document.querySelectorAll(`#tableBody${g} tr`).forEach(row => {
-                    const name = row.children[0].children[0].value;
-                    const marks = parseFloat(row.children[1].children[0].value);
-                    const letter = row.children[2].children[0].value;
-                    const credits = parseFloat(row.children[3].children[0].value);
+                    const name = row.querySelector("td:nth-child(1) input").value.trim();
+                    const marks = parseFloat(row.querySelector("td:nth-child(2) input").value);
+                    const letter = row.querySelector("td:nth-child(3) input").value;
+                    const credits = parseFloat(row.querySelector("td:nth-child(4) input").value);
+
+                    // ⭐ FIXED: Always read the <select> directly
+                    const preference = parseInt(row.querySelector("td:nth-child(5) select").value);
+
                     if (name) {
                         subjects.push({
                             Name: name,
                             Marks: isNaN(marks) ? null : marks,
                             Letter: letter || null,
-                            Credits: isNaN(credits) ? null : credits
+                            Credits: isNaN(credits) ? null : credits,
+                            Preference: isNaN(preference) ? null : preference
                         });
                     }
-
                 });
 
                 if (subjects.length > 0) {
-                    // Calculate grade GPA
+                    // Calculate GPA for this grade
                     let total = 0, creditsSum = 0;
+
                     subjects.forEach(sub => {
                         let point = letterToPoint(sub.Letter);
                         total += point * sub.Credits;
                         creditsSum += sub.Credits;
                     });
+
                     let gpa = creditsSum ? (total / creditsSum).toFixed(2) : 0;
 
                     grades.push({
@@ -494,7 +541,7 @@
                 }
             });
 
-            // 2️⃣ Calculate overall GPA
+            // Calculate overall GPA
             let total = 0, creditsSum = 0;
             grades.forEach(gr => {
                 total += parseFloat(gr.GPA);
@@ -502,7 +549,10 @@
             });
             let overallGPA = creditsSum ? (total / creditsSum).toFixed(2) : 0;
 
-            // 3️⃣ Send to backend
+            // Debug log (optional)
+            console.log("Saving transcript:", { GPA: overallGPA, Grades: grades });
+
+            // Send to backend
             try {
                 const response = await fetch("/save_transcript", {
                     method: "POST",
@@ -515,23 +565,23 @@
 
                 const data = await response.json();
                 alert(data.message);
-                if (data.status === "success") {
-                    // Optional: disable further edits or redirect
-                }
+
             } catch (err) {
                 console.error(err);
                 alert("Error saving transcript. See console.");
             }
         }
 
+
         function loadSavedTranscript(data) {
             transcriptLoaded = true;
             buildScale();
+
             if (!data || !data.Grades || data.Grades.length === 0) {
-                // No transcript → show Step 1
                 step1.classList.remove("hidden");
                 return;
             }
+
             // Skip steps 1–3
             step1.classList.add("hidden");
             step2.classList.add("hidden");
@@ -549,11 +599,45 @@
                 g.Subjects.forEach(sub => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                <td class="border px-4 py-2"><input value="${sub.Name}" class="w-full border rounded p-1"></td>
-                <td class="border px-4 py-2"><input type="number" value="${sub.Marks ?? ''}" class="w-full border rounded p-1"></td>
-                <td class="border px-4 py-2"><input value="${sub.Letter ?? ''}" readonly class="w-full border rounded p-1 bg-gray-100"></td>
-                <td class="border px-4 py-2"><input value="${sub.Credits ?? ''}" type="number" class="w-full border rounded p-1"></td>
-                <td class="border px-4 py-2"><button onclick="deleteRow(this, ${g.GradeLevel})" class="bg-red-600 text-white px-2 py-1 rounded">X</button></td>
+                <td class="border px-4 py-2">
+                    <input value="${sub.Name || ''}" 
+                           class="w-full border rounded p-1">
+                </td>
+
+                <td class="border px-4 py-2">
+                    <input type="number" value="${sub.Marks ?? ''}" 
+                           oninput="updateGrade(this, ${g.GradeLevel})"
+                           class="w-full border rounded p-1">
+                </td>
+
+                <td class="border px-4 py-2">
+                    <input value="${sub.Letter ?? ''}" readonly 
+                           class="w-full border rounded p-1 bg-gray-100">
+                </td>
+
+                <td class="border px-4 py-2">
+                    <input value="${sub.Credits ?? ''}" type="number"
+                           oninput="updateGPA(${g.GradeLevel})"
+                           class="w-full border rounded p-1">
+                </td>
+
+                <td class="border px-4 py-2">
+                    <select class="w-full border border-gray-300 rounded p-1">
+                        <option value="">--</option>
+                        <option value="1" ${sub.Preference == 1 ? "selected" : ""}>1</option>
+                        <option value="2" ${sub.Preference == 2 ? "selected" : ""}>2</option>
+                        <option value="3" ${sub.Preference == 3 ? "selected" : ""}>3</option>
+                        <option value="4" ${sub.Preference == 4 ? "selected" : ""}>4</option>
+                        <option value="5" ${sub.Preference == 5 ? "selected" : ""}>5</option>
+                    </select>
+                </td>
+
+                <td class="border px-4 py-2">
+                    <button onclick="deleteRow(this, ${g.GradeLevel})"
+                            class="bg-red-600 text-white px-2 py-1 rounded">
+                        X
+                    </button>
+                </td>
             `;
                     tbody.appendChild(row);
                 });
@@ -561,6 +645,7 @@
                 updateGPA(g.GradeLevel);
             });
         }
+
         if (savedTranscript) {
             loadSavedTranscript(savedTranscript);
         }
