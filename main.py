@@ -448,11 +448,13 @@ def update_recommendation():
 
     # Update recommendation
     cursor.execute("""
-        UPDATE Recommendation
-        SET Grade = %s,
-            Comments = %s
-        WHERE UserID = %s
-    """, (grade, comments, current_user.id))
+    UPDATE Recommendation r
+    JOIN User u ON u.ID = %s
+    SET r.Email = u.Email,
+        r.Grade = %s,
+        r.Comments = %s
+    WHERE r.UserID = %s
+""", (counselor_id, grade, comments, current_user.id))
 
     connection.commit()
     connection.close()
@@ -468,7 +470,7 @@ def counselor_dashboard():
     
     connection = connect_db()
 
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
     cursor.execute("SELECT * FROM `StudentProfile` Join `User` ON `StudentProfile`.`UserID` = `User`.`ID` WHERE CounselorUserID = %s", (current_user.id,))
 
