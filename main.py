@@ -264,7 +264,25 @@ def logout():
 
 #Dashboard for students.
 @app.route("/student/dashboard")
+@login_required
 def dashboard():
+    
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT User.Email, User.Name
+    FROM StudentProfile
+    JOIN User ON StudentProfile.CounselorUserID = User.ID
+    WHERE StudentProfile.UserID = %s
+    """, (current_user.id,))
+    
+    result = cursor.fetchone()
+    counselor_email = result["Email"] if result else None
+    counselor_name = result["Name"] if result else None
+
+    connection.close()
+
     student = {
         "grade": "N/A",
         "gpa": "N/A",
@@ -279,7 +297,8 @@ def dashboard():
         {"name": "Whatever", "grade": "N/A"},
     ]
 
-    return render_template("studentdashboard.html.jinja", student=student, courses=courses)
+    return render_template("studentdashboard.html.jinja", 
+    student=student, courses=courses, counselor_email= counselor_email, counselor_name=counselor_name )
 
 
 @app.route("/student/recommendation")
