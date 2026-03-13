@@ -501,12 +501,9 @@ def counselor_recommendations():
     
     connection = connect_db()
 
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    cursor.execute("""
-        SELECT * FROM `Recommendation`
-        
-    """)
+    cursor.execute("SELECT * FROM `StudentProfile` Join `User` ON `StudentProfile`.`UserID` = `User`.`ID` WHERE CounselorUserID = %s", (current_user.id,))
 
     result = cursor.fetchall()
 
