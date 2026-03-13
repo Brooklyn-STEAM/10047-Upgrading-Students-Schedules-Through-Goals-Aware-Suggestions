@@ -4,96 +4,172 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>CourseTrack - Home</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
-  <link href= "/static/styles.css" rel="stylesheet" >
+  <link href="/static/styles.css" rel="stylesheet">
+
 </head>
 
+
 <body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col" id="top">
-  {% include "components/navbar.html.jinja" %}
 
-  <!-- HERO SECTION -->
-  <header class="bg-emerald-800 text-white py-20 shadow-md">
-    <div class="container mx-auto text-center px-6">
-      <h1 class="text-5xl font-bold mb-4 tracking-tight">
-        CourseTrack
-      </h1>
-      <p class="text-xl text-emerald-100 mb-8">
-        Empowering Education Through Technology
-      </p>
+{% include "components/navbar.html.jinja" %}
 
-      <a href="/login"
-         class="inline-block bg-white text-emerald-800 font-semibold 
-                px-8 py-3 rounded-lg shadow-lg 
-                hover:bg-emerald-100 hover:scale-105 
-                transition duration-200">
-        Get Started
-      </a>
+
+<!-- HERO SECTION -->
+<header class="relative bg-emerald-800 text-white py-24 shadow-md overflow-hidden">
+
+  <!-- Decorative background blobs -->
+  <div class="absolute -top-20 -left-20 w-72 h-72 bg-emerald-600 opacity-30 rounded-full blur-3xl"></div>
+  <div class="absolute -bottom-20 -right-20 w-72 h-72 bg-emerald-400 opacity-30 rounded-full blur-3xl"></div>
+
+  <div class="container mx-auto text-center px-6 relative z-10">
+
+    <!-- Icon -->
+    <div class="flex justify-center mb-4">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="CourseTrack Logo" class="w-24 h-24">
     </div>
-  </header>
 
-  <main class="container mx-auto px-6 flex-grow my-16">
+    <h1 class="text-5xl font-bold mb-4 tracking-tight">
+      CourseTrack
+    </h1>
 
-    <!-- Intro Section -->
-    <section class="text-center max-w-3xl mx-auto mb-16">
-      <h2 class="text-3xl font-bold text-emerald-900 mb-4">
-        Welcome to CourseTrack
-      </h2>
-      <p class="text-lg text-gray-700 leading-relaxed">
-        Track your academic progress, set meaningful goals, and receive
-        personalized course recommendations — all in one powerful platform.
-      </p>
-    </section>
+    <p class="text-xl text-emerald-100 mb-8">
+      Empowering Education Through Technology
+    </p>
 
-    <!-- Features -->
-    <section>
-      <h3 class="text-2xl font-semibold text-emerald-900 text-center mb-10">
-        Features
-      </h3>
+    <a href="/login"
+       class="inline-flex items-center gap-2 bg-white text-emerald-800 font-semibold 
+              px-8 py-3 rounded-lg shadow-lg 
+              hover:bg-emerald-100 hover:scale-105 
+              transition duration-200">
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="bg-white p-8 rounded-xl shadow-md 
-                    hover:shadow-xl hover:-translate-y-2 
-                    transition duration-300">
-          <h4 class="text-lg font-bold text-emerald-800 mb-3">
-            Track Your Progress
-          </h4>
-          <p class="text-gray-600">
-            Monitor course completion and stay aligned with your academic goals.
-          </p>
+      <i data-feather="log-in"></i>
+      Get Started
+    </a>
+
+  </div>
+
+</header>
+
+
+
+<!-- MAIN CONTENT -->
+<main class="container mx-auto px-6 flex-grow my-16">
+
+
+  <!-- Intro Section -->
+  <section class="text-center max-w-3xl mx-auto mb-16">
+
+    <h2 class="text-3xl font-bold text-emerald-900 mb-4">
+      Welcome!
+    </h2>
+
+    <p class="text-lg text-gray-700 leading-relaxed">
+      Track your academic progress, set meaningful goals, and receive
+      personalized course recommendations — all in one powerful platform.
+    </p>
+
+  </section>
+
+
+
+  <!-- FEATURES -->
+  <section>
+
+    <h3 class="text-2xl font-semibold text-emerald-900 text-center mb-10">
+      Features
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+
+      <!-- Feature 1 -->
+      <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition duration-300 text-center">
+
+        <div class="flex justify-center mb-4">
+          <div class="bg-emerald-100 p-3 rounded-full">
+            <i data-feather="bar-chart-2" class="text-emerald-700"></i>
+          </div>
         </div>
 
-        <div class="bg-white p-8 rounded-xl shadow-md 
-                    hover:shadow-xl hover:-translate-y-2 
-                    transition duration-300">
-          <h4 class="text-lg font-bold text-emerald-800 mb-3">
-            Set Achievable Goals
-          </h4>
-          <p class="text-gray-600">
-            Define clear learning objectives and accomplish them step by step.
-          </p>
-        </div>
+        <h4 class="text-lg font-bold text-emerald-800 mb-3">
+          Track Your Progress
+        </h4>
 
-        <div class="bg-white p-8 rounded-xl shadow-md 
-                    hover:shadow-xl hover:-translate-y-2 
-                    transition duration-300">
-          <h4 class="text-lg font-bold text-emerald-800 mb-3">
-            Personalized Suggestions
-          </h4>
-          <p class="text-gray-600">
-            Get tailored recommendations based on your academic interests.
-          </p>
-        </div>
+        <p class="text-gray-600">
+          Monitor course completion and stay aligned with your academic goals.
+        </p>
+
       </div>
-    </section>
 
-  </main>
 
-  {% include "components/footer.html.jinja" %}
+
+      <!-- Feature 2 -->
+      <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition duration-300 text-center">
+
+        <div class="flex justify-center mb-4">
+          <div class="bg-emerald-100 p-3 rounded-full">
+            <i data-feather="target" class="text-emerald-700"></i>
+          </div>
+        </div>
+
+        <h4 class="text-lg font-bold text-emerald-800 mb-3">
+          Set Achievable Goals
+        </h4>
+
+        <p class="text-gray-600">
+          Define clear learning objectives and accomplish them step by step.
+        </p>
+
+      </div>
+
+
+
+      <!-- Feature 3 -->
+      <div class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-2 transition duration-300 text-center">
+
+        <div class="flex justify-center mb-4">
+          <div class="bg-emerald-100 p-3 rounded-full">
+            <i data-feather="cpu" class="text-emerald-700"></i>
+          </div>
+        </div>
+
+        <h4 class="text-lg font-bold text-emerald-800 mb-3">
+          Personalized Suggestions
+        </h4>
+
+        <p class="text-gray-600">
+          Get tailored recommendations based on your academic interests.
+        </p>
+
+      </div>
+
+
+    </div>
+
+  </section>
+
+</main>
+
+
+
+{% include "components/footer.html.jinja" %}
+
+
+
+<!-- Activate icons -->
+<script>
+  feather.replace()
+</script>
+
 </body>
-
-
-
-
 </html>
