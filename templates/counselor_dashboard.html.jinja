@@ -26,8 +26,8 @@
       </div>
 
       <!-- Student List Card -->
+      {% if user %}
       <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
-        {% if current_user.role == "counselor" %}
           <div class="grid gap-4">
             {% for x in user %}
               {% if x["Role"] == "student" %}
@@ -51,6 +51,32 @@
               {% endif %}
             {% endfor %}
           </div>
+          {% else %}
+          <div class="bg-white rounded-xl shadow-lg p-8 border border-emerald-100 text-center">
+  <!-- Icon -->
+      <div class="flex justify-center mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+          class="h-12 w-12 text-emerald-400" 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor">
+          <path stroke-linecap="round" 
+            stroke-linejoin="round" 
+            stroke-width="2" 
+            d="M17 20h5l-5-5M9 16a7 7 0 100-14 7 7 0 000 14z"/>
+          </svg>
+        </div>
+
+        <!-- Message -->
+          <p class="text-gray-700 text-lg font-medium">
+            No students found
+          </p>
+
+          <p class="text-gray-500 text-sm mt-1">
+            Assigned students will appear here once they have selected you.
+          </p>
+
+        </div>
         {% endif %}
 
       </div>
