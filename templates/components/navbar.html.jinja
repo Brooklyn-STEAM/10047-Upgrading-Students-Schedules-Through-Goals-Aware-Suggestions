@@ -1,4 +1,4 @@
-<nav class="bg-emerald-800 text-white">
+<nav class="bg-emerald-800 text-white z-50 relative">
   <div class="max-w-7xl mx-auto px-4">
     <div class="flex items-center h-16">
 
@@ -7,72 +7,121 @@
         CourseTrack
       </a>
 
-      <!-- Right side (Desktop) -->
+      <!-- Desktop Menu -->
       <div class="hidden md:flex items-center ml-auto space-x-6">
+
         {% if current_user.is_authenticated %}
-        <!-- Dashboard -->
-        {% if current_user.role == 'student' %}
-        <a href="/student/dashboard" class="relative py-1 transition text-white
-               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-               after:transition-all after:duration-300
-               hover:after:w-full">Dashboard</a>
 
-        <a href="/student/academic_record" class="relative py-1 transition text-white
+          {% if current_user.role == 'student' %}
+            <!-- Student Links -->
+            <a href="/student/dashboard"
+               class="relative py-1 transition text-white
                after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-               after:transition-all after:duration-300
-               hover:after:w-full">Academic Record</a>
+               after:bottom-0 after:h-[2px]
+               {% if request.path == '/student/dashboard' %}
+                   after:w-full after:bg-green-200
+               {% else %}
+                   after:w-0 after:bg-green-200 hover:after:w-full
+               {% endif %}
+               after:transition-all after:duration-300">
+               Dashboard
+            </a>
 
-        <a href="/student/recommendation" class="relative py-1 transition text-white
+            <a href="/student/academic_record"
+               class="relative py-1 transition text-white
                after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-               after:transition-all after:duration-300
-               hover:after:w-full">Recommendations</a>
-        {% else %}
-        <a href="/counselor/dashboard" class="relative py-1 transition text-white
+               after:bottom-0 after:h-[2px]
+               {% if request.path == '/student/academic_record' %}
+                   after:w-full after:bg-green-200
+               {% else %}
+                   after:w-0 after:bg-green-200 hover:after:w-full
+               {% endif %}
+               after:transition-all after:duration-300">
+               Academic Record
+            </a>
+
+            <a href="/student/recommendation"
+               class="relative py-1 transition text-white
                after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-               after:transition-all after:duration-300
-               hover:after:w-full">Dashboard</a>
+               after:bottom-0 after:h-[2px]
+               {% if request.path == '/student/recommendation' %}
+                   after:w-full after:bg-green-200
+               {% else %}
+                   after:w-0 after:bg-green-200 hover:after:w-full
+               {% endif %}
+               after:transition-all after:duration-300">
+               Recommendations
+            </a>
 
-        <a href="/counselor/academic_record" class="relative py-1 transition text-white
+          {% else %}
+            <!-- Counselor Links -->
+            <a href="/counselor/dashboard"
+               class="relative py-1 transition text-white
                after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-               after:transition-all after:duration-300
-               hover:after:w-full">Academic Record</a>
+               after:bottom-0 after:h-[2px]
+               {% if request.path == '/counselor/dashboard' %}
+                   after:w-full after:bg-green-200
+               {% else %}
+                   after:w-0 after:bg-green-200 hover:after:w-full
+               {% endif %}
+               after:transition-all after:duration-300">
+               Dashboard
+            </a>
 
-        <a href="/counselor/recommendation" class="relative py-1 transition text-white
+            <a href="/counselor/academic_record"
+               class="relative py-1 transition text-white
                after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px] after:w-0 after:bg-green-200
-               after:transition-all after:duration-300
-               hover:after:w-full">Recommendations</a>
-        {% endif %}
+               after:bottom-0 after:h-[2px]
+               {% if request.path == '/counselor/academic_record' %}
+                   after:w-full after:bg-green-200
+               {% else %}
+                   after:w-0 after:bg-green-200 hover:after:w-full
+               {% endif %}
+               after:transition-all after:duration-300">
+               Academic Record
+            </a>
 
-        <!-- Profile Dropdown -->
-        <div class="relative">
-          <button id="profileBtn" class="flex items-center focus:outline-none">
-            <!-- Greeting -->
-            <span class="hidden sm:inline text-sm font-medium">
-              Hello, {{ current_user.name }}
-            </span>
-            <img src="/static/images/profile-icon.png" alt="Profile"
-              class="w-9 h-9 rounded-full border-2 border-white ml-2">
-          </button>
+            <a href="/counselor/recommendation"
+               class="relative py-1 transition text-white
+               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
+               after:bottom-0 after:h-[2px]
+               {% if request.path == '/counselor/recommendation' %}
+                   after:w-full after:bg-green-200
+               {% else %}
+                   after:w-0 after:bg-green-200 hover:after:w-full
+               {% endif %}
+               after:transition-all after:duration-300">
+               Recommendations
+            </a>
+          {% endif %}
 
-          <div id="profileMenu"
-            class="hidden absolute right-0 mt-2 w-40 bg-white text-gray-700 rounded-md shadow-lg py-2">
-            <a href="/myprofile" class="block px-4 py-2 hover:bg-gray-100">My Profile</a>
-            <a href="/logout" class="block px-4 py-2 hover:bg-gray-100">Log Out</a>
+          <!-- Profile Dropdown (Hover) -->
+          <div class="relative group z-50">
+            <div class="flex items-center cursor-pointer">
+              <span class="hidden sm:inline text-sm font-medium">
+                Hello, {{ current_user.name }}
+              </span>
+              <img src="/static/images/profile-icon.png"
+                   alt="Profile"
+                   class="w-9 h-9 rounded-full border-2 border-white ml-2">
+            </div>
+
+            <!-- Dropdown -->
+            <div class="absolute right-0 mt-2 w-40 bg-white text-gray-700 rounded-md shadow-lg py-2
+                        opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                        transition-all duration-200 z-50">
+              <a href="/myprofile" class="block px-4 py-2 hover:bg-gray-100">My Profile</a>
+              <a href="/logout" class="block px-4 py-2 hover:bg-gray-100">Log Out</a>
+            </div>
           </div>
-        </div>
+
         {% else %}
-        <a href="/login" class="py-1 px-3 rounded hover:bg-green-600 transition">Log In</a>
-        <a href="/register" class="py-1 px-3 rounded hover:bg-green-600 transition">Register</a>
+          <a href="/login" class="py-1 px-3 rounded hover:bg-green-600 transition">Log In</a>
+          <a href="/register" class="py-1 px-3 rounded hover:bg-green-600 transition">Register</a>
         {% endif %}
       </div>
 
-      <!-- Mobile menu button -->
+      <!-- Mobile Menu Button -->
       <div class="md:hidden ml-auto">
         <button id="mobileMenuBtn" class="focus:outline-none">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -87,56 +136,40 @@
   <div id="mobileMenu" class="hidden md:hidden bg-emerald-700 px-4 pb-4 space-y-2">
     {% if current_user.is_authenticated %}
 
-    <!-- Mobile Greeting -->
-    <div class="flex items-center space-x-3 py-3 border-b border-emerald-600">
-      <img src="/static/images/profile-icon.png" class="w-10 h-10 rounded-full border-2 border-white">
-      <div>
-        <p class="text-sm text-emerald-200">Hello,</p>
-        <p class="font-semibold text-white">
-          {{ current_user.name }}
-        </p>
+      <div class="flex items-center space-x-3 py-3 border-b border-emerald-600">
+        <img src="/static/images/profile-icon.png" class="w-10 h-10 rounded-full border-2 border-white">
+        <div>
+          <p class="text-sm text-emerald-200">Hello,</p>
+          <p class="font-semibold text-white">{{ current_user.name }}</p>
+        </div>
       </div>
-    </div>
 
-    
-    {% if current_user.role == 'student' %}
-    <a href="/student/dashboard" class="block hover:text-green-200">Dashboard</a>
-    <a href="/student/academic_record" class="block hover:text-green-200">Academic Record</a>
-    <a href="/student/recommendation" class="block hover:text-green-200">Recommendations</a>
+      {% if current_user.role == 'student' %}
+        <a href="/student/dashboard" class="block hover:text-green-200">Dashboard</a>
+        <a href="/student/academic_record" class="block hover:text-green-200">Academic Record</a>
+        <a href="/student/recommendation" class="block hover:text-green-200">Recommendations</a>
+      {% else %}
+        <a href="/counselor/dashboard" class="block hover:text-green-200">Dashboard</a>
+        <a href="/counselor/academic_record" class="block hover:text-green-200">Academic Record</a>
+        <a href="/counselor/recommendation" class="block hover:text-green-200">Recommendations</a>
+      {% endif %}
+
+      <hr class="border-emerald-600">
+      <a href="/myprofile" class="block hover:text-green-200">My Profile</a>
+      <a href="/logout" class="block hover:text-green-200">Log Out</a>
+
     {% else %}
-    <a href="/counselor/dashboard" class="block hover:text-green-200">Dashboard</a>
-    <a href="/counselor/academic_record" class="block hover:text-green-200">Academic Record</a>
-    <a href="/counselor/recommendation" class="block hover:text-green-200">Recommendations</a>
-    {% endif %}
-    <hr class="border-emerald-600">
-    <a href="/myprofile" class="block hover:text-green-200">My Profile</a>
-    <a href="/logout" class="block hover:text-green-200">Log Out</a>
-    {% else %}
-    <a href="/login" class="block hover:text-green-200">Log In</a>
-    <a href="/register" class="block hover:text-green-200">Register</a>
+      <a href="/login" class="block hover:text-green-200">Log In</a>
+      <a href="/register" class="block hover:text-green-200">Register</a>
     {% endif %}
   </div>
 </nav>
 
 <script>
-  const profileBtn = document.getElementById("profileBtn");
-  const profileMenu = document.getElementById("profileMenu");
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const mobileMenu = document.getElementById("mobileMenu");
 
-  profileBtn?.addEventListener("click", () => {
-    profileMenu.classList.toggle("hidden");
-  });
-
   mobileMenuBtn.addEventListener("click", () => {
     mobileMenu.classList.toggle("hidden");
-  });
-
-  window.addEventListener("click", (e) => {
-    if (profileMenu && profileBtn &&
-      !profileBtn.contains(e.target) &&
-      !profileMenu.contains(e.target)) {
-      profileMenu.classList.add("hidden");
-    }
   });
 </script>
