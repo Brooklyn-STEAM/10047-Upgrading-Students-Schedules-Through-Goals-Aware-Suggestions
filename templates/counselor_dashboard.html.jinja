@@ -1,90 +1,150 @@
 <!doctype html>
-<html>
- <head>
-   <meta charset="UTF-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
-   <title>CourseTrack - Counselor Dashboard</title>
-   <link href= "/static/styles.css" rel="stylesheet" >
- </head>
+<html class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>CourseTrack - Counselor Dashboard</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+  <link href="/static/styles.css" rel="stylesheet">
+</head>
+
+
 <body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
 
-  {% include "components/navbar.html.jinja" %}
+{% include "components/navbar.html.jinja" %}
 
-  <main class="flex-grow flex justify-center px-6 py-12">
-    <div class="w-full max-w-4xl">
+<main class="flex-grow flex justify-center px-6 py-12">
 
-      <!-- Header Section -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-emerald-900">
-          Welcome back, {{ current_user.name }}
-        </h1>
-        <p class="text-emerald-700 mt-2">
-          Here are your assigned students:
-        </p>
-      </div>
+<div class="w-full max-w-4xl relative">
 
-      <!-- Student List Card -->
-      {% if user %}
-      <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
-          <div class="grid gap-4">
-            {% for x in user %}
-              {% if x["Role"] == "student" %}
-                <a href="/counselor/dashboard/{{ x['ID'] }}"
-                   class="flex justify-between items-center p-5 
-                          rounded-lg border border-emerald-200 
-                          hover:bg-emerald-50 
-                          hover:shadow-md 
-                          hover:-translate-y-1
-                          transition-all duration-200">
+<!-- Decorative background blob -->
+<div class="absolute -top-10 -right-10 w-72 h-72 bg-emerald-200 opacity-40 rounded-full blur-3xl"></div>
 
-                  <span class="text-lg font-medium text-gray-800">
-                    {{ x["Name"] }}
-                  </span>
 
-                  <span class="text-emerald-600 font-semibold">
-                    View →
-                  </span>
+<!-- Dashboard Header -->
+<div class="mb-10 relative z-10">
 
-                </a>
-              {% endif %}
-            {% endfor %}
-          </div>
-          {% else %}
-          <div class="bg-white rounded-xl shadow-lg p-8 border border-emerald-100 text-center">
-  <!-- Icon -->
-      <div class="flex justify-center mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" 
-          class="h-12 w-12 text-emerald-400" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor">
-          <path stroke-linecap="round" 
-            stroke-linejoin="round" 
-            stroke-width="2" 
-            d="M17 20h5l-5-5M9 16a7 7 0 100-14 7 7 0 000 14z"/>
-          </svg>
-        </div>
+<div class="flex items-center gap-4">
 
-        <!-- Message -->
-          <p class="text-gray-700 text-lg font-medium">
-            No students found
-          </p>
+<div class="bg-emerald-100 p-3 rounded-full">
+<i data-feather="users" class="text-emerald-700"></i>
+</div>
 
-          <p class="text-gray-500 text-sm mt-1">
-            Assigned students will appear here once they have selected you.
-          </p>
+<div>
+<h1 class="text-3xl font-bold text-emerald-900">
+Welcome back, {{ current_user.name }}
+</h1>
 
-        </div>
-        {% endif %}
+<p class="text-emerald-700 mt-1">
+Here are your assigned students:
+</p>
+</div>
 
-      </div>
+</div>
 
-    </div>
-  </main>
+</div>
 
-  {% include "components/footer.html.jinja" %}
+
+
+<!-- Student List -->
+{% if user %}
+
+<div class="bg-white rounded-xl shadow-xl p-6 border border-emerald-100 relative z-10">
+
+<div class="space-y-4">
+
+{% for x in user %}
+{% if x["Role"] == "student" %}
+
+<a href="/counselor/dashboard/{{ x['ID'] }}"
+
+class="flex justify-between items-center p-5
+rounded-xl border border-emerald-200
+hover:bg-emerald-50
+hover:shadow-lg
+hover:-translate-y-1
+transition-all duration-200">
+
+<!-- Student Info -->
+<div class="flex items-center gap-4">
+
+<div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+<i data-feather="user" class="text-emerald-700 w-5"></i>
+</div>
+
+<span class="text-lg font-medium text-gray-800">
+{{ x["Name"] }}
+</span>
+
+</div>
+
+
+<!-- View Indicator -->
+<div class="flex items-center gap-2 text-emerald-600 font-semibold">
+
+<span>View</span>
+
+<i data-feather="arrow-right"></i>
+
+</div>
+
+</a>
+
+{% endif %}
+{% endfor %}
+
+</div>
+
+</div>
+
+
+
+{% else %}
+
+<!-- Empty State -->
+
+<div class="bg-white rounded-xl shadow-xl p-10 border border-emerald-100 text-center relative z-10">
+
+<div class="flex justify-center mb-4">
+
+<div class="bg-emerald-100 p-4 rounded-full">
+<i data-feather="search" class="text-emerald-600 w-8 h-8"></i>
+</div>
+
+</div>
+
+<p class="text-gray-700 text-lg font-semibold">
+No students found
+</p>
+
+<p class="text-gray-500 text-sm mt-2 max-w-md mx-auto">
+Assigned students will appear here once they have selected you as their counselor.
+</p>
+
+</div>
+
+{% endif %}
+
+</div>
+
+</main>
+
+
+{% include "components/footer.html.jinja" %}
+
+
+<script>
+feather.replace()
+</script>
 
 </body>
-
+</html>
