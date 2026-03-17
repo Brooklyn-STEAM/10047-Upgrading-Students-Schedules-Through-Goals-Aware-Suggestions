@@ -518,8 +518,11 @@ def counselor_recommendations():
 @app.route("/student/academic_record")
 @login_required
 def student_academic_record():
+    if current_user.role != "student":
+        abort(403)
     conn = connect_db()
     cur = conn.cursor()
+    
 
     # find student profile
     cur.execute("SELECT ID FROM StudentProfile WHERE UserID = %s", (current_user.id,))
@@ -560,12 +563,13 @@ def student_academic_record():
                     subject_list.append({
                         "Name": s["SubjectName"] or "",
                         "Letter": s["FinalGrade"] or "",
-                        "Credits": float(s["Credits"]) if s["Credits"] is not None else 0,
+                        "Credits": float(s["Credits"]) if s["Credits"] is not None else None,
                         "Marks": s["Marks"] if s["Marks"] is not None else None,
-                        "Preference": s["Preference"] if s["Preference"] is not None else None
+                        "Preference": s["Preference"] if s["Preference"] is not None else None,
+                        "MainCategory": s.get("MainCategory") if "MainCategory" in s else None,
+                        "CourseName": s.get("CourseName") if "CourseName" in s else None,
+                        "CustomCourseName": s.get("CustomCourseName") if "CustomCourseName" in s else None
                     })
-
-
 
                 grade_list.append({
                     "GradeLevel": grade_level,
@@ -584,6 +588,7 @@ def student_academic_record():
         "student_academic_record.html.jinja",
         transcript_json=json.dumps(transcript_data) if transcript_data else "null"
     )
+
 
 
 #users transcript is saved in database.
@@ -626,8 +631,8 @@ def save_transcript():
             grade_level = grade.get("GradeLevel")
 
             cur.execute(
-                "INSERT INTO Grade (TranscriptID, GradeLevel) VALUES (%s, %s)",
-                (transcript_id, grade_level)
+                "INSERT INTO Grade (TranscriptID, GradeLevel, GPA) VALUES (%s, %s, %s)",
+                (transcript_id, grade_level, grade.get("GPA"))
             )
             grade_id = cur.lastrowid
 
@@ -638,11 +643,32 @@ def save_transcript():
                 marks = subject.get("Marks")
                 preference = subject.get("Preference")
 
+                main_category = subject.get("MainCategory")
+                course_name = subject.get("CourseName")
+                custom_course_name = subject.get("CustomCourseName")
+
+                # basic validation: if CourseName == "Other", require CustomCourseName
+                if course_name == "Other" and not custom_course_name:
+                    custom_course_name = name  # fallback to typed name if needed
 
                 cur.execute(
-                    "INSERT INTO Subject (GradeID, SubjectName, FinalGrade, Credits, Marks, Preference) "
-                    "VALUES (%s, %s, %s, %s, %s, %s)",
-                    (grade_id, name, letter, credits, marks, preference)
+                    """
+                    INSERT INTO Subject 
+                    (GradeID, SubjectName, FinalGrade, Credits, Marks, Preference,
+                     MainCategory, CourseName, CustomCourseName)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        grade_id,
+                        name,
+                        letter,
+                        credits,
+                        marks,
+                        preference,
+                        main_category,
+                        course_name,
+                        custom_course_name
+                    )
                 )
 
         conn.commit()
@@ -654,6 +680,7 @@ def save_transcript():
     except Exception as e:
         print("FULL ERROR:", repr(e))
         return jsonify({"status": "error", "message": "Server error: " + repr(e)}), 500
+
 
 
 @app.route("/counselor/recommendation/addapplication/<applicant_id>")
