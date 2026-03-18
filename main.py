@@ -477,21 +477,82 @@ def counselor_dashboard():
 
 
 
-@app.route("/counselor/dashboard/<student_id>")
-def student_profile(student_id):
-   connection = connect_db()
+@app.route("/counselor/dashboard/<int:student_profile_id>")
+@login_required
+def student_profile(student_profile_id):
+    if current_user.role != "counselor":
+        abort(403)
 
-   cursor = connection.cursor()
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-   cursor.execute("""
+    # Ensure the counselor can view this student
+    cursor.execute("""
+        SELECT 1 
+        FROM StudentProfile sp
+        JOIN CounselorStudent cs ON cs.StudentUserID = sp.UserID
+        WHERE cs.CounselorUserID = %s AND sp.ID = %s
+    """, (current_user.id, student_profile_id))
+    allowed = cursor.fetchone()
+    if not allowed:
+        connection.close()
+        abort(403)
 
-    SELECT * FROM `User`
-    
-    WHERE `ID` = %s
-   """, (student_id))
-   result = cursor.fetchone()
-   connection.close()
-   return render_template("studentprofile.html.jinja", students=student_id , student=result)
+    # Fetch student info
+    cursor.execute("""
+        SELECT 
+            sp.ID AS student_profile_id,
+            u.ID AS user_id,
+            u.Name,
+            u.Email,
+            sp.Grade,
+            sp.Phone,
+            sp.Address,
+            sp.Bio,
+            sp.CounselorNotes
+        FROM StudentProfile sp
+        JOIN User u ON sp.UserID = u.ID
+        WHERE sp.ID = %s
+    """, (student_profile_id,))
+
+    student = cursor.fetchone()
+    print("STUDENT DATA:", student)  # <-- Debug in terminal
+
+    connection.close()
+    return render_template("studentprofile.html.jinja", student=student)
+
+@app.route("/counselor/dashboard/<int:student_profile_id>/notes", methods=["POST"])
+@login_required
+def save_counselor_notes(student_profile_id):
+    if current_user.role != "counselor":
+        abort(403)
+
+    notes = request.form.get("notes", "")
+
+    conn = connect_db()
+    cur = conn.cursor()
+    # Optional: verify counselor-student relationship
+    cur.execute("""
+        SELECT 1 FROM StudentProfile sp
+        JOIN CounselorStudent cs ON cs.StudentUserID = sp.UserID
+        WHERE cs.CounselorUserID = %s AND sp.ID = %s
+    """, (current_user.id, student_profile_id))
+    if not cur.fetchone():
+        cur.close()
+        conn.close()
+        abort(403)
+
+    cur.execute("""
+        UPDATE StudentProfile
+        SET CounselorNotes = %s
+        WHERE ID = %s
+    """, (notes, student_profile_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return redirect(f"/counselor/dashboard/{student_profile_id}")
+
 
 @app.route("/counselor/recommendation")
 @login_required
