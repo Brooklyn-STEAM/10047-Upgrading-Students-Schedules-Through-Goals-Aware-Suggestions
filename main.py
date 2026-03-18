@@ -529,27 +529,27 @@ def save_counselor_notes(student_profile_id):
 
     notes = request.form.get("notes", "")
 
-    conn = connect_db()
-    cur = conn.cursor()
+    connection  = connect_db()
+    cursor = connection.cursor()
     # Optional: verify counselor-student relationship
-    cur.execute("""
+    cursor.execute("""
         SELECT 1 FROM StudentProfile sp
         JOIN CounselorStudent cs ON cs.StudentUserID = sp.UserID
         WHERE cs.CounselorUserID = %s AND sp.ID = %s
     """, (current_user.id, student_profile_id))
-    if not cur.fetchone():
-        cur.close()
-        conn.close()
+    if not cursor.fetchone():
+        cursor.close()
+        connection.close()
         abort(403)
 
-    cur.execute("""
+    cursor.execute("""
         UPDATE StudentProfile
         SET CounselorNotes = %s
         WHERE ID = %s
     """, (notes, student_profile_id))
-    conn.commit()
-    cur.close()
-    conn.close()
+    connection.commit()
+    cursor.close()
+    connection.close()
 
     return redirect(f"/counselor/dashboard/{student_profile_id}")
 
