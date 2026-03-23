@@ -56,19 +56,6 @@
           </select>
         </div>
 
-        <!-- Student ID -->
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-600 mb-1">
-            Student ID
-          </label>
-
-          <input name="studentid"
-                 type="tel"
-                 placeholder="ex. 1234567890"
-                 required
-                 class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-        </div>
-
         <!-- Grade -->
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-gray-600 mb-1">
@@ -108,11 +95,7 @@
 
       <button type="submit"
               class="px-6 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md">
-        {% if recommendation %}
-        Update Counselor
-        {% else %}
         Add Counselor
-        {% endif %}
       </button>
 
     </div>
