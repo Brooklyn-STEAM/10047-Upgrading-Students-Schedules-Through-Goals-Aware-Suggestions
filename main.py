@@ -352,7 +352,7 @@ def recommendations():
     cursor.execute("""
         SELECT ID, Name, Email
         FROM User
-        WHERE Role = 'counselor' """)
+        WHERE Role = %s """ , (current_user.id))
 
     counselors = cursor.fetchall()
     connection.close()
@@ -369,20 +369,13 @@ def add_counselor():
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
     cursor.execute("SELECT ID, Name, Email FROM User WHERE Role='counselor'")
+
     counselors = cursor.fetchall()
-
-    cursor.execute("""
-        SELECT * FROM Recommendation
-        WHERE UserID = %s
-    """, (current_user.id,))
-    recommendation = cursor.fetchone()
-
     connection.close()
 
     return render_template(
         "addcounselor.html.jinja",
         counselors=counselors,
-        recommendation=recommendation
     )
 
 @app.route("/student/recommendation/addcounselor/processing", methods=["POST"])
@@ -411,10 +404,8 @@ def add_counselor_form():
 
     # Save recommendation request using INSERT ... SELECT
     cursor.execute("""
-        INSERT INTO Recommendation (Email, Grade, Comments, UserID)
-        SELECT Email, %s, %s, %s
-        FROM User
-        WHERE ID = %s
+        INSERT INTO StudentProfile (Grade, Comments, UserID , CounselorUserID)
+        SELECT %s, %s, %s, %s
     """, (grade, comments, current_user.id, counselor_id))
 
     connection.commit()
@@ -440,20 +431,30 @@ def update_recommendation():
         WHERE UserID = %s
     """, (counselor_id, current_user.id))
 
-    # Update recommendation
+    # Update StudentProfile
     cursor.execute("""
-    UPDATE Recommendation r
-    JOIN User u ON u.ID = %s
-    SET r.Email = u.Email,
-        r.Grade = %s,
-        r.Comments = %s
-    WHERE r.UserID = %s
+    UPDATE StudentProfile (Grade, Comments, UserID , CounselorUserID)
+    VALUES (%s, %s, %s, %s)
 """, (counselor_id, grade, comments, current_user.id))
 
     connection.commit()
     connection.close()
 
     return redirect("/student/dashboard")
+
+@app.route("/student/recommendation/review")
+@login_required
+def review_recommendation():
+    connection = connect_db()
+    cursor = connection.cursor()
+    cursor.execute("""
+    SELECT * FROM `Application`
+    JOIN `User` ON `Application`.`UserID` = `User`.`ID`
+    WHERE StudentUserID = %s
+    """, (current_user.id,))
+    information = cursor.fetchall()
+    connection.close()
+    return render_template("review.html.jinja" , information=information)
 
 #dashboard for counselors.
 @app.route("/counselor/dashboard")
@@ -466,7 +467,11 @@ def counselor_dashboard():
 
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    cursor.execute("SELECT * FROM `StudentProfile` Join `User` ON `StudentProfile`.`UserID` = `User`.`ID` WHERE CounselorUserID = %s", (current_user.id,))
+    cursor.execute("""
+    SELECT * FROM `StudentProfile`
+    JOIN `User` ON `StudentProfile`.`UserID` = `User`.`ID`
+    WHERE CounselorUserID = %s
+    """, (current_user.id,))
 
     result = cursor.fetchall()
 
@@ -503,14 +508,16 @@ def counselor_recommendations():
 
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    cursor.execute("SELECT * FROM `StudentProfile` Join `User` ON `StudentProfile`.`UserID` = `User`.`ID` WHERE CounselorUserID = %s", (current_user.id,))
+    cursor.execute("""
+    SELECT * FROM `StudentProfile`
+    JOIN `User` ON `StudentProfile`.`UserID` = `User`.`ID`
+    WHERE CounselorUserID = %s
+    """, (current_user.id,))
 
     result = cursor.fetchall()
 
     connection.close()
     return render_template("counselorrecommendation.html.jinja", user=result)
-
-
 
 
 
@@ -656,34 +663,49 @@ def save_transcript():
         return jsonify({"status": "error", "message": "Server error: " + repr(e)}), 500
 
 
-@app.route("/counselor/recommendation/addapplication/<applicant_id>")
+@app.route("/counselor/recommendation/addapplication/<user_id>")
 @login_required
-def add_application(applicant_id):
+def add_application(user_id):
+
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
     cursor.execute("""
-        SELECT * FROM `Recommendation`
-        WHERE `ID` = %s
-    """, (applicant_id))
+    SELECT * FROM `StudentProfile`
+    JOIN `User` ON `StudentProfile`.`UserID` = `User`.`ID`
+    WHERE User.ID = %s
+    """ , (user_id,))
+
     result = cursor.fetchone()
     connection.close()
-    return render_template("addapplication.html.jinja" , applicant=result)
+    
+    return render_template(
+        "addapplication.html.jinja",
+        user=result
+    )
 
-@app.route("/counselor/recommendation/addapplication/adding", methods=['POST'])
+@app.route("/counselor/recommendation/addapplication/<user_id>/adding", methods=['POST'])
 @login_required
-def adding_app():
+def adding_app(user_id):
     Major = request.form["Major"]
-    Application_type = request.form["Type"]
     Comments = request.form["Comments"]
+    student_id = request.form["student_id"]
 
     connection = connect_db()
     cursor = connection.cursor()
 
     cursor.execute("""
-        INSERT INTO Application
-        (UserID, Major, Graduate, Comments)
+    SELECT * FROM `StudentProfile`
+    JOIN `User` ON `StudentProfile`.`UserID` = `User`.`ID`
+    WHERE User.ID = %s
+    """ , (user_id,))
+    users = cursor.fetchone()
+    
+    cursor.execute("""
+        INSERT INTO `Application`
+        (UserID, Major, Comments, StudentUserID)
         VALUES (%s, %s, %s, %s)
-    """, (current_user.id, Major, Application_type, Comments))
+    """, (current_user.id, Major, Comments, student_id,))
 
     connection.commit()
     connection.close()
@@ -913,13 +935,4 @@ def counselor_save_transcript(student_user_id):
     conn.close()
 
     return jsonify({"status": "success", "message": "Transcript updated by counselor."})
-
-
-
-#404 error page
-@app.errorhandler(404)
-def not_found(error):
-    return render_template("404.html.jinja"), 404
-
-
 

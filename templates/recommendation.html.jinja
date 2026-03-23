@@ -6,27 +6,71 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <title>CourseTrack - Recommendations</title>
-    <link href= "/static/styles.css" rel="stylesheet" >
+    <link href="/static/styles.css" rel="stylesheet">
   </head>
-  <body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+
+  <body class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100 min-h-screen flex flex-col">
+    
     {% include "components/navbar.html.jinja" %}
     
-    <main class="container mx-auto my-10 px-4 py-8 flex-grow">
-      <h1 class="text-3xl font-bold text-center mb-6">Recommendations</h1>
+    <main class="container mx-auto my-12 px-4 flex-grow">
       
-      <div class="flex justify-center gap-8">
-        <!-- Counselor Recommendation -->
-        <div class="bg-white max-w-4xl shadow-md rounded-lg p-6">
-          <h2 class="text-2xl font-semibold mb-4">Counselor Recommendation</h2>
-          <p class="text-gray-600">It looks like you have you have no counselor that can recommend you a course! You will need to add a counselor in order to see recommended courses.</p>
-          <div class="flex justify-center mt-4">
-          <a href="/student/recommendation/addcounselor" class="mt-4 inline-block px-6 py-2 text-white bg-emerald-500 rounded hover:bg-emerald-600">Add Counselor</a>
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-extrabold text-emerald-700 mb-3">
+          Your Recommendations
+        </h1>
+        <p class="text-gray-500 text-lg">
+          Guidance from your counselors will appear here
+        </p>
+      </div>
+
+      <!-- Card -->
+      <div class="flex justify-center">
+        <div class="relative bg-white/80 backdrop-blur-lg max-w-2xl w-full shadow-2xl rounded-2xl p-10 border border-emerald-100">
+          
+          <!-- Glow Accent -->
+          <div class="absolute -top-10 -left-10 w-40 h-40 bg-emerald-200 opacity-30 rounded-full blur-3xl"></div>
+
+          <!-- Icon -->
+          <div class="flex justify-center mb-6">
+            <div class="bg-emerald-100 text-emerald-600 p-4 rounded-full text-3xl shadow-inner">
+              🎓
+            </div>
           </div>
+
+          <!-- Title -->
+          <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">
+            No Counselor Yet
+          </h2>
+
+          <!-- Description -->
+          <p class="text-gray-500 text-center leading-relaxed mb-8">
+            It looks like you don’t have a counselor connected to your account yet.
+            Add one to start receiving personalized course and major recommendations.
+          </p>
+
+          <!-- Buttons -->
+          <div class="flex flex-col sm:flex-row justify-center gap-4">
+            
+            <a href="/student/recommendation/addcounselor"
+               class="px-6 py-3 text-white bg-emerald-500 rounded-xl shadow-md hover:bg-emerald-600 hover:scale-105 transition transform text-center">
+              ➕ Add Counselor
+            </a>
+
+            <a href="/student/recommendation/review"
+               class="px-6 py-3 text-emerald-600 border border-emerald-500 rounded-xl hover:bg-emerald-50 hover:scale-105 transition transform text-center">
+              🔍 Review Recommendations
+            </a>
+
+          </div>
+
         </div>
       </div>
 
-      
     </main>
+
     {% include "components/footer.html.jinja" %}
+    
   </body>
 </html>
