@@ -482,21 +482,82 @@ def counselor_dashboard():
 
 
 
-@app.route("/counselor/dashboard/<student_id>")
-def student_profile(student_id):
-   connection = connect_db()
+@app.route("/counselor/dashboard/<int:student_profile_id>")
+@login_required
+def student_profile(student_profile_id):
+    if current_user.role != "counselor":
+        abort(403)
 
-   cursor = connection.cursor()
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-   cursor.execute("""
+    # Ensure the counselor can view this student
+    cursor.execute("""
+        SELECT 1 
+        FROM StudentProfile sp
+        JOIN CounselorStudent cs ON cs.StudentUserID = sp.UserID
+        WHERE cs.CounselorUserID = %s AND sp.ID = %s
+    """, (current_user.id, student_profile_id))
+    allowed = cursor.fetchone()
+    if not allowed:
+        connection.close()
+        abort(403)
 
-    SELECT * FROM `User`
-    
-    WHERE `ID` = %s
-   """, (student_id))
-   result = cursor.fetchone()
-   connection.close()
-   return render_template("studentprofile.html.jinja", students=student_id , student=result)
+    # Fetch student info
+    cursor.execute("""
+        SELECT 
+            sp.ID AS student_profile_id,
+            u.ID AS user_id,
+            u.Name,
+            u.Email,
+            sp.Grade,
+            sp.Phone,
+            sp.Address,
+            sp.Bio,
+            sp.CounselorNotes
+        FROM StudentProfile sp
+        JOIN User u ON sp.UserID = u.ID
+        WHERE sp.ID = %s
+    """, (student_profile_id,))
+
+    student = cursor.fetchone()
+    print("STUDENT DATA:", student)  # <-- Debug in terminal
+
+    connection.close()
+    return render_template("studentprofile.html.jinja", student=student)
+
+@app.route("/counselor/dashboard/<int:student_profile_id>/notes", methods=["POST"])
+@login_required
+def save_counselor_notes(student_profile_id):
+    if current_user.role != "counselor":
+        abort(403)
+
+    notes = request.form.get("notes", "")
+
+    connection  = connect_db()
+    cursor = connection.cursor()
+    # Optional: verify counselor-student relationship
+    cursor.execute("""
+        SELECT 1 FROM StudentProfile sp
+        JOIN CounselorStudent cs ON cs.StudentUserID = sp.UserID
+        WHERE cs.CounselorUserID = %s AND sp.ID = %s
+    """, (current_user.id, student_profile_id))
+    if not cursor.fetchone():
+        cursor.close()
+        connection.close()
+        abort(403)
+
+    cursor.execute("""
+        UPDATE StudentProfile
+        SET CounselorNotes = %s
+        WHERE ID = %s
+    """, (notes, student_profile_id))
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    return redirect(f"/counselor/dashboard/{student_profile_id}")
+
 
 @app.route("/counselor/recommendation")
 @login_required
@@ -525,8 +586,11 @@ def counselor_recommendations():
 @app.route("/student/academic_record")
 @login_required
 def student_academic_record():
+    if current_user.role != "student":
+        abort(403)
     conn = connect_db()
     cur = conn.cursor()
+    
 
     # find student profile
     cur.execute("SELECT ID FROM StudentProfile WHERE UserID = %s", (current_user.id,))
@@ -567,12 +631,13 @@ def student_academic_record():
                     subject_list.append({
                         "Name": s["SubjectName"] or "",
                         "Letter": s["FinalGrade"] or "",
-                        "Credits": float(s["Credits"]) if s["Credits"] is not None else 0,
+                        "Credits": float(s["Credits"]) if s["Credits"] is not None else None,
                         "Marks": s["Marks"] if s["Marks"] is not None else None,
-                        "Preference": s["Preference"] if s["Preference"] is not None else None
+                        "Preference": s["Preference"] if s["Preference"] is not None else None,
+                        "MainCategory": s.get("MainCategory") if "MainCategory" in s else None,
+                        "CourseName": s.get("CourseName") if "CourseName" in s else None,
+                        "CustomCourseName": s.get("CustomCourseName") if "CustomCourseName" in s else None
                     })
-
-
 
                 grade_list.append({
                     "GradeLevel": grade_level,
@@ -591,6 +656,7 @@ def student_academic_record():
         "student_academic_record.html.jinja",
         transcript_json=json.dumps(transcript_data) if transcript_data else "null"
     )
+
 
 
 #users transcript is saved in database.
@@ -633,8 +699,8 @@ def save_transcript():
             grade_level = grade.get("GradeLevel")
 
             cur.execute(
-                "INSERT INTO Grade (TranscriptID, GradeLevel) VALUES (%s, %s)",
-                (transcript_id, grade_level)
+                "INSERT INTO Grade (TranscriptID, GradeLevel, GPA) VALUES (%s, %s, %s)",
+                (transcript_id, grade_level, grade.get("GPA"))
             )
             grade_id = cur.lastrowid
 
@@ -645,11 +711,32 @@ def save_transcript():
                 marks = subject.get("Marks")
                 preference = subject.get("Preference")
 
+                main_category = subject.get("MainCategory")
+                course_name = subject.get("CourseName")
+                custom_course_name = subject.get("CustomCourseName")
+
+                # basic validation: if CourseName == "Other", require CustomCourseName
+                if course_name == "Other" and not custom_course_name:
+                    custom_course_name = name  # fallback to typed name if needed
 
                 cur.execute(
-                    "INSERT INTO Subject (GradeID, SubjectName, FinalGrade, Credits, Marks, Preference) "
-                    "VALUES (%s, %s, %s, %s, %s, %s)",
-                    (grade_id, name, letter, credits, marks, preference)
+                    """
+                    INSERT INTO Subject 
+                    (GradeID, SubjectName, FinalGrade, Credits, Marks, Preference,
+                     MainCategory, CourseName, CustomCourseName)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        grade_id,
+                        name,
+                        letter,
+                        credits,
+                        marks,
+                        preference,
+                        main_category,
+                        course_name,
+                        custom_course_name
+                    )
                 )
 
         conn.commit()
