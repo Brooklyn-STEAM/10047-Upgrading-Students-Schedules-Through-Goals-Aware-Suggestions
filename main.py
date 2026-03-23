@@ -267,6 +267,7 @@ def edit_profile():
                 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
             except FileExistsError:
                 flash("Upload folder exists as a file. Please fix the directory.", "danger")
+                cursor.close()
                 connection.close()
                 return redirect(url_for("edit_profile"))
 
@@ -292,7 +293,8 @@ def edit_profile():
         cursor.close()
         connection.close()
 
-        return redirect(url_for("myprofile"))  # <- Use your actual endpoint function
+        # Redirect to your profile page
+        return redirect(url_for("myprofile"))
 
     # GET request
     cursor.close()
