@@ -5,12 +5,23 @@ from flask import request, redirect, url_for, flash
 from flask_login import current_user
 from flask import jsonify
 
+from werkzeug.utils import secure_filename
 
+
+import os
 import pymysql
 from dynaconf import Dynaconf
 import json
 
 app = Flask(__name__)
+
+UPLOAD_FOLDER = "static/profile_pics"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 config = Dynaconf(settings_file = ["settings.toml"])
 
@@ -191,7 +202,7 @@ def edit_profile():
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    # Fetch existing profile for pre-filling form
+    # Fetch existing profile
     profile = None
     if current_user.role == "student":
         cursor.execute("SELECT * FROM StudentProfile WHERE UserID=%s", (current_user.id,))
@@ -201,9 +212,13 @@ def edit_profile():
         profile = cursor.fetchone()
 
     if request.method == 'POST':
-        # Update User table
-        name = request.form['name']
-        email = request.form['email']
+        # --- Update User table ---
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+
+        if not name or not email:
+            flash("Name and email are required.", "danger")
+            return render_template("editmyprofile.html.jinja", profile=profile)
 
         cursor.execute("""
             UPDATE `User`
@@ -211,11 +226,11 @@ def edit_profile():
             WHERE ID=%s
         """, (name, email, current_user.id))
 
-        # STUDENT PROFILE
+        # --- Update role-specific profile ---
         if current_user.role == "student":
-            phone = request.form.get("phone")
-            address = request.form.get("address")
-            bio = request.form.get("bio")
+            phone = request.form.get("phone", "").strip()
+            address = request.form.get("address", "").strip()
+            bio = request.form.get("bio", "").strip()
 
             cursor.execute("""
                 UPDATE StudentProfile
@@ -223,12 +238,11 @@ def edit_profile():
                 WHERE UserID=%s
             """, (phone, address, bio, current_user.id))
 
-        # COUNSELOR PROFILE
         elif current_user.role == "counselor":
-            phone = request.form.get("phone")
-            office = request.form.get("office")
-            office_hours = request.form.get("office_hours")
-            bio = request.form.get("bio")
+            phone = request.form.get("phone", "").strip()
+            office = request.form.get("office", "").strip()
+            office_hours = request.form.get("office_hours", "").strip()
+            bio = request.form.get("bio", "").strip()
 
             cursor.execute("SELECT * FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
             existing = cursor.fetchone()
@@ -245,10 +259,43 @@ def edit_profile():
                     VALUES (%s, %s, %s, %s, %s)
                 """, (current_user.id, phone, office, office_hours, bio))
 
-        connection.commit()
-        connection.close()
-        return redirect("/myprofile")
+        # --- Handle profile picture ---
+        file = request.files.get("profile_picture")
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            try:
+                os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+            except FileExistsError:
+                flash("Upload folder exists as a file. Please fix the directory.", "danger")
+                connection.close()
+                return redirect(url_for("edit_profile"))
 
+            filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+            file.save(filepath)
+
+            # Update profile picture in DB
+            if current_user.role == "student":
+                cursor.execute("""
+                    UPDATE StudentProfile
+                    SET ProfilePicture=%s
+                    WHERE UserID=%s
+                """, (filename, current_user.id))
+            elif current_user.role == "counselor":
+                cursor.execute("""
+                    UPDATE CounselorProfile
+                    SET ProfilePicture=%s
+                    WHERE UserID=%s
+                """, (filename, current_user.id))
+
+        # --- Commit and close ---
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        return redirect(url_for("myprofile"))  # <- Use your actual endpoint function
+
+    # GET request
+    cursor.close()
     connection.close()
     return render_template("editmyprofile.html.jinja", profile=profile)
 
@@ -1022,4 +1069,35 @@ def counselor_save_transcript(student_user_id):
     conn.close()
 
     return jsonify({"status": "success", "message": "Transcript updated by counselor."})
+
+@app.context_processor
+def inject_navbar_profile():
+    profile = None
+    if current_user.is_authenticated:
+        connection = connect_db()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+        try:
+            if current_user.role == "student":
+                cursor.execute("SELECT ProfilePicture FROM StudentProfile WHERE UserID=%s", (current_user.id,))
+                profile = cursor.fetchone()
+            elif current_user.role == "counselor":
+                cursor.execute("SELECT ProfilePicture FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
+                profile = cursor.fetchone()
+        except Exception as e:
+            print("Navbar profile fetch error:", e)
+        finally:
+            cursor.close()
+            connection.close()
+    return dict(navbar_profile=profile)
+
+
+
+
+
+#404 error page
+@app.errorhandler(404)
+def not_found(error):
+    return render_template("404.html.jinja"), 404
+
+
 

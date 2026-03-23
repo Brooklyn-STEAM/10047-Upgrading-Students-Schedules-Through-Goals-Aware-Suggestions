@@ -101,9 +101,9 @@
               <span class="hidden sm:inline text-sm font-medium">
                 Hello, {{ current_user.name }}
               </span>
-              <img src="/static/images/profile-icon.png"
-                   alt="Profile"
-                   class="w-9 h-9 rounded-full border-2 border-white ml-2">
+<img src="{% if navbar_profile and navbar_profile.ProfilePicture %}/static/profile_pics/{{ navbar_profile.ProfilePicture }}{% else %}/static/images/profile-icon.png{% endif %}"
+     alt="Profile"
+     class="w-9 h-9 rounded-full border-2 border-white ml-2">
             </div>
 
             <!-- Dropdown -->
@@ -137,7 +137,13 @@
     {% if current_user.is_authenticated %}
 
       <div class="flex items-center space-x-3 py-3 border-b border-emerald-600">
-        <img src="/static/images/profile-icon.png" class="w-10 h-10 rounded-full border-2 border-white">
+<img src="{{ '/static/profile_pics/' + navbar_profile['ProfilePicture'] 
+            if navbar_profile and navbar_profile.get('ProfilePicture') 
+            else '/static/images/profile-icon.png' }}"
+     alt="Profile"
+     class="w-9 h-9 rounded-full border-2 border-white ml-2">
+     alt="Profile"
+     class="w-9 h-9 rounded-full border-2 border-white ml-2">
         <div>
           <p class="text-sm text-emerald-200">Hello,</p>
           <p class="font-semibold text-white">{{ current_user.name }}</p>
