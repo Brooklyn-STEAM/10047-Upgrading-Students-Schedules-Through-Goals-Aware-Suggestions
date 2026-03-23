@@ -25,184 +25,191 @@
   </p>
 </div>
 
-<form method="POST" action="/myprofile/edit">
+<!-- Single Form -->
+<form method="POST" action="/myprofile/edit" enctype="multipart/form-data">
 
-<div class="bg-white rounded-xl shadow-lg p-8 border border-emerald-100">
+  <div class="bg-white rounded-xl shadow-lg p-8 border border-emerald-100">
 
-<!-- Top Section -->
-<div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+    <!-- Top Section -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
 
-<div class="flex items-center gap-6">
-  <img class="w-24 h-24 rounded-full bg-emerald-100 border-4 border-emerald-200">
+      <div class="flex items-center gap-6">
+        <!-- Profile Picture with Hover Overlay & File Upload -->
+        <div class="relative group">
+          <img
+            class="w-24 h-24 rounded-full bg-emerald-100 border-4 border-emerald-200 object-cover"
+            src="{{ current_user.profile_picture_url or '/static/default-profile.png' }}"
+            alt="Profile Picture"
+            id="profile-preview"
+          >
+          <!-- Overlay -->
+          <div class="absolute inset-0 rounded-full bg-black bg-opacity-25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M16 3.5a2.828 2.828 0 114 4L7 20H3v-4L16 3.5z"/>
+            </svg>
+          </div>
+          <!-- File input -->
+          <input
+            type="file"
+            name="profile_picture"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-full"
+            onchange="previewProfilePicture(event)"
+          >
+        </div>
 
-  <div>
-    <label class="block text-sm text-emerald-700 mb-1">Full Name</label>
-    <input
-      type="text"
-      name="name"
-      value="{{ current_user.name }}"
-      class="border border-emerald-200 rounded-lg px-4 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none w-64"
-      required
-    >
+        <div>
+          <label class="block text-sm text-emerald-700 mb-1">Full Name</label>
+          <input
+            type="text"
+            name="name"
+            value="{{ current_user.name }}"
+            class="border border-emerald-200 rounded-lg px-4 py-2 focus:ring-1 focus:ring-emerald-500 focus:outline-none w-64"
+            required
+          >
+        </div>
+      </div>
+
+    </div>
+
+    {% if current_user.role == 'student' %}
+    <!-- Info Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <div class="p-4 bg-emerald-50 rounded-lg">
+        <label class="text-sm text-emerald-700 block mb-1">Email</label>
+        <input
+          type="email"
+          name="email"
+          value="{{ current_user.email }}"
+          class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+          required
+        >
+      </div>
+
+      <div class="p-4 bg-emerald-50 rounded-lg">
+        <label class="text-sm text-emerald-700 block mb-1">Phone</label>
+        <input
+          type="text"
+          name="phone"
+          value="{{profile.Phone if profile else ''}}"
+          placeholder="Enter phone number"
+          class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+        >
+      </div>
+
+      <div class="p-4 bg-emerald-50 rounded-lg">
+        <label class="text-sm text-emerald-700 block mb-1">Address</label>
+        <input
+          type="text"
+          name="address"
+          value="{{profile.Address if profile else '' }}"
+          placeholder="Enter address"
+          class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+        >
+      </div>
+
+    </div>
+
+    <!-- About / Bio -->
+    <div class="mt-8">
+      <h3 class="text-xl font-semibold text-emerald-800 mb-3">
+        About
+      </h3>
+
+      <textarea
+        name="bio"
+        rows="4"
+        class="w-full bg-emerald-50 border border-emerald-200 rounded-lg p-4 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+        placeholder="Tell us about yourself..."
+      >{{profile.Bio if profile else ''}}</textarea>
+    </div>
+    {% elif current_user.role == 'counselor' %}
+
+    <!-- Counselor Info Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <div class="p-4 bg-emerald-50 rounded-lg">
+        <label class="text-sm text-emerald-700 block mb-1">Email</label>
+        <input
+          type="email"
+          name="email"
+          value="{{ current_user.email }}"
+          class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+          required
+        >
+      </div>
+
+      <div class="p-4 bg-emerald-50 rounded-lg">
+        <label class="text-sm text-emerald-700 block mb-1">Phone</label>
+        <input
+          type="text"
+          name="phone"
+          value="{{ profile.Phone if profile else '' }}"
+          placeholder="Enter phone number"
+          class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+        >
+      </div>
+
+      <div class="p-4 bg-emerald-50 rounded-lg">
+        <label class="text-sm text-emerald-700 block mb-1">Office</label>
+        <input
+          type="text"
+          name="office"
+          value="{{ profile.Office if profile else '' }}"
+          placeholder="Office location"
+          class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+        >
+      </div>
+
+    </div>
+
+    <!-- Office Hours -->
+    <div class="mt-8">
+      <h3 class="text-xl font-semibold text-emerald-800 mb-3">
+        Office Hours
+      </h3>
+
+      <textarea
+        name="office_hours"
+        rows="3"
+        class="w-full bg-emerald-50 border border-emerald-200 rounded-lg p-4 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+        placeholder="Example: Mon–Fri 9:00 AM – 3:00 PM"
+      >{{ current_user.office_hours }}</textarea>
+    </div>
+
+    <!-- Professional Bio -->
+    <div class="mt-8">
+      <h3 class="text-xl font-semibold text-emerald-800 mb-3">
+        Professional Bio
+      </h3>
+
+      <textarea
+        name="bio"
+        rows="4"
+        class="w-full bg-emerald-50 border border-emerald-200 rounded-lg p-4 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+        placeholder="Tell students about your experience..."
+      >{{ current_user.bio }}</textarea>
+    </div>
+
+    {% endif %}
+
+    <!-- Buttons -->
+    <div class="mt-8 flex justify-end gap-4">
+
+      <a href="/myprofile"
+      class="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition">
+      Cancel
+      </a>
+
+      <button
+      type="submit"
+      class="px-6 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition">
+      Save Changes
+      </button>
+
+    </div>
+
   </div>
-</div>
-
-</div>
-{% if current_user.role == 'student' %}
-<!-- Info Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-<div class="p-4 bg-emerald-50 rounded-lg">
-  <label class="text-sm text-emerald-700 block mb-1">Email</label>
-  <input
-    type="email"
-    name="email"
-    value="{{ current_user.email }}"
-    class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-    required
-  >
-</div>
-
-<div class="p-4 bg-emerald-50 rounded-lg">
-  <label class="text-sm text-emerald-700 block mb-1">Phone</label>
-  <input
-    type="text"
-    name="phone"
-    value="{{profile.Phone if profile else ''}}"
-    placeholder="Enter phone number"
-    class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-  >
-</div>
-
-<div class="p-4 bg-emerald-50 rounded-lg">
-  <label class="text-sm text-emerald-700 block mb-1">Address</label>
-  <input
-    type="text"
-    name="address"
-    value="{{profile.Address if profile else '' }}"
-    placeholder="Enter address"
-    class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-  >
-</div>
-
-</div>
-
-<!-- About / Bio -->
-<div class="mt-8">
-  <h3 class="text-xl font-semibold text-emerald-800 mb-3">
-    About
-  </h3>
-
-  <textarea
-    name="bio"
-    rows="4"
-    class="w-full bg-emerald-50 border border-emerald-200 rounded-lg p-4 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-    placeholder="Tell us about yourself..."
-    value="{{profile.Bio if profile else ''}}"
-  ></textarea>
-</div>
-{% elif current_user.role == 'counselor' %}
-
-<!-- Counselor Info Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-{#   <div class="p-4 bg-emerald-50 rounded-lg">
-    <label class="text-sm text-emerald-700 block mb-1">Employee ID</label>
-    <input
-      type="text"
-      name="employee_id"
-      value="{{ current_user.employee_id }}"
-      placeholder="Enter employee ID"
-      class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-    >
-  </div>
- #}
-  <div class="p-4 bg-emerald-50 rounded-lg">
-    <label class="text-sm text-emerald-700 block mb-1">Email</label>
-    <input
-      type="email"
-      name="email"
-      value="{{ current_user.email }}"
-      class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-      required
-    >
-  </div>
-
-  <div class="p-4 bg-emerald-50 rounded-lg">
-    <label class="text-sm text-emerald-700 block mb-1">Phone</label>
-    <input
-      type="text"
-      name="phone"
-      value="{{ profile.Phone if profile else '' }}"
-      placeholder="Enter phone number"
-      class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-    >
-  </div>
-
-  <div class="p-4 bg-emerald-50 rounded-lg">
-    <label class="text-sm text-emerald-700 block mb-1">Office</label>
-    <input
-      type="text"
-      name="office"
-      value="{{ profile.Office if profile else '' }}"
-      placeholder="Office location"
-      class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-    >
-  </div>
-
-</div>
-
-<!-- Office Hours -->
-<div class="mt-8">
-  <h3 class="text-xl font-semibold text-emerald-800 mb-3">
-    Office Hours
-  </h3>
-
-  <textarea
-    name="office_hours"
-    value="{{profile.OfficeHours if profile else ''}}"
-    rows="3"
-    class="w-full bg-emerald-50 border border-emerald-200 rounded-lg p-4 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-    placeholder="Example: Mon–Fri 9:00 AM – 3:00 PM"
-  >{{ current_user.office_hours }}</textarea>
-</div>
-
-<!-- Professional Bio -->
-<div class="mt-8">
-  <h3 class="text-xl font-semibold text-emerald-800 mb-3">
-    Professional Bio
-  </h3>
-
-  <textarea
-    name="bio"
-    rows="4"
-    class="w-full bg-emerald-50 border border-emerald-200 rounded-lg p-4 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-    placeholder="Tell students about your experience..."
-  >{{ current_user.bio }}</textarea>
-</div>
-
-{% endif %}
-
-
-
-<!-- Buttons -->
-<div class="mt-8 flex justify-end gap-4">
-
-<a href="/myprofile"
-class="px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition">
-Cancel
-</a>
-
-<button
-type="submit"
-class="px-6 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition">
-Save Changes
-</button>
-
-</div>
-
-</div>
-
 </form>
 
 </div>
@@ -211,5 +218,13 @@ Save Changes
 
 {% include "components/footer.html.jinja" %}
 
-</body>
-</html>
+<script>
+function previewProfilePicture(event) {
+  const reader = new FileReader();
+  reader.onload = function(){
+    const output = document.getElementById('profile-preview');
+    output.src = reader.result;
+  };
+  reader.readAsDataURL(event.target.files[0]);
+}
+</script>
