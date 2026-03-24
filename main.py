@@ -63,6 +63,94 @@ def connect_db():
     )
     return conn
 
+def calculate_gpa_for_transcript(grades, gpa_settings):
+    # Extract settings safely
+    system = gpa_settings.get("System", "us_4")
+    max_gpa = float(gpa_settings.get("MaxGPA", 4.0))
+
+    # Validate ScaleJSON
+    scale = gpa_settings.get("ScaleJSON", {})
+    if not isinstance(scale, dict) or "bands" not in scale:
+        scale = {"bands": []}
+
+    bands = scale.get("bands", [])
+    if not isinstance(bands, list):
+        bands = []
+
+    # Validate WeightingJSON
+    weighting = gpa_settings.get("WeightingJSON", {})
+    if not isinstance(weighting, dict):
+        weighting = {}
+
+    def marks_to_letter_and_points(marks):
+        if marks is None:
+            return None, None
+
+        percent = float(marks)
+
+        # Try custom bands first
+        for band in bands:
+            try:
+                band_min = float(band.get("min", 0))
+                band_max = float(band.get("max", 100))
+                if band_min <= percent <= band_max:
+                    letter = band.get("letter")
+                    points = float(band.get("points", 0.0))
+                    return letter, min(points, max_gpa)
+            except:
+                continue  # skip malformed band
+
+        # Fallback US scale
+        if percent >= 90:
+            return "A", min(4.0, max_gpa)
+        elif percent >= 80:
+            return "B", min(3.0, max_gpa)
+        elif percent >= 70:
+            return "C", min(2.0, max_gpa)
+        elif percent >= 60:
+            return "D", min(1.0, max_gpa)
+        else:
+            return "F", 0.0
+
+    overall_quality_points = 0.0
+    overall_credits = 0.0
+
+    for grade in grades:
+        grade_quality_points = 0.0
+        grade_credits = 0.0
+
+        for subj in grade["Subjects"]:
+            credits = subj.get("Credits") or 0
+            marks = subj.get("Marks")
+            category = subj.get("MainCategory")
+
+            if credits and marks is not None:
+                letter, base_points = marks_to_letter_and_points(marks)
+
+                # Apply weighting
+                weight = float(weighting.get(category, 1.0))
+                points = min(base_points * weight, max_gpa)
+
+                subj["Letter"] = letter
+                subj["Points"] = points
+
+                grade_quality_points += points * float(credits)
+                grade_credits += float(credits)
+            else:
+                subj["Letter"] = None
+                subj["Points"] = None
+
+        if grade_credits > 0:
+            grade["GPA"] = round(grade_quality_points / grade_credits, 2)
+            overall_quality_points += grade_quality_points
+            overall_credits += grade_credits
+        else:
+            grade["GPA"] = None
+
+    overall_gpa = round(overall_quality_points / overall_credits, 2) if overall_credits > 0 else None
+    return overall_gpa, grades
+
+
 
 @app.route("/")
 def index():
@@ -520,74 +608,124 @@ def counselor_recommendations():
 def student_academic_record():
     if current_user.role != "student":
         abort(403)
+
     conn = connect_db()
     cur = conn.cursor()
-    
 
     # find student profile
     cur.execute("SELECT ID FROM StudentProfile WHERE UserID = %s", (current_user.id,))
     profile = cur.fetchone()
 
+    # If no student profile exists → return empty transcript
+    if not profile:
+        cur.close()
+        conn.close()
+        return render_template(
+            "student_academic_record.html.jinja",
+            transcript_json="null"
+        )
+
     transcript_data = None
+    student_profile_id = profile["ID"]
 
-    if profile:
-        student_profile_id = profile["ID"]
+    # latest transcript
+    cur.execute("""
+        SELECT * FROM Transcript 
+        WHERE StudentID = %s 
+        ORDER BY CreatedAt DESC LIMIT 1
+    """, (student_profile_id,))
+    transcript = cur.fetchone()
 
-        # latest transcript
-        cur.execute("""
-            SELECT * FROM Transcript 
-            WHERE StudentID = %s 
-            ORDER BY CreatedAt DESC LIMIT 1
-        """, (student_profile_id,))
-        transcript = cur.fetchone()
+    # If no transcript exists → return empty transcript JSON
+    if not transcript:
+        cur.close()
+        conn.close()
+        return render_template(
+            "student_academic_record.html.jinja",
+            transcript_json="null"
+        )
 
-        if transcript:
-            transcript_id = transcript["ID"]
+    # Ownership check AFTER confirming transcript exists
+    if transcript["StudentID"] != student_profile_id:
+        cur.close()
+        conn.close()
+        abort(403)
 
-            # load grades
-            cur.execute("SELECT * FROM Grade WHERE TranscriptID = %s", (transcript_id,))
-            grades = cur.fetchall()
+    transcript_id = transcript["ID"]
 
-            grade_list = []
+    # load grades
+    cur.execute("SELECT * FROM Grade WHERE TranscriptID = %s", (transcript_id,))
+    grades = cur.fetchall()
 
-            for g in grades:
-                grade_id = g["ID"]
-                grade_level = g["GradeLevel"]
+    grade_list = []
 
-                # load subjects
-                cur.execute("SELECT * FROM Subject WHERE GradeID = %s", (grade_id,))
-                subjects = cur.fetchall()
+    for g in grades:
+        grade_id = g["ID"]
+        grade_level = g["GradeLevel"]
 
-                subject_list = []
-                for s in subjects:
-                    subject_list.append({
-                        "Name": s["SubjectName"] or "",
-                        "Letter": s["FinalGrade"] or "",
-                        "Credits": float(s["Credits"]) if s["Credits"] is not None else None,
-                        "Marks": s["Marks"] if s["Marks"] is not None else None,
-                        "Preference": s["Preference"] if s["Preference"] is not None else None,
-                        "MainCategory": s.get("MainCategory") if "MainCategory" in s else None,
-                        "CourseName": s.get("CourseName") if "CourseName" in s else None,
-                        "CustomCourseName": s.get("CustomCourseName") if "CustomCourseName" in s else None
-                    })
+        # load subjects
+        cur.execute("SELECT * FROM Subject WHERE GradeID = %s", (grade_id,))
+        subjects = cur.fetchall()
 
-                grade_list.append({
-                    "GradeLevel": grade_level,
-                    "Subjects": subject_list
-                })
+        subject_list = []
+        for s in subjects:
+            subject_list.append({
+                "Name": s["SubjectName"] or "",
+                "Credits": float(s["Credits"]) if s["Credits"] is not None else None,
+                "Marks": float(s["Marks"]) if s["Marks"] is not None else None,
+                "Preference": s["Preference"] if s["Preference"] is not None else None,
+                "MainCategory": s.get("MainCategory") if "MainCategory" in s else None,
+                "CourseName": s.get("CourseName") if "CourseName" in s else None,
+                "CustomCourseName": s.get("CustomCourseName") if "CustomCourseName" in s else None
+            })
 
-            transcript_data = {
-                "GPA": float(transcript["GPA"]) if transcript["GPA"] is not None else None,
-                "Grades": grade_list
-            }
+        grade_list.append({
+            "GradeLevel": grade_level,
+            "Subjects": subject_list
+        })
+
+    # load GPA settings for this user
+    cur.execute("""
+        SELECT * FROM GPA_Settings
+        WHERE UserID = %s
+        ORDER BY UpdatedAt DESC
+        LIMIT 1
+    """, (current_user.id,))
+    settings = cur.fetchone()
+
+    if settings:
+        gpa_settings = {
+            "System": settings["System"],
+            "MaxGPA": float(settings["MaxGPA"]) if settings["MaxGPA"] is not None else 4.0,
+            "ScaleJSON": json.loads(settings["ScaleJSON"]) if settings["ScaleJSON"] else {},
+            "WeightingJSON": json.loads(settings["WeightingJSON"]) if settings["WeightingJSON"] else {}
+        }
+    else:
+        gpa_settings = {
+            "System": "us_4",
+            "MaxGPA": 4.0,
+            "ScaleJSON": {},
+            "WeightingJSON": {}
+        }
+
+    # calculate GPA using backend logic
+    overall_gpa, grade_list = calculate_gpa_for_transcript(grade_list, gpa_settings)
+
+    transcript_data = {
+        "GPA": overall_gpa,
+        "Grades": grade_list,
+        "GPASettings": gpa_settings
+    }
 
     cur.close()
     conn.close()
 
     return render_template(
         "student_academic_record.html.jinja",
-        transcript_json=json.dumps(transcript_data) if transcript_data else "null"
+        transcript_json=json.dumps(transcript_data)
     )
+
+
 
 
 
@@ -615,30 +753,32 @@ def save_transcript():
 
         student_profile_id = profile["ID"]
 
-        overall_gpa = data.get("GPA", None)
         grades_data = data.get("Grades", [])
 
-        # insert transcript
+        # Insert transcript (no GPA column anymore)
         cur.execute(
-            "INSERT INTO Transcript (StudentID, CourseID, GPA, CreatedAt) "
-            "VALUES (%s, NULL, %s, NOW())",
-            (student_profile_id, overall_gpa)
+            "INSERT INTO Transcript (StudentID, CourseID, CreatedAt) VALUES (%s, NULL, NOW())",
+            (student_profile_id,)
         )
         transcript_id = cur.lastrowid
 
-        # insert grades + subjects
+        # Insert grades + subjects
         for grade in grades_data:
             grade_level = grade.get("GradeLevel")
 
+
+            if not isinstance(grade_level, int) or grade_level < 1 or grade_level > 12:
+                return jsonify({"status": "error", "message": "Invalid grade level"}), 400
+        
+            # Insert grade (no GPA column anymore)
             cur.execute(
-                "INSERT INTO Grade (TranscriptID, GradeLevel, GPA) VALUES (%s, %s, %s)",
-                (transcript_id, grade_level, grade.get("GPA"))
+                "INSERT INTO Grade (TranscriptID, GradeLevel) VALUES (%s, %s)",
+                (transcript_id, grade_level)
             )
             grade_id = cur.lastrowid
 
             for subject in grade.get("Subjects", []):
                 name = subject.get("Name")
-                letter = subject.get("Letter")
                 credits = subject.get("Credits")
                 marks = subject.get("Marks")
                 preference = subject.get("Preference")
@@ -647,21 +787,25 @@ def save_transcript():
                 course_name = subject.get("CourseName")
                 custom_course_name = subject.get("CustomCourseName")
 
-                # basic validation: if CourseName == "Other", require CustomCourseName
+                # If CourseName == "Other", ensure CustomCourseName exists
                 if course_name == "Other" and not custom_course_name:
-                    custom_course_name = name  # fallback to typed name if needed
+                    custom_course_name = name  # fallback
 
+
+                if not name or len(name) > 100:
+                    return jsonify({"status": "error", "message": "Invalid subject name"}), 400
+
+                # Insert subject (FinalGrade removed)
                 cur.execute(
                     """
                     INSERT INTO Subject 
-                    (GradeID, SubjectName, FinalGrade, Credits, Marks, Preference,
+                    (GradeID, SubjectName, Credits, Marks, Preference,
                      MainCategory, CourseName, CustomCourseName)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         grade_id,
                         name,
-                        letter,
                         credits,
                         marks,
                         preference,
@@ -680,6 +824,7 @@ def save_transcript():
     except Exception as e:
         print("FULL ERROR:", repr(e))
         return jsonify({"status": "error", "message": "Server error: " + repr(e)}), 500
+
 
 
 
@@ -947,6 +1092,100 @@ def counselor_save_transcript(student_user_id):
 @app.errorhandler(404)
 def not_found(error):
     return render_template("404.html.jinja"), 404
+
+
+
+
+#Update-------------------------------------
+
+@app.route("/student/gpa_settings", methods=["GET"])
+@login_required
+def get_gpa_settings():
+    if current_user.role != "student":
+        abort(403)
+
+    conn = connect_db()
+    cur = conn.cursor()
+
+    # Find StudentProfile
+    cur.execute("SELECT ID FROM StudentProfile WHERE UserID = %s", (current_user.id,))
+    profile = cur.fetchone()
+
+    if not profile:
+        cur.close()
+        conn.close()
+        return jsonify({"status": "error", "message": "Student profile not found"}), 400
+
+    student_profile_id = profile["ID"]
+
+    # Load GPA settings
+    cur.execute("""
+        SELECT * FROM GPA_Settings
+        WHERE UserID = %s
+        ORDER BY UpdatedAt DESC
+        LIMIT 1
+    """, (current_user.id,))
+    settings = cur.fetchone()
+
+    # If no settings exist → return defaults
+    if not settings:
+        default_settings = {
+            "System": "us_4",
+            "MaxGPA": 4.00,
+            "ScaleJSON": {},
+            "WeightingJSON": {}
+        }
+        cur.close()
+        conn.close()
+        return jsonify(default_settings)
+
+    # Convert JSON fields
+    settings["ScaleJSON"] = json.loads(settings["ScaleJSON"])
+    settings["WeightingJSON"] = json.loads(settings["WeightingJSON"])
+
+    cur.close()
+    conn.close()
+
+    return jsonify(settings)
+
+
+
+@app.route("/student/gpa_settings", methods=["POST"])
+@login_required
+def save_gpa_settings():
+    if current_user.role != "student":
+        abort(403)
+    
+    cur.execute("SELECT ID FROM StudentProfile WHERE UserID = %s", (current_user.id,))
+    profile = cur.fetchone()
+
+    if not profile:
+        abort(403)
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"status": "error", "message": "No data received"}), 400
+
+    system = data.get("System")
+    max_gpa = data.get("MaxGPA")
+    scale_json = json.dumps(data.get("ScaleJSON", {}))
+    weighting_json = json.dumps(data.get("WeightingJSON", {}))
+
+    conn = connect_db()
+    cur = conn.cursor()
+
+    # Insert new settings row (we keep history)
+    cur.execute("""
+        INSERT INTO GPA_Settings (UserID, System, MaxGPA, ScaleJSON, WeightingJSON)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (current_user.id, system, max_gpa, scale_json, weighting_json))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"status": "success", "message": "GPA settings saved successfully."})
 
 
 

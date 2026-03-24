@@ -8,6 +8,20 @@
     <!-- Tailwind CSS CDN -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gpa-tab {
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+        }
+
+        .gpa-tab.active-tab {
+            border-color: #2563eb;
+            /* blue-600 */
+            font-weight: 600;
+            color: #2563eb;
+        }
+    </style>
+
 </head>
 
 <body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
@@ -43,103 +57,81 @@
         </div>
 
         <!-- STEP 3 -->
-        <div id="step3" class="bg-white shadow-md rounded-lg p-6 mb-6 hidden">
-            <h2 class="text-2xl font-bold mb-2">Customize Grading Scale</h2>
-            <p class="mb-4 text-gray-700">You can edit the default grading scale below.</p>
 
-            <div class="overflow-x-auto">
-                <table id="scaleTable" class="min-w-full border border-gray-200">
-                    <thead class="bg-gray-200">
-                        <tr>
-                            <th class="px-4 py-2 text-left">Minimum %</th>
-                            <th class="px-4 py-2 text-left">Letter Grade</th>
-                            <th class="px-4 py-2 text-left">Remove</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="97"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="A+"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="93"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="A"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="90"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="A-"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="87"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="B+"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="83"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="B"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="80"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="B-"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="70"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="C"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="60"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="D"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="0"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="F"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div id="step3" class="hidden">
+            <h2 class="text-2xl font-bold mb-4">GPA Settings</h2>
+
+            <!-- Tabs -->
+            <div class="border-b mb-4 flex space-x-6">
+                <button class="gpa-tab active-tab" data-tab="systemTab">GPA System</button>
+                <button class="gpa-tab" data-tab="scaleTab">Scale</button>
+                <button class="gpa-tab" data-tab="weightingTab">Weighting</button>
+                <button class="gpa-tab" data-tab="advancedTab">Advanced</button>
             </div>
 
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-4 rounded" onclick="addScaleRow()">+
-                Add Scale Row</button>
-            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 mt-4 ml-2 rounded"
-                onclick="startTranscript()">Continue</button>
+            <!-- GPA SYSTEM TAB -->
+            <div id="systemTab" class="gpa-tab-content">
+                <label class="block font-semibold mb-2">Select GPA System</label>
+                <select id="presetGPA" class="border p-2 rounded w-full mb-4">
+                    <option value="us_4">US 4.0 (Unweighted)</option>
+                    <option value="us_5">US 5.0 (Weighted)</option>
+                    <option value="ib">IB (1–7)</option>
+                    <option value="uk">UK (A*–E)</option>
+                    <option value="asia_4">Asia (100 → 4.0)</option>
+                    <option value="asia_5">Asia (100 → 5.0)</option>
+                    <option value="custom">Custom</option>
+                </select>
+
+                <button onclick="applyPresetGPA()" class="bg-blue-600 text-white px-4 py-2 rounded">
+                    Apply System
+                </button>
+            </div>
+
+            <!-- SCALE TAB -->
+            <div id="scaleTab" class="gpa-tab-content hidden">
+                <h3 class="font-semibold mb-2">Marks → Letter Conversion</h3>
+                <div id="scaleTableContainer"></div>
+            </div>
+
+            <!-- WEIGHTING TAB -->
+            <div id="weightingTab" class="gpa-tab-content hidden">
+                <h3 class="font-semibold mb-2">Weighting Rules</h3>
+                <div id="weightingTableContainer"></div>
+            </div>
+
+            <!-- ADVANCED TAB -->
+            <div id="advancedTab" class="gpa-tab-content hidden">
+                <label class="block font-semibold mb-2">Max GPA</label>
+                <input id="maxGPAInput" type="number" step="0.1" class="border p-2 rounded w-full">
+            </div>
+
+            <!-- Footer -->
+            <div class="flex justify-end mt-6">
+                <button onclick="goBackToStep2()" class="px-4 py-2 mr-2">Back</button>
+                <button onclick="saveGPASettingsAndContinue()" class="bg-green-600 text-white px-4 py-2 rounded">
+                    Continue to Transcript
+                </button>
+            </div>
         </div>
 
+
+
         <!-- STEP 4 -->
+        <div class="flex gap-3 mb-4">
+            <button onclick="openGPASettings()" class="bg-blue-600 text-white px-4 py-2 rounded">
+                Change GPA System
+            </button>
+
+            <button onclick="openScaleSettings()" class="bg-blue-600 text-white px-4 py-2 rounded">
+                Marks → Letter Conversion
+            </button>
+
+            <button onclick="openAdvancedGPASettings()" class="bg-gray-700 text-white px-4 py-2 rounded">
+                Advanced GPA Settings
+            </button>
+        </div>
+
+
         <div id="transcriptSection" class="hidden relative">
             <div class="flex justify-end mb-2">
                 <button id="addGradeBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded hidden"
@@ -153,12 +145,26 @@
     </div>
 
     <script>
+        let gpaSettings = null;
 
         const savedTranscript = {{ transcript_json| safe}};
 
         let gradingScale = [];
         let gradesShown = []; // Track which grades are visible
         let transcriptLoaded = false; //flag to detect whether transcript is loaded.
+
+
+        document.addEventListener("click", function (e) {
+            if (e.target.classList.contains("gpa-tab")) {
+                const tab = e.target.dataset.tab;
+
+                document.querySelectorAll(".gpa-tab-content").forEach(el => el.classList.add("hidden"));
+                document.getElementById(tab).classList.remove("hidden");
+
+                document.querySelectorAll(".gpa-tab").forEach(b => b.classList.remove("active-tab"));
+                e.target.classList.add("active-tab");
+            }
+        });
 
         const courseOptions = {
             "Math": [
@@ -260,6 +266,267 @@
 
 
 
+        //GPA Presets
+
+        function applyPresetGPA() {
+            const preset = document.getElementById("presetGPA").value;
+
+            if (preset === "us_4") loadUS4();
+            if (preset === "us_5") loadUS5();
+            if (preset === "ib") loadIB();
+            if (preset === "uk") loadUK();
+            if (preset === "asia_4") loadAsia4();
+            if (preset === "asia_5") loadAsia5();
+            if (preset === "custom") loadCustom();
+        }
+
+        // USA 4.0 unweighted
+        function loadUS4() {
+            document.getElementById("maxGPAInput").value = 4.0;
+
+            const scale = [
+                { min: 90, max: 100, letter: "A", points: 4.0 },
+                { min: 80, max: 89, letter: "B", points: 3.0 },
+                { min: 70, max: 79, letter: "C", points: 2.0 },
+                { min: 60, max: 69, letter: "D", points: 1.0 },
+                { min: 0, max: 59, letter: "F", points: 0.0 }
+            ];
+
+            const weighting = {}; // no weighting
+
+            renderScaleTable(scale);
+            renderWeightingTable(weighting);
+        }
+
+        // USA 5.0 Weighted
+
+        function loadUS5() {
+            document.getElementById("maxGPAInput").value = 5.0;
+
+            const scale = [
+                { min: 90, max: 100, letter: "A", points: 4.0 },
+                { min: 80, max: 89, letter: "B", points: 3.0 },
+                { min: 70, max: 79, letter: "C", points: 2.0 },
+                { min: 60, max: 69, letter: "D", points: 1.0 },
+                { min: 0, max: 59, letter: "F", points: 0.0 }
+            ];
+
+            const weighting = {
+                "Honors": 0.5,
+                "AP": 1.0
+            };
+
+            renderScaleTable(scale);
+            renderWeightingTable(weighting);
+        }
+
+        // IB (1-7)
+
+        function loadIB() {
+            document.getElementById("maxGPAInput").value = 7.0;
+
+            const scale = [
+                { min: 7, max: 7, letter: "7", points: 7 },
+                { min: 6, max: 6, letter: "6", points: 6 },
+                { min: 5, max: 5, letter: "5", points: 5 },
+                { min: 4, max: 4, letter: "4", points: 4 },
+                { min: 3, max: 3, letter: "3", points: 3 },
+                { min: 2, max: 2, letter: "2", points: 2 },
+                { min: 1, max: 1, letter: "1", points: 1 }
+            ];
+
+            const weighting = {
+                "HL": 0.5
+            };
+
+            renderScaleTable(scale);
+            renderWeightingTable(weighting);
+        }
+
+
+        // UK (A* - E)
+
+        function loadUK() {
+            document.getElementById("maxGPAInput").value = 4.0;
+
+            const scale = [
+                { min: 90, max: 100, letter: "A*", points: 4.0 },
+                { min: 80, max: 89, letter: "A", points: 4.0 },
+                { min: 70, max: 79, letter: "B", points: 3.0 },
+                { min: 60, max: 69, letter: "C", points: 2.0 },
+                { min: 50, max: 59, letter: "D", points: 1.0 },
+                { min: 40, max: 49, letter: "E", points: 0.5 }
+            ];
+
+            const weighting = {};
+
+            renderScaleTable(scale);
+            renderWeightingTable(weighting);
+        }
+
+
+        // Asia (100 -> 4.0)
+        function loadAsia4() {
+            document.getElementById("maxGPAInput").value = 4.0;
+
+            const scale = [
+                { min: 90, max: 100, letter: "A", points: 4.0 },
+                { min: 80, max: 89, letter: "B", points: 3.0 },
+                { min: 70, max: 79, letter: "C", points: 2.0 },
+                { min: 60, max: 69, letter: "D", points: 1.0 },
+                { min: 0, max: 59, letter: "F", points: 0.0 }
+            ];
+
+            const weighting = {};
+
+            renderScaleTable(scale);
+            renderWeightingTable(weighting);
+        }
+
+        // Asia (100 -> 5.0)
+        function loadAsia5() {
+            document.getElementById("maxGPAInput").value = 5.0;
+
+            const scale = [
+                { min: 90, max: 100, letter: "A", points: 5.0 },
+                { min: 80, max: 89, letter: "B", points: 4.0 },
+                { min: 70, max: 79, letter: "C", points: 3.0 },
+                { min: 60, max: 69, letter: "D", points: 2.0 },
+                { min: 0, max: 59, letter: "F", points: 0.0 }
+            ];
+
+            const weighting = {};
+
+            renderScaleTable(scale);
+            renderWeightingTable(weighting);
+        }
+        // Custom (empty tables)
+        function loadCustom() {
+            document.getElementById("maxGPAInput").value = "";
+
+            renderScaleTable([]);
+            renderWeightingTable({});
+        }
+
+
+
+        // SCALE TABLE BUILDER
+
+        function renderScaleTable(scale) {
+            const container = document.getElementById("scaleTableContainer");
+
+            let html = `
+        <table class="w-full border">
+            <tr class="bg-gray-100">
+                <th class="border p-2">Min</th>
+                <th class="border p-2">Max</th>
+                <th class="border p-2">Letter</th>
+                <th class="border p-2">Points</th>
+            </tr>
+    `;
+
+            scale.forEach((row, i) => {
+                html += `
+            <tr>
+                <td class="border p-2"><input type="number" value="${row.min}" class="scale-min-${i} w-full border p-1"></td>
+                <td class="border p-2"><input type="number" value="${row.max}" class="scale-max-${i} w-full border p-1"></td>
+                <td class="border p-2"><input type="text" value="${row.letter}" class="scale-letter-${i} w-full border p-1"></td>
+                <td class="border p-2"><input type="number" step="0.1" value="${row.points}" class="scale-points-${i} w-full border p-1"></td>
+            </tr>
+        `;
+            });
+
+            html += `</table>`;
+
+            container.innerHTML = html;
+        }
+
+        // WEIGHTING TABLE BUILDER
+
+        function renderWeightingTable(weighting) {
+            const container = document.getElementById("weightingTableContainer");
+
+            let html = `
+        <table class="w-full border">
+            <tr class="bg-gray-100">
+                <th class="border p-2">Category</th>
+                <th class="border p-2">Weight</th>
+            </tr>
+    `;
+
+            Object.keys(weighting).forEach((cat, i) => {
+                html += `
+            <tr>
+                <td class="border p-2"><input type="text" value="${cat}" class="weight-cat-${i} w-full border p-1"></td>
+                <td class="border p-2"><input type="number" step="0.1" value="${weighting[cat]}" class="weight-val-${i} w-full border p-1"></td>
+            </tr>
+        `;
+            });
+
+            html += `</table>`;
+
+            container.innerHTML = html;
+        }
+
+        // LOAD EXISTING SETTINGS INTO STEP 3
+
+        function loadGPASettingsIntoUI() {
+            fetch("/student/gpa_settings")
+                .then(res => res.json())
+                .then(data => {
+                    if (!data) return;
+
+                    document.getElementById("maxGPAInput").value = data.MaxGPA || "";
+
+                    renderScaleTable(data.ScaleJSON || []);
+                    renderWeightingTable(data.WeightingJSON || {});
+                });
+        }
+
+
+        // SAVE SETTINGS (POST to backend)
+
+        function saveGPASettings(callback) {
+            const maxGPA = parseFloat(document.getElementById("maxGPAInput").value);
+
+            // Collect scale rows
+            const scaleRows = [];
+            const scaleInputs = document.querySelectorAll("[class^='scale-min-']");
+            scaleInputs.forEach((_, i) => {
+                scaleRows.push({
+                    min: parseFloat(document.querySelector(`.scale-min-${i}`).value),
+                    max: parseFloat(document.querySelector(`.scale-max-${i}`).value),
+                    letter: document.querySelector(`.scale-letter-${i}`).value,
+                    points: parseFloat(document.querySelector(`.scale-points-${i}`).value)
+                });
+            });
+
+            // Collect weighting rows
+            const weighting = {};
+            const weightInputs = document.querySelectorAll("[class^='weight-cat-']");
+            weightInputs.forEach((_, i) => {
+                const cat = document.querySelector(`.weight-cat-${i}`).value;
+                const val = parseFloat(document.querySelector(`.weight-val-${i}`).value);
+                if (cat) weighting[cat] = val;
+            });
+
+            fetch("/student/gpa_settings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    MaxGPA: maxGPA,
+                    ScaleJSON: scaleRows,
+                    WeightingJSON: weighting
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    if (callback) callback();
+                });
+        }
+
+
+
         // STEP NAVIGATION
         function goToStep2() {
             if (!studentType.value) { alert("Select student type"); return; }
@@ -267,21 +534,38 @@
 
             if (studentType.value === "hs") {
                 step2.classList.remove("hidden");
-            } else {
-                step3.classList.remove("hidden");
             }
         }
 
         function goToStep3() {
-            if (studentType.value === "hs" && !currentGrade.value) {
-                alert("Select current grade");
-                return;
-            }
-            step2.classList.add("hidden");
-            step3.classList.remove("hidden");
+            document.getElementById("step2").classList.add("hidden");
+            document.getElementById("step3").classList.remove("hidden");
+
+            // Optionally load existing GPA settings from backend into Step 3
+            loadGPASettingsIntoUI();
         }
 
-        function startTranscript() {
+        function goBackToStep2() {
+            document.getElementById("step3").classList.add("hidden");
+            document.getElementById("step2").classList.remove("hidden");
+        }
+
+        function saveGPASettingsAndContinue() {
+            // This will POST to /student/gpa_settings, then go to Step 4
+            saveGPASettings(() => {
+                document.getElementById("step3").classList.add("hidden");
+                document.getElementById("step4").classList.remove("hidden");
+                startTranscript(); // your existing transcript init
+            });
+        }
+
+
+
+
+        async function startTranscript() {
+            // Load GPA settings before building transcript
+            await loadGPASettingsForTranscript();
+
             gradingScale = [];
 
             // Read all rows from the scale table
@@ -297,15 +581,13 @@
             // Sort highest → lowest
             gradingScale.sort((a, b) => b.min - a.min);
 
-            // Hide Step 3
-            document.getElementById("step3").classList.add("hidden");
-
             // Show transcript section (Step 4)
             document.getElementById("transcriptSection").classList.remove("hidden");
 
             // Build transcript UI
             buildTranscript();
         }
+
 
 
 
@@ -330,14 +612,18 @@
         }
 
         function convertToLetter(marks) {
-            // gradingScale must be sorted from highest min → lowest min
-            for (const grade of gradingScale) {
-                if (marks >= grade.min) {
-                    return grade.letter;
+            if (!gpaSettings || !gpaSettings.ScaleJSON) return "";
+
+            const bands = gpaSettings.ScaleJSON.bands;
+
+            for (const b of bands) {
+                if (marks >= b.min && marks <= b.max) {
+                    return b.letter;
                 }
             }
-            return ""; // fallback (should never happen)
+            return "";
         }
+
 
 
 
@@ -693,13 +979,12 @@
         }
 
         function letterToPoint(letter) {
-            const scale = {
-                "A+": 4, "A": 4, "A-": 3.7,
-                "B+": 3.3, "B": 3, "B-": 2.7,
-                "C+": 2.3, "C": 2, "D": 1, "F": 0
-            };
-            return scale[letter] || 0;
+            if (!gpaSettings || !gpaSettings.ScaleJSON) return 0;
+
+            const band = gpaSettings.ScaleJSON.bands.find(b => b.letter === letter);
+            return band ? band.points : 0;
         }
+
 
         function updateGPA(g) {
             const rows = document.querySelectorAll("#tableBody" + g + " tr");
@@ -710,14 +995,35 @@
                 const cred = parseFloat(r.children[4].querySelector("input").value);
 
                 if (letter && !isNaN(cred) && cred > 0) {
-                    total += letterToPoint(letter) * cred;
+
+                    // Base points from scale
+                    let point = letterToPoint(letter);
+
+                    // Apply weighting rules
+                    if (gpaSettings && gpaSettings.WeightingJSON) {
+                        const category = r.children[0].querySelector("select").value;
+                        const weight = gpaSettings.WeightingJSON[category];
+                        if (weight) {
+                            point += weight;
+                        }
+                    }
+
+                    total += point * cred;
                     credits += cred;
                 }
             });
 
-            const gpa = credits > 0 ? (total / credits).toFixed(2) : "0.00";
-            document.getElementById("gpa" + g).innerText = gpa;
+            let gpa = credits > 0 ? (total / credits) : 0;
+
+            // Enforce Max GPA
+            if (gpaSettings && gpaSettings.MaxGPA) {
+                gpa = Math.min(gpa, gpaSettings.MaxGPA);
+            }
+
+            document.getElementById("gpa" + g).innerText = gpa.toFixed(2);
         }
+
+
 
 
         async function saveChanges() {
@@ -732,20 +1038,20 @@
                     const customInput = row.querySelector("td:nth-child(2) input");
 
                     const marksInput = row.querySelector("td:nth-child(3) input");
-                    const letterInput = row.querySelector("td:nth-child(4) input");
                     const creditsInput = row.querySelector("td:nth-child(5) input");
                     const prefSelect = row.querySelector("td:nth-child(6) select");
 
                     const mainCategory = categorySelect.value || null;
                     const courseName = courseSelect.value || null;
-                    const customCourseName = customInput.classList.contains("hidden") ? null : (customInput.value.trim() || null);
+                    const customCourseName = customInput.classList.contains("hidden")
+                        ? null
+                        : (customInput.value.trim() || null);
 
                     const marks = parseFloat(marksInput.value);
-                    const letter = letterInput.value;
                     const credits = parseFloat(creditsInput.value);
                     const preference = parseInt(prefSelect.value);
 
-                    // basic validation: skip completely empty rows
+                    // Skip completely empty rows
                     if (!mainCategory && !courseName && isNaN(marks) && isNaN(credits) && !preference) {
                         return;
                     }
@@ -755,52 +1061,27 @@
                         CourseName: courseName,
                         CustomCourseName: customCourseName,
                         Marks: isNaN(marks) ? null : marks,
-                        Letter: letter || null,
                         Credits: isNaN(credits) ? null : credits,
                         Preference: isNaN(preference) ? null : preference,
-                        // Name kept for backward compatibility / display
                         Name: customCourseName || courseName || ""
                     });
                 });
 
                 if (subjects.length > 0) {
-                    let total = 0, creditsSum = 0;
-
-                    subjects.forEach(sub => {
-                        if (sub.Credits && sub.Letter) {
-                            let point = letterToPoint(sub.Letter);
-                            total += point * sub.Credits;
-                            creditsSum += sub.Credits;
-                        }
-                    });
-
-                    let gpa = creditsSum ? (total / creditsSum).toFixed(2) : 0;
-
                     grades.push({
                         GradeLevel: g,
-                        GPA: gpa,
                         Subjects: subjects
                     });
                 }
             });
 
-            let total = 0, creditsSum = 0;
-            grades.forEach(gr => {
-                total += parseFloat(gr.GPA);
-                creditsSum++;
-            });
-            let overallGPA = creditsSum ? (total / creditsSum).toFixed(2) : 0;
-
-            console.log("Saving transcript:", { GPA: overallGPA, Grades: grades });
+            console.log("Saving transcript (raw):", { Grades: grades });
 
             try {
                 const response = await fetch("/save_transcript", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        GPA: overallGPA,
-                        Grades: grades
-                    })
+                    body: JSON.stringify({ Grades: grades })
                 });
 
                 const data = await response.json();
@@ -811,6 +1092,8 @@
                 alert("Error saving transcript. See console.");
             }
         }
+
+
 
 
 
@@ -826,112 +1109,117 @@
             // Skip steps 1–3
             step1.classList.add("hidden");
             step2.classList.add("hidden");
-            step3.classList.add("hidden");
             transcriptSection.classList.remove("hidden");
 
             // Build grade sections
             gradesShown = data.Grades.map(g => g.GradeLevel);
             rebuildTranscript();
 
-            // Fill subjects
+            // Fill subjects + use backend GPA
             data.Grades.forEach(g => {
                 const tbody = document.querySelector(`#tableBody${g.GradeLevel}`);
 
                 g.Subjects.forEach(sub => {
                     const row = document.createElement("tr");
-                    const categoryOptionsHtml = mainCategories.map(c => `
-    <option value="${c}" ${sub.MainCategory === c ? "selected" : ""}>${c}</option>
-`).join("");
 
-                    // determine course list for this subject
+                    const categoryOptionsHtml = mainCategories.map(c => `
+                <option value="${c}" ${sub.MainCategory === c ? "selected" : ""}>${c}</option>
+            `).join("");
+
+                    // Determine course list
                     let courseList = [];
                     if (sub.MainCategory && courseOptions[sub.MainCategory]) {
                         courseList = courseOptions[sub.MainCategory];
                     }
 
                     const courseOptionsHtml = ['<option value="">Select course</option>']
-                        .concat(courseList.map(c => `<option value="${c}" ${sub.CourseName === c ? "selected" : ""}>${c}</option>`))
+                        .concat(courseList.map(c => `
+                    <option value="${c}" ${sub.CourseName === c ? "selected" : ""}>${c}</option>
+                `))
                         .join("");
 
                     const isOther = sub.CourseName === "Other";
                     const customName = sub.CustomCourseName || (isOther ? (sub.Name || "") : "");
 
                     row.innerHTML = `
-    <!-- Category -->
-    <td class="border px-4 py-2">
-        <select class="w-full border border-gray-300 rounded p-1"
-                onchange="onCategoryChange(this, ${g.GradeLevel})">
-            <option value="">Select category</option>
-            ${categoryOptionsHtml}
-        </select>
-    </td>
+                <!-- Category -->
+                <td class="border px-4 py-2">
+                    <select class="w-full border border-gray-300 rounded p-1"
+                            onchange="onCategoryChange(this, ${g.GradeLevel})">
+                        <option value="">Select category</option>
+                        ${categoryOptionsHtml}
+                    </select>
+                </td>
 
-    <!-- Subject (Course) -->
-    <td class="border px-4 py-2">
-        <select class="w-full border border-gray-300 rounded p-1"
-                onchange="onCourseChange(this, ${g.GradeLevel})">
-            ${courseOptionsHtml}
-        </select>
-        <input class="w-full border border-gray-300 rounded p-1 mt-1 ${isOther ? "" : "hidden"}"
-               placeholder="Enter course name"
-               value="${customName}">
-    </td>
+                <!-- Subject -->
+                <td class="border px-4 py-2">
+                    <select class="w-full border border-gray-300 rounded p-1"
+                            onchange="onCourseChange(this, ${g.GradeLevel})">
+                        ${courseOptionsHtml}
+                    </select>
+                    <input class="w-full border border-gray-300 rounded p-1 mt-1 ${isOther ? "" : "hidden"}"
+                           placeholder="Enter course name"
+                           value="${customName}">
+                </td>
 
-    <!-- Marks -->
-    <td class="border px-4 py-2">
-       <input type="text"
-       value="${sub.Marks ?? ''}"
-       oninput="forceNumeric(this); updateGrade(this, ${g.GradeLevel})"
-       class="w-full border rounded p-1">
+                <!-- Marks -->
+                <td class="border px-4 py-2">
+                    <input type="text"
+                           value="${sub.Marks ?? ''}"
+                           oninput="forceNumeric(this); updateGrade(this, ${g.GradeLevel})"
+                           class="w-full border rounded p-1">
+                </td>
 
+                <!-- Letter (from backend) -->
+                <td class="border px-4 py-2">
+                    <input value="${sub.Letter ?? ''}" readonly
+                           class="w-full border rounded p-1 bg-gray-100">
+                </td>
 
-    </td>
+                <!-- Credits -->
+                <td class="border px-4 py-2">
+                    <input type="text"
+                           value="${sub.Credits ?? ''}"
+                           oninput="forceDecimal(this); updateGPA(${g.GradeLevel})"
+                           class="w-full border rounded p-1">
+                </td>
 
-    <!-- Letter -->
-    <td class="border px-4 py-2">
-        <input value="${sub.Letter ?? ''}" readonly 
-               class="w-full border rounded p-1 bg-gray-100">
-    </td>
+                <!-- Preference -->
+                <td class="border px-4 py-2">
+                    <select class="w-full border border-gray-300 rounded p-1">
+                        <option value="">--</option>
+                        <option value="1" ${sub.Preference == 1 ? "selected" : ""}>1</option>
+                        <option value="2" ${sub.Preference == 2 ? "selected" : ""}>2</option>
+                        <option value="3" ${sub.Preference == 3 ? "selected" : ""}>3</option>
+                        <option value="4" ${sub.Preference == 4 ? "selected" : ""}>4</option>
+                        <option value="5" ${sub.Preference == 5 ? "selected" : ""}>5</option>
+                    </select>
+                </td>
 
-    <!-- Credits -->
-    <td class="border px-4 py-2">
-        <input type="text"
-       value="${sub.Credits ?? ''}"
-       oninput="forceDecimal(this); updateGPA(${g.GradeLevel})"
-       class="w-full border rounded p-1">
-
-
-    </td>
-
-    <!-- Preference -->
-    <td class="border px-4 py-2">
-        <select class="w-full border border-gray-300 rounded p-1">
-            <option value="">--</option>
-            <option value="1" ${sub.Preference == 1 ? "selected" : ""}>1</option>
-            <option value="2" ${sub.Preference == 2 ? "selected" : ""}>2</option>
-            <option value="3" ${sub.Preference == 3 ? "selected" : ""}>3</option>
-            <option value="4" ${sub.Preference == 4 ? "selected" : ""}>4</option>
-            <option value="5" ${sub.Preference == 5 ? "selected" : ""}>5</option>
-        </select>
-    </td>
-
-    <!-- Remove -->
-    <td class="border px-4 py-2">
-        <button onclick="deleteRow(this, ${g.GradeLevel})"
-                class="bg-red-600 text-white px-2 py-1 rounded">
-            X
-        </button>
-    </td>
-`;
-
-
+                <!-- Remove -->
+                <td class="border px-4 py-2">
+                    <button onclick="deleteRow(this, ${g.GradeLevel})"
+                            class="bg-red-600 text-white px-2 py-1 rounded">
+                        X
+                    </button>
+                </td>
+            `;
 
                     tbody.appendChild(row);
                 });
 
-                updateGPA(g.GradeLevel);
+                // ⭐ Use backend GPA instead of recalculating
+                const gpaSpan = document.getElementById(`gpa${g.GradeLevel}`);
+                if (gpaSpan) {
+                    if (g.GPA != null) {
+                        gpaSpan.innerText = parseFloat(g.GPA).toFixed(2);
+                    } else {
+                        gpaSpan.innerText = "0.00";
+                    }
+                }
             });
         }
+
 
         if (savedTranscript) {
             loadSavedTranscript(savedTranscript);
