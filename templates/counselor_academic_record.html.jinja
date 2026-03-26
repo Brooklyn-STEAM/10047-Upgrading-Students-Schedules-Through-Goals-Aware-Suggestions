@@ -105,6 +105,105 @@
         let editMode = false;
         let currentTranscript = null; // store loaded transcript
 
+
+        const courseOptions = {
+            "Math": [
+                "General Math", "Mathematics", "Integrated Math", "Integrated Math I", "Integrated Math II", "Integrated Math III",
+                "Algebra I", "Algebra II", "Linear Algebra",
+                "Geometry", "Advanced Geometry",
+                "Trigonometry", "Pre-Calculus", "Functions & Relations",
+                "Calculus", "AP Calculus AB", "AP Calculus BC",
+                "Statistics", "AP Statistics", "Data Analysis",
+                "Higher Maths", "Further Maths", "Additional Mathematics", "Pure Mathematics", "Applied Mathematics",
+                "Mathematical Methods", "Specialist Mathematics",
+                "Cambridge IGCSE Mathematics", "Cambridge Additional Mathematics",
+                "CBSE Mathematics", "ICSE Mathematics",
+                "Other"
+            ],
+            "Science": [
+                "General Science", "Integrated Science", "Physical Science", "Life Science",
+                "Biology", "Advanced Biology", "AP Biology", "IB Biology SL", "IB Biology HL",
+                "Chemistry", "Advanced Chemistry", "AP Chemistry", "IB Chemistry SL", "IB Chemistry HL",
+                "Physics", "Advanced Physics", "AP Physics 1", "AP Physics 2",
+                "AP Physics C: Mechanics", "AP Physics C: Electricity & Magnetism",
+                "IB Physics SL", "IB Physics HL",
+                "Environmental Science", "AP Environmental Science", "Earth Science", "Marine Science",
+                "Home Science", "Food Science", "Health Science", "Agricultural Science",
+                "Cambridge IGCSE Biology", "Cambridge IGCSE Chemistry", "Cambridge IGCSE Physics",
+                "CBSE Science", "ICSE Science",
+                "Other"
+            ],
+            "English / Language Arts": [
+                "English", "English Language Arts (ELA)", "English Literature", "English Composition",
+                "English 1st Paper", "English 2nd Paper",
+                "English 9", "English 10", "English 11", "English 12",
+                "AP English Language", "AP English Literature",
+                "IB English A: Language & Literature SL", "IB English A: Language & Literature HL",
+                "IB English A: Literature SL", "IB English A: Literature HL",
+                "Cambridge IGCSE English", "Cambridge IGCSE Literature",
+                "CBSE English", "ICSE English",
+                "Other"
+            ],
+            "Social Studies / Humanities": [
+                "History", "World History", "US History", "European History",
+                "AP World History", "AP US History", "AP European History",
+                "Geography", "Civics", "Government", "Political Science",
+                "Sociology", "Psychology",
+                "Economics", "AP Microeconomics", "AP Macroeconomics",
+                "IB History SL", "IB History HL", "IB Economics SL", "IB Economics HL",
+                "Cambridge IGCSE History", "Cambridge IGCSE Geography",
+                "CBSE Social Science", "ICSE History & Civics",
+                "Other"
+            ],
+            "Computer Science / Technology": [
+                "Computer Science", "Information Technology", "Programming",
+                "Web Development", "Software Development",
+                "AP Computer Science A", "AP Computer Science Principles",
+                "IB Computer Science SL", "IB Computer Science HL",
+                "Data Science", "Robotics", "Artificial Intelligence",
+                "Digital Literacy",
+                "Cambridge IGCSE Computer Science",
+                "CBSE Computer Applications", "ICSE Computer Studies",
+                "Other"
+            ],
+            "Business / Commerce": [
+                "Business Studies", "Accounting", "Finance", "Marketing", "Entrepreneurship",
+                "Economics", "AP Microeconomics", "AP Macroeconomics",
+                "IB Business Management SL", "IB Business Management HL",
+                "Cambridge IGCSE Business Studies", "Cambridge IGCSE Accounting",
+                "CBSE Business Studies", "ICSE Commercial Studies",
+                "Other"
+            ],
+            "Arts": [
+                "Visual Arts", "Fine Arts", "Music", "Drama", "Theatre",
+                "Photography", "Graphic Design", "Digital Media",
+                "AP Art & Design",
+                "IB Visual Arts SL", "IB Visual Arts HL",
+                "Cambridge IGCSE Art & Design",
+                "Other"
+            ],
+            "Foreign Language": [
+                "Spanish", "French", "German", "Mandarin", "Arabic",
+                "Hindi", "Bengali", "Urdu", "Japanese", "Korean",
+                "Latin", "Greek",
+                "AP Spanish", "AP French",
+                "IB Language B SL", "IB Language B HL",
+                "Cambridge IGCSE Languages",
+                "Other"
+            ],
+            "Physical Education / Health": [
+                "Physical Education", "Health", "Sports Science", "Fitness", "Yoga",
+                "IB Sports, Exercise & Health Science",
+                "Cambridge IGCSE Physical Education",
+                "Other"
+            ],
+            "Other": [
+                "Other"
+            ]
+        };
+
+        const mainCategories = Object.keys(courseOptions);
+
         // Select a student from the list
         function selectStudent(studentUserId, studentName, allowEditFlag) {
             currentStudentId = studentUserId;
@@ -189,7 +288,8 @@
                             <table class="min-w-full border border-gray-200 text-sm">
                                 <thead class="bg-gray-100">
                                     <tr>
-                                        <th class="px-3 py-2 text-left">Subject</th>
+                                        <th class="px-3 py-2 text-left">Category</th>
+                                        <th class="px-3 py-2 text-left">Course</th>
                                         <th class="px-3 py-2 text-left">Marks (%)</th>
                                         <th class="px-3 py-2 text-left">Letter</th>
                                         <th class="px-3 py-2 text-left">Credits</th>
@@ -197,6 +297,7 @@
                                         <th class="px-3 py-2 text-left edit-only hidden">Remove</th>
                                     </tr>
                                 </thead>
+
                                 <tbody id="gradeBody-${g.GradeLevel}">
                                 </tbody>
                             </table>
@@ -218,48 +319,97 @@
                 // Fill subjects
                 g.Subjects.forEach(sub => {
                     const row = document.createElement("tr");
+
+                    const categoryOptionsHtml = mainCategories.map(c => `
+        <option value="${c}" ${sub.MainCategory === c ? "selected" : ""}>${c}</option>
+    `).join("");
+
+                    let courseList = [];
+                    if (sub.MainCategory && courseOptions[sub.MainCategory]) {
+                        courseList = courseOptions[sub.MainCategory];
+                    }
+
+                    const courseOptionsHtml = ['<option value="">Select course</option>']
+                        .concat(courseList.map(c => `
+            <option value="${c}" ${sub.CourseName === c ? "selected" : ""}>${c}</option>
+        `))
+                        .join("");
+
+                    const isOther = sub.CourseName === "Other";
+                    const customName = sub.CustomCourseName || (isOther ? (sub.Name || "") : "");
+
                     row.innerHTML = `
-                        <td class="border px-3 py-2">
-                            <input class="w-full border border-gray-300 rounded p-1 text-sm"
-                                   value="${sub.Name || ''}" ${!editMode ? "readonly class='bg-gray-50 w-full border border-gray-200 rounded p-1 text-sm'" : ""}>
-                        </td>
-                        <td class="border px-3 py-2">
-                            <input type="number" min="0" max="100"
-                                   class="w-full border border-gray-300 rounded p-1 text-sm"
-                                   value="${sub.Marks ?? ''}"
-                                   ${!editMode ? "readonly class='bg-gray-50 w-full border border-gray-200 rounded p-1 text-sm'" : ""}
-                                   oninput="updateGrade(this, ${g.GradeLevel})">
-                        </td>
-                        <td class="border px-3 py-2">
-                            <input class="w-full border border-gray-300 rounded p-1 text-sm bg-gray-100"
-                                   value="${sub.Letter ?? ''}" readonly>
-                        </td>
-                        <td class="border px-3 py-2">
-                            <input type="number" step="0.5"
-                                   class="w-full border border-gray-300 rounded p-1 text-sm"
-                                   value="${sub.Credits ?? ''}"
-                                   ${!editMode ? "readonly class='bg-gray-50 w-full border border-gray-200 rounded p-1 text-sm'" : ""}
-                                   oninput="updateGPA(${g.GradeLevel})">
-                        </td>
-                        <td class="border px-3 py-2">
-                            <select class="w-full border border-gray-300 rounded p-1 text-sm" ${!editMode ? "disabled class='bg-gray-50 w-full border border-gray-200 rounded p-1 text-sm'" : ""}>
-                                <option value="">--</option>
-                                <option value="1" ${sub.Preference == 1 ? "selected" : ""}>1</option>
-                                <option value="2" ${sub.Preference == 2 ? "selected" : ""}>2</option>
-                                <option value="3" ${sub.Preference == 3 ? "selected" : ""}>3</option>
-                                <option value="4" ${sub.Preference == 4 ? "selected" : ""}>4</option>
-                                <option value="5" ${sub.Preference == 5 ? "selected" : ""}>5</option>
-                            </select>
-                        </td>
-                        <td class="border px-3 py-2 text-center edit-only hidden">
-                            <button class="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
-                                    onclick="deleteRow(this, ${g.GradeLevel})">
-                                X
-                            </button>
-                        </td>
-                    `;
+                                    <!-- Category -->
+                                    <td class="border px-3 py-2">
+                                        <select class="categorySelect w-full border rounded p-1"
+                                                onchange="onCategoryChangeCounselor(this, ${g.GradeLevel})">
+                                            <option value="">Select category</option>
+                                            ${mainCategories.map(c => `
+                                                <option value="${c}" ${sub.MainCategory === c ? "selected" : ""}>${c}</option>
+                                            `).join("")}
+                                        </select>
+                                    </td>
+
+                                    <!-- Course -->
+                                    <td class="border px-3 py-2">
+                                        <select class="courseSelect w-full border rounded p-1"
+                                                onchange="onCourseChangeCounselor(this, ${g.GradeLevel})">
+                                            ${courseOptionsHtml}
+                                        </select>
+                                        <input class="customCourseInput w-full border rounded p-1 mt-1 ${isOther ? "" : "hidden"}"
+                                            placeholder="Enter course name"
+                                            value="${customName}">
+                                    </td>
+
+                                    <!-- Marks -->
+                                    <td class="border px-3 py-2">
+                                        <input type="text"
+                                            value="${sub.Marks ?? ''}"
+                                            oninput="forceNumeric(this); updateGrade(this, ${g.GradeLevel})"
+                                            class="marksInput w-full border rounded p-1">
+                                    </td>
+
+                                    <!-- Letter -->
+                                    <td class="border px-3 py-2">
+                                        <input readonly
+                                            value="${sub.Letter ?? ''}"
+                                            class="letterInput w-full border rounded p-1 bg-gray-100">
+                                    </td>
+
+                                    <!-- Credits -->
+                                    <td class="border px-3 py-2">
+                                        <input type="text"
+                                            value="${sub.Credits ?? ''}"
+                                            oninput="forceDecimal(this); updateGPA(${g.GradeLevel})"
+                                            class="creditsInput w-full border rounded p-1">
+                                    </td>
+
+                                    <!-- Preference -->
+                                    <td class="border px-3 py-2">
+                                        <select class="preferenceSelect w-full border rounded p-1">
+                                            <option value="">--</option>
+                                            <option value="1" ${sub.Preference == 1 ? "selected" : ""}>1</option>
+                                            <option value="2" ${sub.Preference == 2 ? "selected" : ""}>2</option>
+                                            <option value="3" ${sub.Preference == 3 ? "selected" : ""}>3</option>
+                                            <option value="4" ${sub.Preference == 4 ? "selected" : ""}>4</option>
+                                            <option value="5" ${sub.Preference == 5 ? "selected" : ""}>5</option>
+                                        </select>
+                                    </td>
+
+                                    <!-- Remove -->
+                                    <td class="border px-3 py-2 text-center edit-only">
+                                        <button class="bg-red-600 text-white px-2 py-1 rounded"
+                                                onclick="deleteRow(this, ${g.GradeLevel})">
+                                            X
+                                        </button>
+                                    </td>
+                                `;
+
+
+
                     tbody.appendChild(row);
                 });
+
 
                 updateGPA(g.GradeLevel);
             });
@@ -296,18 +446,41 @@
                 }
             });
 
-            // Toggle readonly/disabled on inputs/selects
-            document.querySelectorAll("#transcriptContainer input, #transcriptContainer select").forEach(el => {
-                const isLetterField = el.closest("td")?.cellIndex === 2; // letter column
+            const elements = document.querySelectorAll(
+                "#transcriptContainer tbody tr td input, #transcriptContainer tbody tr td select"
+            );
 
+            elements.forEach(el => {
+                const td = el.closest("td");
+                if (!td) return;
+
+                const col = td.cellIndex;
+
+                const isMarksField = col === 2;
+                const isLetterField = col === 3;
+
+                // Letter is ALWAYS readonly
                 if (isLetterField) {
-                    // Letter is always readonly
                     el.readOnly = true;
                     el.disabled = false;
                     el.classList.add("bg-gray-100");
                     return;
                 }
 
+                // Marks must be editable in edit mode
+                if (isMarksField) {
+                    if (editMode && currentStudentCanEdit) {
+                        el.readOnly = false;
+                        el.disabled = false;
+                        el.classList.remove("bg-gray-50");
+                    } else {
+                        el.readOnly = true;
+                        el.classList.add("bg-gray-50");
+                    }
+                    return;
+                }
+
+                // All other fields follow normal edit rules
                 if (!editMode || !currentStudentCanEdit) {
                     if (el.tagName === "SELECT") {
                         el.disabled = true;
@@ -326,46 +499,79 @@
             });
         }
 
+
+
+
         // Add a new subject row to a grade
         function addRow(gradeLevel) {
-            const tbody = document.getElementById(`gradeBody-${gradeLevel}`);
+            const tbody = document.querySelector(`#gradeBody-${gradeLevel}`);
             const row = document.createElement("tr");
+
             row.innerHTML = `
-                <td class="border px-3 py-2">
-                    <input class="w-full border border-gray-300 rounded p-1 text-sm">
-                </td>
-                <td class="border px-3 py-2">
-                    <input type="number" min="0" max="100"
-                           class="w-full border border-gray-300 rounded p-1 text-sm"
-                           oninput="updateGrade(this, ${gradeLevel})">
-                </td>
-                <td class="border px-3 py-2">
-                    <input class="w-full border border-gray-300 rounded p-1 text-sm bg-gray-100" readonly>
-                </td>
-                <td class="border px-3 py-2">
-                    <input type="number" step="0.5"
-                           class="w-full border border-gray-300 rounded p-1 text-sm"
-                           oninput="updateGPA(${gradeLevel})">
-                </td>
-                <td class="border px-3 py-2">
-                    <select class="w-full border border-gray-300 rounded p-1 text-sm">
-                        <option value="">--</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                    </select>
-                </td>
-                <td class="border px-3 py-2 text-center edit-only">
-                    <button class="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
-                            onclick="deleteRow(this, ${gradeLevel})">
-                        X
-                    </button>
-                </td>
-            `;
+        <!-- Category -->
+        <td class="border px-3 py-2">
+            <select class="categorySelect w-full border rounded p-1"
+                    onchange="onCategoryChangeCounselor(this, ${gradeLevel})">
+                <option value="">Select category</option>
+                ${mainCategories.map(c => `<option value="${c}">${c}</option>`).join("")}
+            </select>
+        </td>
+
+        <!-- Course -->
+        <td class="border px-3 py-2">
+            <select class="courseSelect w-full border rounded p-1"
+                    onchange="onCourseChangeCounselor(this, ${gradeLevel})">
+                <option value="">Select course</option>
+            </select>
+            <input class="customCourseInput w-full border rounded p-1 mt-1 hidden"
+                   placeholder="Enter course name">
+        </td>
+
+        <!-- Marks -->
+        <td class="border px-3 py-2">
+            <input type="text"
+                   oninput="forceNumeric(this); updateGrade(this, ${gradeLevel})"
+                   class="marksInput w-full border rounded p-1">
+        </td>
+
+        <!-- Letter -->
+        <td class="border px-3 py-2">
+            <input readonly
+                   class="letterInput w-full border rounded p-1 bg-gray-100">
+        </td>
+
+        <!-- Credits -->
+        <td class="border px-3 py-2">
+            <input type="text"
+                   oninput="forceDecimal(this); updateGPA(${gradeLevel})"
+                   class="creditsInput w-full border rounded p-1">
+        </td>
+
+        <!-- Preference -->
+        <td class="border px-3 py-2">
+            <select class="preferenceSelect w-full border rounded p-1">
+                <option value="">--</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+        </td>
+
+        <!-- Remove -->
+        <td class="border px-3 py-2 text-center edit-only">
+            <button class="bg-red-600 text-white px-2 py-1 rounded"
+                    onclick="deleteRow(this, ${gradeLevel})">
+                X
+            </button>
+        </td>
+    `;
+
             tbody.appendChild(row);
         }
+
+
 
         // Calculate letter from marks (simple mapping; you can sync with your scale if needed)
         function calculateLetter(mark) {
@@ -381,15 +587,21 @@
         }
 
         function updateGrade(input, gradeLevel) {
-            const mark = parseFloat(input.value);
             const row = input.closest("tr");
-            if (!isNaN(mark)) {
-                row.children[2].querySelector("input").value = calculateLetter(mark);
-            } else {
-                row.children[2].querySelector("input").value = "";
-            }
+
+            // Marks is column 3
+            const marks = parseFloat(row.children[2].querySelector("input").value);
+
+            // Letter is column 4
+            const letterInput = row.children[3].querySelector("input");
+
+            const letter = calculateLetter(marks);
+
+            letterInput.value = letter;
+
             updateGPA(gradeLevel);
         }
+
 
         function deleteRow(btn, gradeLevel) {
             btn.closest("tr").remove();
@@ -410,8 +622,9 @@
             let total = 0, credits = 0;
 
             rows.forEach(r => {
-                const letter = r.children[2].querySelector("input").value || "";
-                const cred = parseFloat(r.children[3].querySelector("input").value);
+                const letter = r.children[3].querySelector("input").value || "";
+                const cred = parseFloat(r.children[4].querySelector("input").value);
+
                 if (!isNaN(cred) && cred > 0) {
                     total += letterToPoint(letter) * cred;
                     credits += cred;
@@ -421,9 +634,9 @@
             const gpa = credits ? (total / credits).toFixed(2) : "0.00";
             document.getElementById(`gpa-${gradeLevel}`).innerText = gpa;
 
-            // Recompute overall GPA
             recomputeOverallGPA();
         }
+
 
         function recomputeOverallGPA() {
             const gpaSpans = document.querySelectorAll("[id^='gpa-']");
@@ -450,22 +663,60 @@
                 const gradeLevel = parseInt(tbody.id.replace("gradeBody-", ""));
                 const subjects = [];
 
-                tbody.querySelectorAll("tr").forEach(row => {
-                    const name = row.children[0].querySelector("input").value.trim();
-                    const marks = parseFloat(row.children[1].querySelector("input").value);
-                    const letter = row.children[2].querySelector("input").value;
-                    const credits = parseFloat(row.children[3].querySelector("input").value);
-                    const preference = parseInt(row.children[4].querySelector("select").value);
+                // find matching grade in currentTranscript (if any)
+                let existingGrade = null;
+                if (currentTranscript && Array.isArray(currentTranscript.Grades)) {
+                    existingGrade = currentTranscript.Grades.find(g => parseInt(g.GradeLevel) === gradeLevel);
+                }
 
-                    if (name) {
-                        subjects.push({
-                            Name: name,
-                            Marks: isNaN(marks) ? null : marks,
-                            Letter: letter || null,
-                            Credits: isNaN(credits) ? null : credits,
-                            Preference: isNaN(preference) ? null : preference
-                        });
+                tbody.querySelectorAll("tr").forEach((row, idx) => {
+                    const categorySelect = row.querySelector("td:nth-child(1) select");
+                    const courseSelect = row.querySelector("td:nth-child(2) select");
+                    const customInput = row.querySelector("td:nth-child(2) input");
+
+                    const marksInput = row.querySelector("td:nth-child(3) input");
+                    const letterInput = row.querySelector("td:nth-child(4) input");
+                    const creditsInput = row.querySelector("td:nth-child(5) input");
+                    const prefSelect = row.querySelector("td:nth-child(6) select");
+
+                    const marks = parseFloat(marksInput.value);
+                    const letter = letterInput.value;
+                    const credits = parseFloat(creditsInput.value);
+                    const preference = parseInt(prefSelect.value);
+
+
+
+                    // try to preserve category/course/custom from existing transcript
+                    let mainCategory = null;
+                    let courseName = null;
+                    let customCourseName = null;
+
+                    if (existingGrade && Array.isArray(existingGrade.Subjects) && existingGrade.Subjects[idx]) {
+                        const oldSub = existingGrade.Subjects[idx];
+                        mainCategory = oldSub.MainCategory ?? null;
+                        courseName = oldSub.CourseName ?? null;
+                        customCourseName = oldSub.CustomCourseName ?? null;
                     }
+
+                    subjects.push({
+                        MainCategory: categorySelect.value || null,
+                        CourseName: courseSelect.value || null,
+                        CustomCourseName: customInput.classList.contains("hidden")
+                            ? null
+                            : (customInput.value.trim() || null),
+
+                        Marks: isNaN(marks) ? null : marks,
+                        Letter: letter || null,
+                        Credits: isNaN(credits) ? null : credits,
+                        Preference: isNaN(preference) ? null : preference,
+
+                        // Name = course OR custom course (same as student)
+                        Name: customInput.classList.contains("hidden")
+                            ? (courseSelect.value || "")
+                            : (customInput.value.trim() || "")
+                    });
+
+
                 });
 
                 if (subjects.length > 0) {
@@ -510,17 +761,67 @@
                 alert(data.message || "Saved.");
 
                 if (data.status === "success") {
-                    // After saving, reload transcript in view-only mode
                     editMode = false;
                     document.getElementById("toggleEditBtn").innerText = "Enable Edit";
                     document.getElementById("saveBtn").classList.add("hidden");
-                    selectStudent(currentStudentId, document.getElementById("studentName").innerText, currentStudentCanEdit ? 1 : 0);
+                    // reload
+                    selectStudent(
+                        currentStudentId,
+                        document.getElementById("studentName").innerText,
+                        currentStudentCanEdit ? 1 : 0
+                    );
                 }
             } catch (err) {
                 console.error(err);
                 alert("Error saving transcript.");
             }
         }
+
+
+
+
+        function onCategoryChangeCounselor(select, gradeLevel) {
+            const row = select.closest("tr");
+            const courseSelect = row.querySelector("td:nth-child(2) select");
+            const customInput = row.querySelector("td:nth-child(2) input");
+
+            courseSelect.innerHTML = `<option value="">Select course</option>`;
+            customInput.classList.add("hidden");
+            customInput.value = "";
+
+            const category = select.value;
+            if (!category || !courseOptions[category]) return;
+
+            courseOptions[category].forEach(c => {
+                courseSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+        }
+
+        function onCourseChangeCounselor(select, gradeLevel) {
+            const row = select.closest("tr");
+            const customInput = row.querySelector("td:nth-child(2) input");
+            const course = select.value;
+
+            if (course === "Other") {
+                customInput.classList.remove("hidden");
+            } else {
+                customInput.classList.add("hidden");
+                customInput.value = "";
+            }
+        }
+
+
+        function forceNumeric(input) {
+            input.value = input.value.replace(/[^0-9]/g, "");
+        }
+
+        function forceDecimal(input) {
+            input.value = input.value
+                .replace(/[^0-9.]/g, "")
+                .replace(/(\..*)\./g, "$1");
+        }
+
+
     </script>
 
 </body>

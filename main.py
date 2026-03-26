@@ -637,11 +637,10 @@ def counselor_recommendations():
 def student_academic_record():
     if current_user.role != "student":
         abort(403)
+
     conn = connect_db()
     cur = conn.cursor()
-    
 
-    # find student profile
     cur.execute("SELECT ID FROM StudentProfile WHERE UserID = %s", (current_user.id,))
     profile = cur.fetchone()
 
@@ -650,10 +649,9 @@ def student_academic_record():
     if profile:
         student_profile_id = profile["ID"]
 
-        # latest transcript
         cur.execute("""
-            SELECT * FROM Transcript 
-            WHERE StudentID = %s 
+            SELECT * FROM Transcript
+            WHERE StudentID = %s
             ORDER BY CreatedAt DESC LIMIT 1
         """, (student_profile_id,))
         transcript = cur.fetchone()
@@ -661,7 +659,6 @@ def student_academic_record():
         if transcript:
             transcript_id = transcript["ID"]
 
-            # load grades
             cur.execute("SELECT * FROM Grade WHERE TranscriptID = %s", (transcript_id,))
             grades = cur.fetchall()
 
@@ -669,27 +666,31 @@ def student_academic_record():
 
             for g in grades:
                 grade_id = g["ID"]
-                grade_level = g["GradeLevel"]
 
-                # load subjects
-                cur.execute("SELECT * FROM Subject WHERE GradeID = %s", (grade_id,))
+                cur.execute("""
+                    SELECT SubjectName, FinalGrade, Credits, Marks, Preference,
+                           MainCategory, CourseName, CustomCourseName
+                    FROM Subject
+                    WHERE GradeID = %s
+                """, (grade_id,))
                 subjects = cur.fetchall()
 
                 subject_list = []
                 for s in subjects:
                     subject_list.append({
-                        "Name": s["SubjectName"] or "",
-                        "Letter": s["FinalGrade"] or "",
+                        "Name": s["SubjectName"],
+                        "Letter": s["FinalGrade"],
                         "Credits": float(s["Credits"]) if s["Credits"] is not None else None,
-                        "Marks": s["Marks"] if s["Marks"] is not None else None,
-                        "Preference": s["Preference"] if s["Preference"] is not None else None,
-                        "MainCategory": s.get("MainCategory") if "MainCategory" in s else None,
-                        "CourseName": s.get("CourseName") if "CourseName" in s else None,
-                        "CustomCourseName": s.get("CustomCourseName") if "CustomCourseName" in s else None
+                        "Marks": float(s["Marks"]) if s["Marks"] is not None else None,
+                        "Preference": s["Preference"],
+                        "MainCategory": s["MainCategory"],
+                        "CourseName": s["CourseName"],
+                        "CustomCourseName": s["CustomCourseName"]
                     })
 
                 grade_list.append({
-                    "GradeLevel": grade_level,
+                    "GradeLevel": g["GradeLevel"],
+                    "GPA": float(g["GPA"]) if "GPA" in g and g["GPA"] is not None else None,
                     "Subjects": subject_list
                 })
 
@@ -708,7 +709,6 @@ def student_academic_record():
 
 
 
-#users transcript is saved in database.
 @app.route("/save_transcript", methods=["POST"])
 @login_required
 def save_transcript():
@@ -735,7 +735,7 @@ def save_transcript():
         overall_gpa = data.get("GPA", None)
         grades_data = data.get("Grades", [])
 
-        # insert transcript
+        # insert transcript (you’re using CourseID=NULL, so DB must have CourseID)
         cur.execute(
             "INSERT INTO Transcript (StudentID, CourseID, GPA, CreatedAt) "
             "VALUES (%s, NULL, %s, NOW())",
@@ -746,10 +746,11 @@ def save_transcript():
         # insert grades + subjects
         for grade in grades_data:
             grade_level = grade.get("GradeLevel")
+            grade_gpa = grade.get("GPA")
 
             cur.execute(
                 "INSERT INTO Grade (TranscriptID, GradeLevel, GPA) VALUES (%s, %s, %s)",
-                (transcript_id, grade_level, grade.get("GPA"))
+                (transcript_id, grade_level, grade_gpa)
             )
             grade_id = cur.lastrowid
 
@@ -764,9 +765,8 @@ def save_transcript():
                 course_name = subject.get("CourseName")
                 custom_course_name = subject.get("CustomCourseName")
 
-                # basic validation: if CourseName == "Other", require CustomCourseName
                 if course_name == "Other" and not custom_course_name:
-                    custom_course_name = name  # fallback to typed name if needed
+                    custom_course_name = name
 
                 cur.execute(
                     """
@@ -797,6 +797,8 @@ def save_transcript():
     except Exception as e:
         print("FULL ERROR:", repr(e))
         return jsonify({"status": "error", "message": "Server error: " + repr(e)}), 500
+
+
 
 
 @app.route("/counselor/recommendation/addapplication/<user_id>")
@@ -902,14 +904,13 @@ def counselor_student_transcript(student_user_id):
     conn = connect_db()
     cur = conn.cursor()
 
-    # Ensure this student belongs to this counselor
+    # Ensure counselor-student relationship
     cur.execute("""
         SELECT 1
         FROM CounselorStudent
         WHERE CounselorUserID = %s AND StudentUserID = %s
     """, (current_user.id, student_user_id))
-    link = cur.fetchone()
-    if not link:
+    if not cur.fetchone():
         cur.close()
         conn.close()
         abort(403)
@@ -921,6 +922,7 @@ def counselor_student_transcript(student_user_id):
         WHERE UserID = %s
     """, (student_user_id,))
     profile = cur.fetchone()
+
     if not profile:
         cur.close()
         conn.close()
@@ -937,32 +939,43 @@ def counselor_student_transcript(student_user_id):
     transcript = cur.fetchone()
 
     transcript_data = None
+
     if transcript:
         transcript_id = transcript["ID"]
 
+        # Load grades
         cur.execute("SELECT * FROM Grade WHERE TranscriptID = %s", (transcript_id,))
         grades = cur.fetchall()
 
         grade_list = []
+
         for g in grades:
             grade_id = g["ID"]
-            grade_level = g["GradeLevel"]
 
-            cur.execute("SELECT * FROM Subject WHERE GradeID = %s", (grade_id,))
+            cur.execute("""
+                SELECT SubjectName, FinalGrade, Credits, Marks, Preference,
+                       MainCategory, CourseName, CustomCourseName
+                FROM Subject
+                WHERE GradeID = %s
+            """, (grade_id,))
             subjects = cur.fetchall()
 
             subject_list = []
             for s in subjects:
                 subject_list.append({
-                    "Name": s["SubjectName"] or "",
-                    "Letter": s["FinalGrade"] or "",
-                    "Credits": float(s["Credits"]) if s["Credits"] is not None else 0,
-                    "Marks": s["Marks"] if s["Marks"] is not None else None,
-                    "Preference": s["Preference"] if s["Preference"] is not None else None
+                    "Name": s["SubjectName"],
+                    "Letter": s["FinalGrade"],
+                    "Credits": float(s["Credits"]) if s["Credits"] is not None else None,
+                    "Marks": float(s["Marks"]) if s["Marks"] is not None else None,
+                    "Preference": s["Preference"],
+                    "MainCategory": s["MainCategory"],
+                    "CourseName": s["CourseName"],
+                    "CustomCourseName": s["CustomCourseName"]
                 })
 
             grade_list.append({
-                "GradeLevel": grade_level,
+                "GradeLevel": g["GradeLevel"],
+                "GPA": float(g["GPA"]) if "GPA" in g and g["GPA"] is not None else None,
                 "Subjects": subject_list
             })
 
@@ -986,6 +999,7 @@ def counselor_student_transcript(student_user_id):
 
 
 
+
 #Counselor saves transcript edits (if allowed)
 @app.route("/counselor/save_transcript/<int:student_user_id>", methods=["POST"])
 @login_required
@@ -1000,7 +1014,7 @@ def counselor_save_transcript(student_user_id):
     conn = connect_db()
     cur = conn.cursor()
 
-    # Ensure relationship + get profile
+    # Validate relationship + permissions
     cur.execute("""
         SELECT sp.ID, sp.AllowCounselorEdit, sp.Grade
         FROM CounselorStudent cs
@@ -1008,6 +1022,7 @@ def counselor_save_transcript(student_user_id):
         WHERE cs.CounselorUserID = %s AND cs.StudentUserID = %s
     """, (current_user.id, student_user_id))
     row = cur.fetchone()
+
     if not row:
         cur.close()
         conn.close()
@@ -1021,45 +1036,50 @@ def counselor_save_transcript(student_user_id):
     student_profile_id = row["ID"]
     current_profile_grade = row["Grade"]
 
-    overall_gpa = data.get("GPA", None)
+    overall_gpa = data.get("GPA")
     grades_data = data.get("Grades", [])
 
-    # Insert new transcript (same pattern as student)
-    cur.execute(
-        "INSERT INTO Transcript (StudentID, CourseID, GPA, CreatedAt) "
-        "VALUES (%s, NULL, %s, NOW())",
-        (student_profile_id, overall_gpa)
-    )
+    # Insert new transcript
+    cur.execute("""
+        INSERT INTO Transcript (StudentID, CourseID, GPA, CreatedAt)
+        VALUES (%s, NULL, %s, NOW())
+    """, (student_profile_id, overall_gpa))
     transcript_id = cur.lastrowid
 
     max_grade_level = current_profile_grade
 
     for grade in grades_data:
         grade_level = grade.get("GradeLevel")
+        grade_gpa = grade.get("GPA")
+
         if grade_level and (max_grade_level is None or grade_level > max_grade_level):
             max_grade_level = grade_level
 
-        cur.execute(
-            "INSERT INTO Grade (TranscriptID, GradeLevel) VALUES (%s, %s)",
-            (transcript_id, grade_level)
-        )
+        cur.execute("""
+            INSERT INTO Grade (TranscriptID, GradeLevel, GPA)
+            VALUES (%s, %s, %s)
+        """, (transcript_id, grade_level, grade_gpa))
         grade_id = cur.lastrowid
 
         for subject in grade.get("Subjects", []):
-            cur.execute(
-                "INSERT INTO Subject (GradeID, SubjectName, FinalGrade, Credits, Marks, Preference) "
-                "VALUES (%s, %s, %s, %s, %s, %s)",
-                (
-                    grade_id,
-                    subject.get("Name"),
-                    subject.get("Letter"),
-                    subject.get("Credits"),
-                    subject.get("Marks"),
-                    subject.get("Preference"),
-                )
-            )
+            cur.execute("""
+                INSERT INTO Subject
+                (GradeID, SubjectName, FinalGrade, Credits, Marks, Preference,
+                 MainCategory, CourseName, CustomCourseName)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                grade_id,
+                subject.get("Name"),
+                subject.get("Letter"),
+                subject.get("Credits"),
+                subject.get("Marks"),
+                subject.get("Preference"),
+                subject.get("MainCategory"),
+                subject.get("CourseName"),
+                subject.get("CustomCourseName")
+            ))
 
-    # Optionally sync grade
+    # Sync student grade
     cur.execute("""
         UPDATE StudentProfile
         SET Grade = %s
@@ -1071,6 +1091,7 @@ def counselor_save_transcript(student_user_id):
     conn.close()
 
     return jsonify({"status": "success", "message": "Transcript updated by counselor."})
+
 
 @app.context_processor
 def inject_navbar_profile():
