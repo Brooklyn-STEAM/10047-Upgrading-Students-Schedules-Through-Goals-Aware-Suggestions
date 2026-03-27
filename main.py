@@ -297,6 +297,7 @@ def edit_profile():
         return redirect(url_for("myprofile"))
 
     # GET request
+    connection.commit()
     cursor.close()
     connection.close()
     return render_template("editmyprofile.html.jinja", profile=profile)
@@ -559,6 +560,7 @@ def student_profile(student_profile_id):
             u.ID AS user_id,
             u.Name,
             u.Email,
+            sp.ProfilePicture,
             sp.Grade,
             sp.Phone,
             sp.Address,
@@ -1111,7 +1113,9 @@ def inject_navbar_profile():
         finally:
             cursor.close()
             connection.close()
-    return dict(navbar_profile=profile)
+    return dict(navbar_profile=profile) 
+
+        
 
 
 
