@@ -27,15 +27,15 @@
         <!-- Top Section with gradient -->
         <div class="bg-gradient-to-r from-emerald-200 to-emerald-100 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div class="flex items-center gap-6">
-            <img 
-              src="{{ student.PhotoURL or 'https://via.placeholder.com/150' }}" 
+<img src="{{ url_for('static', filename='profile_pics/' ~ student.ProfilePicture) if student.ProfilePicture else url_for('static', filename='default_profile.png') }}"
+
               alt="Student Photo" 
               class="w-28 h-28 rounded-full border-4 border-emerald-300 shadow-lg ring-2 ring-emerald-400"
             >
             <div>
               <h2 class="text-2xl font-bold text-emerald-900">{{ student.Name }}</h2>
               <p class="text-emerald-800 mt-1 text-sm md:text-base">
-                Grade: {{ student.Grade or 'N/A' }}
+                Grade: {{ student.Grade or 'N/A' }}th
               </p>
             </div>
           </div>
