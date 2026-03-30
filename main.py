@@ -396,17 +396,38 @@ def toggle_counselor_edit():
 def recommendations():
 
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
+    # ✅ Check if student has a counselor
     cursor.execute("""
-        SELECT ID, Name, Email
-        FROM User
-        WHERE Role = %s """ , (current_user.id))
+        SELECT CounselorUserID 
+        FROM StudentProfile
+        WHERE UserID = %s
+    """, (current_user.id,))
+    
+    student = cursor.fetchone()
 
-    counselors = cursor.fetchall()
+    counselor_id = student["CounselorUserID"] if student else None
+
+    information = []
+
+    # ✅ If counselor exists → get recommendations
+    if counselor_id:
+        cursor.execute("""
+        SELECT Application.*, User.Name 
+        FROM Application
+        JOIN User ON Application.UserID = User.ID
+        WHERE StudentUserID = %s
+        """, (current_user.id,))
+        
+        information = cursor.fetchall()
+
     connection.close()
 
-    return render_template( "recommendation.html.jinja", counselors=counselors
+    return render_template(
+        "recommendation.html.jinja",
+        counselor_id=counselor_id,
+        information=information
     )
 
 
@@ -491,19 +512,98 @@ def update_recommendation():
 
     return redirect("/student/dashboard")
 
-@app.route("/student/recommendation/review")
+@app.route("/student/recommendation/editrecommendations")
 @login_required
 def review_recommendation():
     connection = connect_db()
     cursor = connection.cursor()
     cursor.execute("""
-    SELECT * FROM `Application`
-    JOIN `User` ON `Application`.`UserID` = `User`.`ID`
-    WHERE StudentUserID = %s
+    SELECT 
+    StudentProfile.*, 
+    student.Name AS StudentName,
+    counselor.Name AS CounselorName
+    FROM StudentProfile
+    JOIN User AS student 
+    ON StudentProfile.UserID = student.ID
+    LEFT JOIN User AS counselor 
+    ON StudentProfile.CounselorUserID = counselor.ID
+    WHERE StudentProfile.UserID = %s
     """, (current_user.id,))
     information = cursor.fetchall()
     connection.close()
-    return render_template("review.html.jinja" , information=information)
+    return render_template("edit.html.jinja" , information=information)
+
+@app.route("/student/recommendation/deleterecommendation", methods=["POST"])
+@login_required
+def delete_recommendation():
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    recommendation_id = request.form.get("id")
+
+    # Delete the specific recommendation row
+    cursor.execute("""
+        DELETE FROM StudentProfile
+        WHERE ID = %s AND UserID = %s
+    """, (recommendation_id, current_user.id))
+
+    # Optional: clean up relationship table
+    cursor.execute("""
+        DELETE FROM CounselorStudent
+        WHERE StudentUserID = %s
+    """, (current_user.id,))
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/student/recommendation/editrecommendations")
+
+@app.route("/student/recommendation/edit/<id>")
+@login_required
+def edit_specific_recommendation(id):
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    cursor.execute("""
+    SELECT ID, Name, Email FROM User
+    WHERE Role='counselor'
+    """)
+    recommendation = cursor.fetchall()
+
+    cursor.execute("""
+    SELECT * FROM StudentProfile WHERE UserID = %s
+    """, (current_user.id,))
+    user = cursor.fetchone()
+
+
+    connection.close()
+
+    if not recommendation:
+        abort(404)
+
+    return render_template("editspecific.html.jinja", recommendation=recommendation , user=user)
+
+@app.route("/student/recommendation/edit/<id>/processing", methods=["POST"])
+@login_required
+def edit_specific_recommendation_processing(id):
+    counselor_id = request.form["counselor_id"]
+    grade = request.form["grade"]
+    comments = request.form.get("comments")
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    # Update student profile counselor
+    cursor.execute("""
+        UPDATE StudentProfile
+        SET CounselorUserID = %s, Grade = %s, Comments = %s
+        WHERE ID = %s AND UserID = %s
+    """, (counselor_id, grade, comments, id, current_user.id))
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/student/recommendation/editrecommendations")
 
 #dashboard for counselors.
 @app.route("/counselor/dashboard")
@@ -803,45 +903,59 @@ def save_transcript():
 @login_required
 def add_application(user_id):
 
+    if current_user.role != "counselor":
+        abort(403)
+
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
     cursor.execute("""
     SELECT * FROM `StudentProfile`
     JOIN `User` ON `StudentProfile`.`UserID` = `User`.`ID`
-    WHERE User.ID = %s
-    """ , (user_id,))
+    WHERE User.ID = %s AND StudentProfile.CounselorUserID = %s
+    """, (user_id, current_user.id))
 
     result = cursor.fetchone()
     connection.close()
-    
-    return render_template(
-        "addapplication.html.jinja",
-        user=result
-    )
+
+    # 🚨 If student is not assigned → block access
+    if not result:
+        return redirect("/counselor/recommendation")
+
+    return render_template("addapplication.html.jinja", user=result)
 
 @app.route("/counselor/recommendation/addapplication/<user_id>/adding", methods=['POST'])
 @login_required
 def adding_app(user_id):
+
+    if current_user.role != "counselor":
+        abort(403)
+
     Major = request.form["Major"]
     Comments = request.form["Comments"]
-    student_id = request.form["student_id"]
 
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
+    # ✅ Validate ownership
     cursor.execute("""
-    SELECT * FROM `StudentProfile`
-    JOIN `User` ON `StudentProfile`.`UserID` = `User`.`ID`
-    WHERE User.ID = %s
-    """ , (user_id,))
-    users = cursor.fetchone()
-    
+    SELECT * FROM StudentProfile
+    WHERE UserID = %s AND CounselorUserID = %s
+    """, (user_id, current_user.id))
+
+    student = cursor.fetchone()
+
+    # 🚨 Block if not allowed
+    if not student:
+        connection.close()
+        abort(403)  # or redirect
+
+    # ✅ Safe insert (use validated user_id)
     cursor.execute("""
-        INSERT INTO `Application`
+        INSERT INTO Application
         (UserID, Major, Comments, StudentUserID)
         VALUES (%s, %s, %s, %s)
-    """, (current_user.id, Major, Comments, student_id,))
+    """, (current_user.id, Major, Comments, user_id))
 
     connection.commit()
     connection.close()

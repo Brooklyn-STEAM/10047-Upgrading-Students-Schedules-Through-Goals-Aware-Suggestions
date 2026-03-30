@@ -1,0 +1,107 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+    <title>CourseTrack - Your Recommendations</title>
+    <link href="/static/styles.css" rel="stylesheet">
+  </head>
+
+  <body class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100 min-h-screen flex flex-col text-gray-800">
+
+{% include "components/navbar.html.jinja" %}
+
+<main class="flex-grow px-4 py-16">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
+      <div>
+        <h1 class="text-4xl font-bold tracking-tight text-gray-900">
+          Your Recommendation
+        </h1>
+        <p class="text-gray-500 mt-1">
+          Manage and update your counselor requests
+        </p>
+      </div>
+
+      <a href="/student/recommendation"
+         class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition shadow">
+        ← Back
+      </a>
+    </div>
+
+    {% for row in information %}
+    <!-- BIG CARD -->
+    <div class="relative bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-8 overflow-hidden">
+
+      <!-- subtle gradient accent -->
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400"></div>
+
+      <!-- Content -->
+      <div class="flex flex-col gap-6">
+
+        <!-- Top Section -->
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+
+          <div>
+            <h2 class="text-2xl font-semibold text-gray-900">
+              {{ row.CounselorName if row.CounselorName else "Unknown Counselor" }}
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">
+              Recommendation Recipient
+            </p>
+          </div>
+
+          <div class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg text-sm font-medium w-fit">
+            Grade: {{ row.Grade }}
+          </div>
+
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-gray-200"></div>
+
+        <!-- Comments -->
+        <div>
+          <p class="text-sm text-gray-500 mb-2">Comments</p>
+          <p class="text-gray-700 leading-relaxed text-base">
+            {{ row.Comments if row.Comments else "No comments yet." }}
+          </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-4">
+
+          <form action="/student/recommendation/deleterecommendation"
+                method="post"
+                onsubmit="return confirm('Are you sure you want to delete this recommendation?');"
+                class="w-full sm:w-auto">
+            <input type="hidden" name="id" value="{{ row.ID }}">
+            <button type="submit"
+              class="w-full px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-medium">
+              Delete
+            </button>
+          </form>
+
+          <a href="/student/recommendation/edit/{{ row.ID }}"
+             class="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md font-medium">
+            Edit Recommendation
+          </a>
+
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+</main>
+
+{% include "components/footer.html.jinja" %}
+
+  </body>
+</html>
