@@ -14,63 +14,92 @@
     {% include "components/navbar.html.jinja" %}
     
     <main class="container mx-auto my-12 px-4 flex-grow">
+
+  <!-- Header -->
+  <div class="text-center mb-12">
+    <h1 class="text-4xl font-extrabold text-emerald-700 mb-3">
+      Your Applications
+    </h1>
+    <p class="text-gray-500 text-lg">
+      Guidance from your counselor will appear here
+    </p>
+  </div>
+
+  {% if not counselor_id %}
+  <!-- ❌ NO COUNSELOR -->
+  <div class="flex justify-center">
+    <div class="bg-white shadow-xl rounded-2xl p-10 text-center max-w-md border border-emerald-100">
       
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-extrabold text-emerald-700 mb-3">
-          Your Recommendations
-        </h1>
-        <p class="text-gray-500 text-lg">
-          Guidance from your counselors will appear here
-        </p>
-      </div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-3">
+        No Counselor has gaven you applications yet
+      </h2>
 
-      <!-- Card -->
-      <div class="flex justify-center">
-        <div class="relative bg-white/80 backdrop-blur-lg max-w-2xl w-full shadow-2xl rounded-2xl p-10 border border-emerald-100">
-          
-          <!-- Glow Accent -->
-          <div class="absolute -top-10 -left-10 w-40 h-40 bg-emerald-200 opacity-30 rounded-full blur-3xl"></div>
+      <p class="text-gray-500 mb-6">
+        Add one to start receiving applications.
+      </p>
 
-          <!-- Icon -->
-          <div class="flex justify-center mb-6">
-            <div class="bg-emerald-100 text-emerald-600 p-4 rounded-full text-3xl shadow-inner">
-              🎓
-            </div>
-          </div>
+      <a href="/student/recommendation/addcounselor"
+         class="px-6 py-3 bg-emerald-500 text-white rounded-xl">
+        + Add Counselor
+      </a>
+    </div>
+  </div>
 
-          <!-- Title -->
-          <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">
-            No Counselor Yet
-          </h2>
+  {% else %}
 
-          <!-- Description -->
-          <p class="text-gray-500 text-center leading-relaxed mb-8">
-            It looks like you don’t have a counselor connected to your account yet.
-            Add one to start receiving personalized course and major recommendations.
-          </p>
+    {% if information and information|length > 0 %}
 
-          <!-- Buttons -->
-          <div class="flex flex-col sm:flex-row justify-center gap-4">
-            
-            <a href="/student/recommendation/addcounselor"
-               class="px-6 py-3 text-white bg-emerald-500 rounded-xl shadow-md hover:bg-emerald-600 hover:scale-105 transition transform text-center">
-              ➕ Add Counselor
-            </a>
+      <!-- ✅ SHOW RECOMMENDATIONS -->
+      {% for x in information %}
+      <div class="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl p-8 mb-8">
 
-            <a href="/student/recommendation/review"
-               class="px-6 py-3 text-emerald-600 border border-emerald-500 rounded-xl hover:bg-emerald-50 hover:scale-105 transition transform text-center">
-              🔍 Review Recommendations
-            </a>
-
-          </div>
-
+        <div class="mb-4">
+          <p class="text-sm text-gray-400">Sent From</p>
+          <h2 class="text-lg font-semibold text-gray-800">{{ x['Name'] }}</h2>
         </div>
+
+        <div class="mb-4">
+          <h3 class="font-semibold text-emerald-700">📚 Major</h3>
+          <p>{{ x['Major'] }}</p>
+        </div>
+
+        <div class="mb-4">
+          <h3 class="font-semibold text-emerald-700">📝 Comments</h3>
+          <p>{{ x['Comments'] }}</p>
+        </div>
+
+        <p class="text-sm text-gray-400">Sent on {{ x['Date'] }}</p>
+      </div>
+      {% endfor %}
+
+      <div class="text-center">
+      <a href="/student/recommendation/editrecommendations"
+         class="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 hover:scale-105 transition transform">
+        Your Recommendation
+      </a>
       </div>
 
-    </main>
+    {% else %}
 
-    {% include "components/footer.html.jinja" %}
-    
-  </body>
-</html>
+      <!-- ⚠️ NO RECOMMENDATIONS YET -->
+      <div class="max-w-2xl mx-auto text-center bg-white shadow-lg rounded-2xl p-10">
+        
+        <h2 class="text-2xl font-bold text-emerald-700 mb-3">
+          No Recommendations Yet
+        </h2>
+
+        <p class="text-gray-500 mb-6">
+          Your counselor hasn't submitted anything yet.
+        </p>
+
+        <a href="/student/recommendation/editrecommendations"
+         class="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 hover:scale-105 transition transform">
+        Your Recommendation
+      </a>
+      </div>
+
+    {% endif %}
+
+  {% endif %}
+
+</main>
