@@ -484,35 +484,6 @@ def add_counselor_form():
 
     return redirect("/student/dashboard")
 
-@app.route("/student/recommendation/update", methods=["POST"])
-@login_required
-def update_recommendation():
-
-    counselor_id = request.form["counselor_id"]
-    grade = request.form["grade"]
-    comments = request.form.get("comments")
-
-    connection = connect_db()
-    cursor = connection.cursor()
-
-    # Update student profile counselor
-    cursor.execute("""
-        UPDATE StudentProfile
-        SET CounselorUserID = %s
-        WHERE UserID = %s
-    """, (counselor_id, current_user.id))
-
-    # Update StudentProfile
-    cursor.execute("""
-    UPDATE StudentProfile (Grade, Comments, UserID , CounselorUserID)
-    VALUES (%s, %s, %s, %s)
-""", (counselor_id, grade, comments, current_user.id))
-
-    connection.commit()
-    connection.close()
-
-    return redirect("/student/dashboard")
-
 @app.route("/student/recommendation/editrecommendations")
 @login_required
 def review_recommendation():
@@ -717,19 +688,63 @@ def counselor_recommendations():
         abort(404)
     
     connection = connect_db()
-
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
+    # ✅ Get students assigned to this counselor
     cursor.execute("""
-    SELECT * FROM `StudentProfile`
-    JOIN `User` ON `StudentProfile`.`UserID` = `User`.`ID`
-    WHERE CounselorUserID = %s
+        SELECT 
+            StudentProfile.*, 
+            User.Name AS StudentName,
+            User.Email AS StudentEmail
+        FROM StudentProfile
+        JOIN User ON StudentProfile.UserID = User.ID
+        WHERE CounselorUserID = %s
     """, (current_user.id,))
+    
+    students = cursor.fetchall()
 
-    result = cursor.fetchall()
+    # ✅ Attach ONE application per student (from this counselor only)
+    for student in students:
+        cursor.execute("""
+            SELECT 
+                Application.*, 
+                User.Name AS CounselorName
+            FROM Application
+            JOIN User ON Application.UserID = User.ID
+            WHERE StudentUserID = %s
+              AND Application.UserID = %s
+            ORDER BY Application.Date DESC
+            LIMIT 1
+        """, (student["UserID"], current_user.id))
+        
+        student["application"] = cursor.fetchone()
 
     connection.close()
-    return render_template("counselorrecommendation.html.jinja", user=result)
+
+    return render_template(
+        "counselorrecommendation.html.jinja",
+        user=students
+    )
+
+@app.route("/counselor/recommendation/edit/<app_id>", methods=["POST"])
+@login_required
+def edit_application(app_id):
+    major = request.form["major"]
+    comments = request.form["comments"]
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE Application
+        SET Major = %s, Comments = %s
+        WHERE ID = %s AND UserID = %s
+    """, (major, comments, app_id, current_user.id))
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/counselor/recommendation")
 
 
 
