@@ -418,7 +418,8 @@ def recommendations():
         FROM Application
         JOIN User ON Application.UserID = User.ID
         WHERE StudentUserID = %s
-        """, (current_user.id,))
+        AND Application.UserID = %s
+        """, (current_user.id, counselor_id))
         
         information = cursor.fetchall()
 
@@ -506,7 +507,7 @@ def delete_recommendation():
 
     # Delete the specific recommendation row
     cursor.execute("""
-        DELETE FROM StudentProfile
+        DELETE FROM Recommendation
         WHERE ID = %s AND UserID = %s
     """, (recommendation_id, current_user.id))
 
@@ -519,7 +520,7 @@ def delete_recommendation():
     connection.commit()
     connection.close()
 
-    return redirect("/student/recommendation/editrecommendations")
+    return redirect("/student/recommendation")
 
 @app.route("/student/recommendation/edit/<id>")
 @login_required
