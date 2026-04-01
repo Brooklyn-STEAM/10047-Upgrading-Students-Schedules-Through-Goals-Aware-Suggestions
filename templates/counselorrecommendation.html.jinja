@@ -162,15 +162,36 @@
                     </div>
 
                     <div class="flex justify-between items-center mt-4">
+                      
                       <span class="text-xs text-gray-400">
                         {{ x['application']['Date'] }}
                       </span>
 
-                      <button 
-                        onclick="event.stopPropagation(); toggleEdit('{{ x['ID'] }}')"
-                        class="px-3 py-1 text-xs bg-gray-100 rounded-lg hover:bg-gray-200">
-                        Edit
-                      </button>
+                      <div class="flex gap-2">
+
+                        <!-- EDIT -->
+                        <button 
+                          onclick="event.stopPropagation(); toggleEdit('{{ x['ID'] }}')"
+                          class="px-3 py-1 text-xs bg-gray-100 rounded-lg hover:bg-gray-200">
+                          Edit
+                        </button>
+
+                        <!-- DELETE -->
+                        <form 
+                          action="/counselor/recommendation/delete/{{ x['application']['ID'] }}" 
+                          method="POST"
+                          onsubmit="return confirm('Delete this application?');"
+                        >
+                          <button 
+                            type="submit"
+                            onclick="event.stopPropagation();"
+                            class="px-3 py-1 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
+                            Delete
+                          </button>
+                        </form>
+
+                      </div>
+
                     </div>
 
                   </div>

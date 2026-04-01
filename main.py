@@ -323,9 +323,9 @@ def dashboard():
     # 1. Load counselor info
     cursor.execute("""
         SELECT User.Email, User.Name
-        FROM StudentProfile
-        JOIN User ON StudentProfile.CounselorUserID = User.ID
-        WHERE StudentProfile.UserID = %s
+        FROM Recommendation
+        JOIN User ON Recommendation.CounselorID = User.ID
+        WHERE Recommendation.UserID = %s
     """, (current_user.id,))
     
     result = cursor.fetchone()
@@ -401,14 +401,13 @@ def recommendations():
 
     # ✅ Check if student has a counselor
     cursor.execute("""
-        SELECT CounselorUserID 
-        FROM StudentProfile
+        SELECT CounselorID 
+        FROM Recommendation
         WHERE UserID = %s
     """, (current_user.id,))
-    
     student = cursor.fetchone()
 
-    counselor_id = student["CounselorUserID"] if student else None
+    counselor_id = student["CounselorID"] if student else None
 
     information = []
 
@@ -459,24 +458,16 @@ def add_counselor_form():
     connection = connect_db()
     cursor = connection.cursor()
 
-    # Assign counselor to student
-    cursor.execute("""
-        UPDATE StudentProfile
-        SET CounselorUserID = %s
-        WHERE UserID = %s
-    """, (counselor_id, current_user.id))
-
-    # 2. NEW: Insert into CounselorStudent (this is what makes the counselor see the student)
+    # Link student to counselor
     cursor.execute("""
         INSERT INTO CounselorStudent (CounselorUserID, StudentUserID)
         VALUES (%s, %s)
     """, (counselor_id, current_user.id))
 
-
-    # Save recommendation request using INSERT ... SELECT
+    # Save recommendation request
     cursor.execute("""
-        INSERT INTO StudentProfile (Grade, Comments, UserID , CounselorUserID)
-        SELECT %s, %s, %s, %s
+        INSERT INTO Recommendation (Grade, Comments, UserID, CounselorID)
+        VALUES (%s, %s, %s, %s)
     """, (grade, comments, current_user.id, counselor_id))
 
     connection.commit()
@@ -491,15 +482,15 @@ def review_recommendation():
     cursor = connection.cursor()
     cursor.execute("""
     SELECT 
-    StudentProfile.*, 
+    Recommendation.*, 
     student.Name AS StudentName,
     counselor.Name AS CounselorName
-    FROM StudentProfile
+    FROM Recommendation
     JOIN User AS student 
-    ON StudentProfile.UserID = student.ID
+    ON Recommendation.UserID = student.ID
     LEFT JOIN User AS counselor 
-    ON StudentProfile.CounselorUserID = counselor.ID
-    WHERE StudentProfile.UserID = %s
+    ON Recommendation.CounselorID = counselor.ID
+    WHERE Recommendation.UserID = %s
     """, (current_user.id,))
     information = cursor.fetchall()
     connection.close()
@@ -543,7 +534,7 @@ def edit_specific_recommendation(id):
     recommendation = cursor.fetchall()
 
     cursor.execute("""
-    SELECT * FROM StudentProfile WHERE UserID = %s
+    SELECT * FROM Recommendation WHERE UserID = %s
     """, (current_user.id,))
     user = cursor.fetchone()
 
@@ -567,8 +558,8 @@ def edit_specific_recommendation_processing(id):
 
     # Update student profile counselor
     cursor.execute("""
-        UPDATE StudentProfile
-        SET CounselorUserID = %s, Grade = %s, Comments = %s
+        UPDATE Recommendation
+        SET CounselorID = %s, Grade = %s, Comments = %s
         WHERE ID = %s AND UserID = %s
     """, (counselor_id, grade, comments, id, current_user.id))
 
@@ -589,9 +580,14 @@ def counselor_dashboard():
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
     cursor.execute("""
-    SELECT * FROM `StudentProfile`
-    JOIN `User` ON `StudentProfile`.`UserID` = `User`.`ID`
-    WHERE CounselorUserID = %s
+    SELECT 
+        Recommendation.*,
+        User.*,
+        StudentProfile.ID AS student_profile_id
+    FROM Recommendation
+    JOIN User ON Recommendation.UserID = User.ID
+    JOIN StudentProfile ON StudentProfile.UserID = User.ID
+    WHERE CounselorID = %s
     """, (current_user.id,))
 
     result = cursor.fetchall()
@@ -616,8 +612,8 @@ def student_profile(student_profile_id):
     cursor.execute("""
         SELECT 1 
         FROM StudentProfile sp
-        JOIN CounselorStudent cs ON cs.StudentUserID = sp.UserID
-        WHERE cs.CounselorUserID = %s AND sp.ID = %s
+        JOIN Recommendation cs ON cs.UserID = sp.UserID
+        WHERE cs.CounselorID = %s AND sp.ID = %s
     """, (current_user.id, student_profile_id))
     allowed = cursor.fetchone()
     if not allowed:
@@ -627,16 +623,16 @@ def student_profile(student_profile_id):
     # Fetch student info
     cursor.execute("""
         SELECT 
-            sp.ID AS student_profile_id,
-            u.ID AS user_id,
-            u.Name,
-            u.Email,
-            sp.ProfilePicture,
-            sp.Grade,
-            sp.Phone,
-            sp.Address,
-            sp.Bio,
-            sp.CounselorNotes
+        sp.ID AS student_profile_id,
+        u.ID AS user_id,
+        u.Name,
+        u.Email,
+        sp.ProfilePicture,
+        sp.Grade,
+        sp.Phone,
+        sp.Address,
+        sp.Bio,
+        sp.CounselorNotes
         FROM StudentProfile sp
         JOIN User u ON sp.UserID = u.ID
         WHERE sp.ID = %s
@@ -693,12 +689,12 @@ def counselor_recommendations():
     # ✅ Get students assigned to this counselor
     cursor.execute("""
         SELECT 
-            StudentProfile.*, 
+            Recommendation.*, 
             User.Name AS StudentName,
             User.Email AS StudentEmail
-        FROM StudentProfile
-        JOIN User ON StudentProfile.UserID = User.ID
-        WHERE CounselorUserID = %s
+        FROM Recommendation
+        JOIN User ON Recommendation.UserID = User.ID
+        WHERE Recommendation.CounselorID = %s
     """, (current_user.id,))
     
     students = cursor.fetchall()
@@ -746,7 +742,26 @@ def edit_application(app_id):
 
     return redirect("/counselor/recommendation")
 
+@app.route("/counselor/recommendation/delete/<int:application_id>", methods=["POST"])
+@login_required
+def delete_application(application_id):
+    if current_user.role != "counselor":
+        abort(403)
 
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    # ✅ DELETE
+    cursor.execute("""
+        DELETE FROM Application
+        WHERE ID = %s
+    """, (application_id,))
+
+    connection.commit()   # 🔥 THIS IS REQUIRED
+
+    connection.close()
+
+    return redirect(url_for("counselor_dashboard"))
 
 
 @app.route("/student/academic_record")
@@ -929,9 +944,9 @@ def add_application(user_id):
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
     cursor.execute("""
-    SELECT * FROM `StudentProfile`
-    JOIN `User` ON `StudentProfile`.`UserID` = `User`.`ID`
-    WHERE User.ID = %s AND StudentProfile.CounselorUserID = %s
+    SELECT * FROM `Recommendation`
+    JOIN `User` ON `Recommendation`.`UserID` = `User`.`ID`
+    WHERE User.ID = %s AND Recommendation.CounselorID = %s
     """, (user_id, current_user.id))
 
     result = cursor.fetchone()
@@ -958,8 +973,8 @@ def adding_app(user_id):
 
     # ✅ Validate ownership
     cursor.execute("""
-    SELECT * FROM StudentProfile
-    WHERE UserID = %s AND CounselorUserID = %s
+    SELECT * FROM Recommendation
+    WHERE UserID = %s AND CounselorID = %s
     """, (user_id, current_user.id))
 
     student = cursor.fetchone()
