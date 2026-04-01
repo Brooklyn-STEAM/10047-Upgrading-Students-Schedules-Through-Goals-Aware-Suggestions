@@ -23,7 +23,7 @@
     </div>
 
     <div class="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl font-medium">
-      {{ user|length }} Students
+      {{ user|length }} Student{{ user|length != 1 and 's' or '' }}
     </div>
   </div>
 
