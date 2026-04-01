@@ -37,7 +37,7 @@
         <tr>
           <th class="px-6 py-4 text-left">Student</th>
           <th class="px-6 py-4 text-left">Grade</th>
-          <th class="px-6 py-4 text-left">Status</th>
+          <th class="px-6 py-4 text-left">Applications</th>
           <th class="px-6 py-4 text-center">Action</th>
         </tr>
       </thead>
@@ -81,13 +81,14 @@
 
           <!-- STATUS -->
           <td class="px-6 py-4">
-            {% if x['application'] %}
-              <span class="px-3 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
-                Submitted
+            
+            {% if x['application_count'] > 0 %}
+              <span class="px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700 rounded-full">
+                {{ x['application_count'] }} Application{{ x['application_count'] != 1 and 's' or '' }}
               </span>
             {% else %}
               <span class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-500 rounded-full">
-                No Application
+                No Applications
               </span>
             {% endif %}
           </td>
@@ -142,104 +143,130 @@
                 <!-- RIGHT SIDE -->
                 <div class="flex-1">
 
-                  {% if x['application'] %}
+                  {% if x['applications'] and x['applications']|length > 0 %}
 
-                  <!-- VIEW MODE -->
-                  <div id="view-{{ x['ID'] }}" class="bg-white border rounded-xl p-6 shadow-sm">
-                    
-                    <div class="mb-4">
-                      <p class="text-xs text-gray-400">Application</p>
-                      <h3 class="text-lg font-semibold text-gray-800">
-                        {{ x['application']['Major'] }}
-                      </h3>
-                    </div>
+                  <div class="relative">
 
-                    <div class="mb-4">
-                      <p class="text-xs text-gray-400">Comments</p>
-                      <p class="text-sm text-gray-600">
-                        {{ x['application']['Comments'] }}
-                      </p>
-                    </div>
-
-                    <div class="flex justify-between items-center mt-4">
+                    <!-- SLIDES -->
+                    {% for app in x['applications'] %}
+                    <div class="app-slide-{{ x['ID'] }} {% if not loop.first %}hidden{% endif %}">
                       
-                      <span class="text-xs text-gray-400">
-                        {{ x['application']['Date'] }}
-                      </span>
+                      <!-- VIEW MODE -->
+                      <div id="view-{{ app['ID'] }}" class="bg-white border rounded-xl p-5 shadow-sm">
 
-                      <div class="flex gap-2">
+                        <div class="mb-2">
+                          <p class="text-xs text-gray-400">Major</p>
+                          <h3 class="font-semibold text-gray-800">
+                            {{ app['Major'] }}
+                          </h3>
+                        </div>
 
-                        <!-- EDIT -->
-                        <button 
-                          onclick="event.stopPropagation(); toggleEdit('{{ x['ID'] }}')"
-                          class="px-3 py-1 text-xs bg-gray-100 rounded-lg hover:bg-gray-200">
-                          Edit
-                        </button>
+                        <div class="mb-2">
+                          <p class="text-xs text-gray-400">Comments</p>
+                          <p class="text-sm text-gray-600">
+                            {{ app['Comments'] }}
+                          </p>
+                        </div>
 
-                        <!-- DELETE -->
-                        <form 
-                          action="/counselor/recommendation/delete/{{ x['application']['ID'] }}" 
-                          method="POST"
-                          onsubmit="return confirm('Delete this application?');"
-                        >
-                          <button 
-                            type="submit"
-                            onclick="event.stopPropagation();"
-                            class="px-3 py-1 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
-                            Delete
-                          </button>
-                        </form>
+                        <div class="flex justify-between items-center mt-3">
+                          <span class="text-xs text-gray-400">
+                            {{ app['Date'] }}
+                          </span>
+
+                          <div class="flex gap-2">
+
+                            <!-- EDIT -->
+                            <button 
+                              onclick="event.stopPropagation(); toggleEdit('{{ app['ID'] }}')"
+                              class="px-3 py-1 text-xs bg-gray-100 rounded-lg hover:bg-gray-200">
+                              Edit
+                            </button>
+
+                            <!-- DELETE -->
+                            <form 
+                              action="/counselor/recommendation/delete/{{ app['ID'] }}" 
+                              method="POST"
+                              onsubmit="return confirm('Delete this application?');"
+                            >
+                              <button 
+                                type="submit"
+                                onclick="event.stopPropagation();"
+                                class="px-3 py-1 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
+                                Delete
+                              </button>
+                            </form>
+
+                          </div>
+                        </div>
 
                       </div>
 
+                      <!-- EDIT MODE -->
+                      <form id="edit-{{ app['ID'] }}" 
+                            action="/counselor/recommendation/edit/{{ app['ID'] }}" 
+                            method="POST"
+                            class="hidden bg-white border rounded-xl p-5 shadow-sm space-y-3">
+
+                        <div>
+                          <label class="text-xs text-gray-400">Major</label>
+                          <input type="text" name="major" 
+                                value="{{ app['Major'] }}"
+                                class="w-full mt-1 px-3 py-2 border rounded-lg">
+                        </div>
+
+                        <div>
+                          <label class="text-xs text-gray-400">Comments</label>
+                          <textarea name="comments" rows="3"
+                            class="w-full mt-1 px-3 py-2 border rounded-lg">{{ app['Comments'] }}</textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-2">
+                          <button type="button"
+                            onclick="toggleEdit('{{ app['ID'] }}')"
+                            class="px-3 py-1 text-sm bg-gray-100 rounded-lg">
+                            Cancel
+                          </button>
+
+                          <button type="submit"
+                            class="px-4 py-1 text-sm bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
+                            Save
+                          </button>
+                        </div>
+
+                      </form>
+
+                    </div>
+                    {% endfor %}
+
+                    <!-- NAVIGATION -->
+                    <div class="flex items-center justify-between mt-4">
+
+                      <!-- LEFT -->
+                      <button onclick="prevApp('{{ x['ID'] }}')" 
+                        class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                        ←
+                      </button>
+
+                      <!-- INDICATOR -->
+                      <div class="text-xs text-gray-400">
+                        <span id="app-index-{{ x['ID'] }}">1</span> / {{ x['applications']|length }}
+                      </div>
+
+                      <!-- RIGHT -->
+                      <button onclick="nextApp('{{ x['ID'] }}')" 
+                        class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                        →
+                      </button>
+
                     </div>
 
                   </div>
-
-                  <!-- EDIT MODE -->
-                  <form id="edit-{{ x['ID'] }}" 
-                        action="/counselor/recommendation/edit/{{ x['application']['ID'] }}" 
-                        method="POST"
-                        class="hidden bg-white border rounded-xl p-6 shadow-sm space-y-4">
-
-                    <!-- Major -->
-                    <div>
-                      <label class="text-xs text-gray-400">Major</label>
-                      <input type="text" name="major" 
-                            value="{{ x['application']['Major'] }}"
-                            class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500">
-                    </div>
-
-                    <!-- Comments -->
-                    <div>
-                      <label class="text-xs text-gray-400">Comments</label>
-                      <textarea name="comments" rows="3"
-                        class="w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500">{{ x['application']['Comments'] }}</textarea>
-                    </div>
-
-                    <!-- Buttons -->
-                    <div class="flex justify-end gap-2">
-                      
-                      <button type="button"
-                        onclick="toggleEdit('{{ x['ID'] }}')"
-                        class="px-3 py-1 text-sm bg-gray-100 rounded-lg">
-                        Cancel
-                      </button>
-
-                      <button type="submit"
-                        class="px-4 py-1 text-sm bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
-                        Save
-                      </button>
-
-                    </div>
-
-                  </form>
 
                   {% else %}
-                  
-                  <div class="text-gray-400 text-sm">
-                    No application submitted yet
-                  </div>
+
+                    <div class="text-gray-400 text-sm">
+                      No applications submitted yet
+                    </div>
 
                   {% endif %}
 
@@ -318,6 +345,45 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+// ==========================
+// CAROUSEL LOGIC
+// ==========================
+const appIndex = {};
+
+function showApp(studentId, index) {
+  const slides = document.querySelectorAll(".app-slide-" + studentId);
+  if (!slides.length) return;
+
+  slides.forEach((el, i) => {
+    el.classList.toggle("hidden", i !== index);
+  });
+
+  appIndex[studentId] = index;
+
+  // Update indicator
+  const indicator = document.getElementById("app-index-" + studentId);
+  if (indicator) indicator.innerText = index + 1;
+}
+
+function nextApp(studentId) {
+  const slides = document.querySelectorAll(".app-slide-" + studentId);
+  if (!slides.length) return;
+
+  let index = appIndex[studentId] ?? 0;
+  index = (index + 1) % slides.length;
+
+  showApp(studentId, index);
+}
+
+function prevApp(studentId) {
+  const slides = document.querySelectorAll(".app-slide-" + studentId);
+  if (!slides.length) return;
+
+  let index = appIndex[studentId] ?? 0;
+  index = (index - 1 + slides.length) % slides.length;
+
+  showApp(studentId, index);
+}
 </script>
 
 </body>
