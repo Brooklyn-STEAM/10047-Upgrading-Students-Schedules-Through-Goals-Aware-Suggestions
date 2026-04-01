@@ -700,21 +700,18 @@ def counselor_recommendations():
     
     students = cursor.fetchall()
 
-    # ✅ Attach ONE application per student (from this counselor only)
+    # ✅ Attach ALL applications per student (ONLY from this counselor)
     for student in students:
         cursor.execute("""
-            SELECT 
-                Application.*, 
-                User.Name AS CounselorName
+            SELECT *
             FROM Application
-            JOIN User ON Application.UserID = User.ID
             WHERE StudentUserID = %s
-              AND Application.UserID = %s
-            ORDER BY Application.Date DESC
-            LIMIT 1
+              AND UserID = %s
+            ORDER BY Date DESC
         """, (student["UserID"], current_user.id))
         
-        student["application"] = cursor.fetchone()
+        student["applications"] = cursor.fetchall()
+        student["application_count"] = len(student["applications"])  # 🔥 LIST
 
     connection.close()
 
@@ -723,9 +720,14 @@ def counselor_recommendations():
         user=students
     )
 
-@app.route("/counselor/recommendation/edit/<app_id>", methods=["POST"])
+
+# ✅ EDIT
+@app.route("/counselor/recommendation/edit/<int:app_id>", methods=["POST"])
 @login_required
 def edit_application(app_id):
+    if current_user.role != "counselor":
+        abort(403)
+
     major = request.form["major"]
     comments = request.form["comments"]
 
@@ -743,6 +745,8 @@ def edit_application(app_id):
 
     return redirect("/counselor/recommendation")
 
+
+# ✅ DELETE (SECURE)
 @app.route("/counselor/recommendation/delete/<int:application_id>", methods=["POST"])
 @login_required
 def delete_application(application_id):
@@ -752,17 +756,15 @@ def delete_application(application_id):
     connection = connect_db()
     cursor = connection.cursor()
 
-    # ✅ DELETE
     cursor.execute("""
         DELETE FROM Application
-        WHERE ID = %s
-    """, (application_id,))
+        WHERE ID = %s AND UserID = %s
+    """, (application_id, current_user.id))
 
-    connection.commit()   # 🔥 THIS IS REQUIRED
-
+    connection.commit()
     connection.close()
 
-    return redirect(url_for("counselor_dashboard"))
+    return redirect("/counselor/recommendation")
 
 
 @app.route("/student/academic_record")
