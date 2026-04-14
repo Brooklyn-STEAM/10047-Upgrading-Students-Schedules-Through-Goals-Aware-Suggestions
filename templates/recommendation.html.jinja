@@ -29,7 +29,7 @@
       <div class="flex justify-center">
         <div class="relative bg-white/80 backdrop-blur-lg max-w-2xl w-full shadow-2xl rounded-2xl p-10 border border-emerald-100">
           
-          <!-- Glow Accent -->
+          <!-- Glow -->
           <div class="absolute -top-10 -left-10 w-40 h-40 bg-emerald-200 opacity-30 rounded-full blur-3xl"></div>
 
           <!-- Icon -->
@@ -41,29 +41,65 @@
 
           <!-- Title -->
           <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">
-            No Counselor Yet
+            Counselor & Recommendations
           </h2>
 
-          <!-- Description -->
-          <p class="text-gray-500 text-center leading-relaxed mb-8">
-            It looks like you don’t have a counselor connected to your account yet.
-            Add one to start receiving personalized course and major recommendations.
-          </p>
+          {% if counselor_id %}
 
-          <!-- Buttons -->
-          <div class="flex flex-col sm:flex-row justify-center gap-4">
-            
-            <a href="/student/recommendation/addcounselor"
-               class="px-6 py-3 text-white bg-emerald-500 rounded-xl shadow-md hover:bg-emerald-600 hover:scale-105 transition transform text-center">
-              ➕ Add Counselor
-            </a>
+            <p class="text-center text-gray-600 mb-6">
+              You are connected with a counselor and can start chatting or reviewing recommendations.
+            </p>
 
-            <a href="/student/recommendation/review"
-               class="px-6 py-3 text-emerald-600 border border-emerald-500 rounded-xl hover:bg-emerald-50 hover:scale-105 transition transform text-center">
-              🔍 Review Recommendations
-            </a>
+            <!-- Buttons -->
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
 
-          </div>
+              <a href="/student/recommendation/addcounselor"
+                 class="px-6 py-3 text-white bg-emerald-500 rounded-xl shadow-md hover:bg-emerald-600 hover:scale-105 transition transform text-center">
+                ➕ Change Counselor
+              </a>
+
+
+<a href="{{ url_for('chat', user_id=counselor_id) }}"
+   class="px-6 py-3 text-white bg-blue-500 rounded-xl shadow-md hover:bg-blue-600 hover:scale-105 transition transform text-center">
+  💬 Chat with Counselor
+</a>
+
+
+
+
+              <a href="/student/recommendation/editrecommendations"
+                 class="px-6 py-3 text-emerald-600 border border-emerald-500 rounded-xl hover:bg-emerald-50 hover:scale-105 transition transform text-center">
+                🔍 Review Recommendations
+              </a>
+
+            </div>
+
+          {% else %}
+
+            <p class="text-gray-500 text-center leading-relaxed mb-8">
+              It looks like you don’t have a counselor connected yet.
+              Add one to start receiving personalized guidance.
+            </p>
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+
+              <a href="/student/recommendation/addcounselor"
+                 class="px-6 py-3 text-white bg-emerald-500 rounded-xl shadow-md hover:bg-emerald-600 hover:scale-105 transition transform text-center">
+                ➕ Add Counselor
+              </a>
+
+              <span class="px-6 py-3 text-gray-400 border border-gray-300 rounded-xl text-center">
+                💬 Chat unavailable
+              </span>
+
+              <a href="/student/recommendation/editrecommendations"
+                 class="px-6 py-3 text-emerald-600 border border-emerald-500 rounded-xl hover:bg-emerald-50 hover:scale-105 transition transform text-center">
+                🔍 Review Recommendations
+              </a>
+
+            </div>
+
+          {% endif %}
 
         </div>
       </div>

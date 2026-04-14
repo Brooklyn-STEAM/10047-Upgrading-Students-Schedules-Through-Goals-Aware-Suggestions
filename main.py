@@ -397,19 +397,39 @@ def toggle_counselor_edit():
 def recommendations():
 
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
+    # Get counselor relationship
     cursor.execute("""
-        SELECT ID, Name, Email
-        FROM User
-        WHERE Role = %s """ , (current_user.id))
+        SELECT CounselorID 
+        FROM Recommendation
+        WHERE UserID = %s
+    """, (current_user.id,))
+    
+    student = cursor.fetchone()
+    counselor_id = student["CounselorID"] if student else None
 
-    counselors = cursor.fetchall()
+    information = []
+
+    # Load recommendations if counselor exists
+    if counselor_id:
+        cursor.execute("""
+            SELECT Application.*, User.Name 
+            FROM Application
+            JOIN User ON Application.UserID = User.ID
+            WHERE StudentUserID = %s
+            AND Application.UserID = %s
+        """, (current_user.id, counselor_id))
+        
+        information = cursor.fetchall()
+
     connection.close()
 
-    return render_template( "recommendation.html.jinja", counselors=counselors
+    return render_template(
+        "recommendation.html.jinja",
+        counselor_id=counselor_id,
+        information=information
     )
-
 
 @app.route("/student/recommendation/addcounselor")
 @login_required
@@ -1115,6 +1135,141 @@ def inject_navbar_profile():
             connection.close()
     return dict(navbar_profile=profile) 
 
+@app.route("/chat/<int:user_id>")
+@login_required
+def chat(user_id):
+
+    conn = connect_db()
+    cur = conn.cursor(pymysql.cursors.DictCursor)
+
+    # get target user
+    cur.execute("SELECT Name, Role FROM User WHERE ID = %s", (user_id,))
+    target = cur.fetchone()
+
+    if not target:
+        conn.close()
+        return "User not found", 404
+
+    # STUDENT VIEWING COUNSELOR CHAT
+    if current_user.role == "student":
+
+        cur.execute("""
+            SELECT CounselorUserID
+            FROM CounselorStudent
+            WHERE StudentUserID = %s
+            ORDER BY ID DESC
+            LIMIT 1
+        """, (current_user.id,))
+
+        row = cur.fetchone()
+
+        if not row or row["CounselorUserID"] != user_id:
+            conn.close()
+            return "Not allowed", 403
+
+    # COUNSELOR VIEWING STUDENT CHAT
+    elif current_user.role == "counselor":
+
+        cur.execute("""
+            SELECT 1
+            FROM CounselorStudent
+            WHERE CounselorUserID = %s AND StudentUserID = %s
+        """, (current_user.id, user_id))
+
+        if not cur.fetchone():
+            conn.close()
+            return "Not allowed", 403
+
+    conn.close()
+
+    return render_template(
+        "chat.html.jinja",
+        receiver_id=user_id,
+        receiver_name=target["Name"],
+        receiver_role=target["Role"]
+    )
+
+@app.route("/send_message", methods=["POST"])
+@login_required
+def send_message():
+
+    receiver_id = request.form.get("receiver_id")
+    content = request.form["content"]
+
+    conn = connect_db()
+    cur = conn.cursor(pymysql.cursors.DictCursor)
+
+    # get CURRENT counselor of student
+    cur.execute("""
+        SELECT CounselorUserID
+        FROM CounselorStudent
+        WHERE StudentUserID = %s
+        ORDER BY ID DESC
+        LIMIT 1
+    """, (current_user.id,))
+    
+    row = cur.fetchone()
+
+    counselor_id = row["CounselorUserID"] if row else None
+
+    cur.execute("""
+        INSERT INTO Message (SenderID, ReceiverID, CounselorID, Content)
+        VALUES (%s, %s, %s, %s)
+    """, (current_user.id, receiver_id, counselor_id, content))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"status": "success"})
+
+@app.route("/get_messages/<int:user_id>")
+@login_required
+def get_messages(user_id):
+
+    conn = connect_db()
+    cur = conn.cursor(pymysql.cursors.DictCursor)
+
+    # get current counselor
+    cur.execute("""
+        SELECT CounselorUserID
+        FROM CounselorStudent
+        WHERE StudentUserID = %s
+        ORDER BY ID DESC
+        LIMIT 1
+    """, (current_user.id,))
+
+    row = cur.fetchone()
+    counselor_id = row["CounselorUserID"] if row else None
+
+    cur.execute("""
+        SELECT 
+            m.ID,
+            m.SenderID,
+            m.ReceiverID,
+            m.Content,
+            m.CreatedAt,
+            u.Name AS SenderName,
+            COALESCE(sp.ProfilePicture, cp.ProfilePicture) AS SenderProfilePicture
+        FROM Message m
+        JOIN User u ON u.ID = m.SenderID
+        LEFT JOIN StudentProfile sp ON sp.UserID = u.ID
+        LEFT JOIN CounselorProfile cp ON cp.UserID = u.ID
+        WHERE 
+            (
+                (m.SenderID = %s AND m.ReceiverID = %s AND m.CounselorID = %s)
+                OR
+                (m.SenderID = %s AND m.ReceiverID = %s AND m.CounselorID = %s)
+            )
+        ORDER BY m.CreatedAt ASC
+    """, (
+        current_user.id, user_id, counselor_id,
+        user_id, current_user.id, counselor_id
+    ))
+
+    messages = cur.fetchall()
+    conn.close()
+
+    return jsonify(messages)
         
 
 
