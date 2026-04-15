@@ -68,7 +68,7 @@ Here are your assigned students:
 {% for x in user %}
 {% if x["Role"] == "student" %}
 
-<a href="/counselor/dashboard/{{ x['ID'] }}"
+<a href="/counselor/dashboard/{{ x['student_profile_id'] }}"
 
 class="flex justify-between items-center p-5
 rounded-xl border border-emerald-200
