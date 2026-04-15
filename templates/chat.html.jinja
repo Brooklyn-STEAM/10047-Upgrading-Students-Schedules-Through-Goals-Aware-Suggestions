@@ -67,48 +67,56 @@ function resetChat() {
 // Load messages
 async function loadMessages() {
     const res = await fetch(`/get_messages/${receiverId}`);
-    const messages = await res.json();
 
+    if (res.status === 403) {
+        document.getElementById("chat-box").innerHTML =
+            "<p class='text-center text-red-500'>Chat unavailable</p>";
+        return;
+    }
+
+    if (!res.ok) {
+        console.error("Failed to load messages");
+        return;
+    }
+
+    const messages = await res.json();
     const chatBox = document.getElementById("chat-box");
+
+    chatBox.innerHTML = "";
 
     messages.forEach(msg => {
 
-        if (msg.ID > lastMessageId) {
+        const isMe = msg.SenderID == currentUserId;
 
-            const isMe = msg.SenderID == currentUserId;
+        const wrapper = document.createElement("div");
+        wrapper.className = `flex items-end gap-2 ${isMe ? "justify-end" : "justify-start"}`;
 
-            const wrapper = document.createElement("div");
-            wrapper.className = `flex items-end gap-2 ${isMe ? "justify-end" : "justify-start"}`;
+        const img = document.createElement("img");
+        img.className = "w-8 h-8 rounded-full object-cover";
 
-            const img = document.createElement("img");
-            img.className = "w-8 h-8 rounded-full object-cover";
+        img.src = msg.SenderProfilePicture
+            ? `/static/profile_pics/${msg.SenderProfilePicture}`
+            : "https://ui-avatars.com/api/?name=" + encodeURIComponent(msg.SenderName);
 
-            img.src = msg.SenderProfilePicture
-                ? `/static/profile_pics/${msg.SenderProfilePicture}`
-                : "https://ui-avatars.com/api/?name=" + encodeURIComponent(msg.SenderName);
+        const bubble = document.createElement("div");
+        bubble.className = `
+            max-w-[70%] px-4 py-2 text-sm shadow-sm
+            ${isMe
+                ? "bg-emerald-500 text-white rounded-2xl rounded-br-md"
+                : "bg-white text-gray-800 border rounded-2xl rounded-bl-md"}
+        `;
 
-            const bubble = document.createElement("div");
-            bubble.className = `
-                max-w-[70%] px-4 py-2 text-sm shadow-sm
-                ${isMe
-                    ? "bg-emerald-500 text-white rounded-2xl rounded-br-md"
-                    : "bg-white text-gray-800 border rounded-2xl rounded-bl-md"}
-            `;
+        bubble.textContent = msg.Content;
 
-            bubble.textContent = msg.Content;
-
-            if (isMe) {
-                wrapper.appendChild(bubble);
-                wrapper.appendChild(img);
-            } else {
-                wrapper.appendChild(img);
-                wrapper.appendChild(bubble);
-            }
-
-            chatBox.appendChild(wrapper);
-
-            lastMessageId = msg.ID;
+        if (isMe) {
+            wrapper.appendChild(bubble);
+            wrapper.appendChild(img);
+        } else {
+            wrapper.appendChild(img);
+            wrapper.appendChild(bubble);
         }
+
+        chatBox.appendChild(wrapper);
     });
 
     chatBox.scrollTop = chatBox.scrollHeight;
