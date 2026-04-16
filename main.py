@@ -325,15 +325,25 @@ def dashboard():
 
     # 1. Load counselor info
     cursor.execute("""
-        SELECT User.Email, User.Name
+        SELECT User.Email, User.Name, Recommendation.Status
         FROM Recommendation
         JOIN User ON Recommendation.CounselorID = User.ID
         WHERE Recommendation.UserID = %s
     """, (current_user.id,))
     
     result = cursor.fetchone()
-    counselor_email = result["Email"] if result else None
-    counselor_name = result["Name"] if result else None
+
+    if result:
+        if result["Status"] == "accepted":
+            counselor_decision = "Accepted"
+            counselor_email = result["Email"]
+            counselor_name = result["Name"]
+        else:
+            counselor_email = None
+            counselor_name = "Pending"
+    else:
+        counselor_email = None
+        counselor_name = None
 
     # 2. Load real student profile
     cursor.execute("""
@@ -369,7 +379,8 @@ def dashboard():
         student=student,
         courses=courses,
         counselor_name=counselor_name,
-        counselor_email=counselor_email
+        counselor_email=counselor_email,
+        counselor_decision = counselor_decision
     )
 
 
@@ -449,13 +460,74 @@ def recommendations():
         
         information = cursor.fetchall()
 
+    # 🔔 NEW: Get unread notification count
+    cursor.execute("""
+        SELECT COUNT(*) AS count
+        FROM Declined
+        WHERE StudentID = %s AND Seen = FALSE
+    """, (current_user.id,))
+
+    notification_count = cursor.fetchone()["count"]
+
     connection.close()
 
     return render_template(
         "recommendation.html.jinja",
         counselor_id=counselor_id,
-        information=information
+        information=information,
+        notification_count=notification_count  # ✅ pass to frontend
     )
+
+@app.route("/student/recommendation/notifications")
+@login_required
+def student_notifications():
+    if current_user.role != "student":
+        abort(403)
+
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    cursor.execute("""
+        SELECT 
+            Declined.Reason,
+            Declined.ID,
+            User.Name AS CounselorName
+        FROM Declined
+        JOIN User ON Declined.UserID = User.ID
+        WHERE Declined.StudentID = %s
+        ORDER BY Declined.ID DESC
+    """, (current_user.id,))
+
+    notifications = cursor.fetchall()
+
+    connection.close()
+
+    return render_template(
+        "notif.html.jinja",
+        notifications=notifications
+    )
+
+@app.route("/student/notifications/read/<int:notification_id>")
+@login_required
+def mark_notification_read(notification_id):
+    if current_user.role != "student":
+        abort(403)
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    # Only mark if it belongs to the student
+    cursor.execute("""
+        UPDATE Declined
+        SET Seen = TRUE
+        WHERE ID = %s AND StudentID = %s
+    """, (notification_id, current_user.id))
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/student/recommendation")
+
 
 @app.route("/student/recommendation/addcounselor")
 @login_required
@@ -639,9 +711,6 @@ def counselor_dashboard():
 
     return render_template("counselor_dashboard.html.jinja", user=result)
 
-
-
-
 @app.route("/counselor/dashboard/<int:student_profile_id>")
 @login_required
 def student_profile(student_profile_id):
@@ -729,7 +798,7 @@ def counselor_recommendations():
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    # ✅ Get students assigned to this counselor
+    # ✅ ONLY accepted students
     cursor.execute("""
         SELECT 
             Recommendation.*, 
@@ -738,11 +807,12 @@ def counselor_recommendations():
         FROM Recommendation
         JOIN User ON Recommendation.UserID = User.ID
         WHERE Recommendation.CounselorID = %s
+        AND Recommendation.Status = 'accepted'
     """, (current_user.id,))
     
     students = cursor.fetchall()
 
-    # ✅ Attach ALL applications per student (ONLY from this counselor)
+    # Attach applications
     for student in students:
         cursor.execute("""
             SELECT *
@@ -753,7 +823,7 @@ def counselor_recommendations():
         """, (student["UserID"], current_user.id))
         
         student["applications"] = cursor.fetchall()
-        student["application_count"] = len(student["applications"])  # 🔥 LIST
+        student["application_count"] = len(student["applications"])
 
     connection.close()
 
@@ -761,6 +831,123 @@ def counselor_recommendations():
         "counselorrecommendation.html.jinja",
         user=students
     )
+
+@app.route("/counselor/dashboard/accept/<int:user_id>")
+@login_required
+def accept_student(user_id):
+    if current_user.role != "counselor":
+        abort(403)
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    # ✅ Step 1: Verify request exists and is pending
+    cursor.execute("""
+        SELECT *
+        FROM Recommendation
+        WHERE UserID = %s 
+          AND CounselorID = %s
+          AND Status = 'pending'
+    """, (user_id, current_user.id))
+
+    request = cursor.fetchone()
+
+    if not request:
+        connection.close()
+        abort(404)
+
+    # ✅ Step 2: Update status to accepted
+    cursor.execute("""
+        UPDATE Recommendation
+        SET Status = 'accepted'
+        WHERE UserID = %s AND CounselorID = %s
+    """, (user_id, current_user.id))
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/counselor/dashboard")
+
+@app.route("/counselor/dashboard/decline/<int:user_id>")
+@login_required
+def decline_academic_record(user_id):
+    if current_user.role != "counselor":
+        abort(403)
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    # Get student name + verify relationship
+    cursor.execute("""
+        SELECT User.Name
+        FROM StudentProfile
+        JOIN User ON StudentProfile.UserID = User.ID
+        WHERE StudentProfile.UserID = %s
+    """, (user_id,))
+
+    rc = cursor.fetchone()
+    connection.close()
+
+    if not rc:
+        abort(404)
+
+    return render_template(
+        "decline.html.jinja",
+        user_id=user_id,
+        student_name=rc["Name"]
+    )
+
+@app.route("/counselor/dashboard/decline/<int:user_id>/processing", methods=["POST"])
+@login_required
+def decline_academic_record_processing(user_id):
+    if current_user.role != "counselor":
+        abort(403)
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    # Step 1: Verify student belongs to counselor
+    cursor.execute("""
+        SELECT UserID
+        FROM StudentProfile
+        WHERE UserID = %s AND CounselorUserID = %s
+    """, (user_id, current_user.id))
+
+    student = cursor.fetchone()
+
+    # Step 2: Get reason
+    reason = request.form.get("reason", "")
+
+    # Step 3: Insert into Declined
+    cursor.execute("""
+        INSERT INTO Declined (UserID, StudentID, Reason)
+        VALUES (%s, %s, %s)
+    """, (current_user.id, user_id, reason))
+
+    # Step 4: Delete from Recommendation
+    cursor.execute("""
+        DELETE FROM Recommendation
+        WHERE CounselorID = %s AND UserID = %s
+    """, (current_user.id, user_id))
+
+    # ✅ NEW: Delete from CounselorStudent
+    cursor.execute("""
+        DELETE FROM CounselorStudent
+        WHERE CounselorUserID = %s AND StudentUserID = %s
+    """, (current_user.id, user_id))
+
+    # OPTIONAL (recommended): unassign counselor
+    cursor.execute("""
+        UPDATE StudentProfile
+        SET CounselorUserID = NULL
+        WHERE UserID = %s
+    """, (user_id,))
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    return redirect("/counselor/dashboard")
 
 
 # ✅ EDIT
