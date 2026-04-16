@@ -1,73 +1,156 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
-    <title>CourseTrack - Recommendation</title>
-    <link href="/static/styles.css" rel="stylesheet">
-  </head>
-  <body class="bg-emerald-100 min-h-screen flex flex-col">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+  <title>CourseTrack - Counselor Dashboard</title>
+  <link href="/static/styles.css" rel="stylesheet">
+</head>
 
-    {% include "components/navbar.html.jinja" %}
+<body class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100 min-h-screen flex flex-col">
 
-    {% if user %}
-    <div class="max-w-6xl mx-auto bg-white/90 backdrop-blur shadow-2xl rounded-2xl flex-grow p-8 mt-12 mb-12 border border-emerald-100">
+{% include "components/navbar.html.jinja" %}
+
+<main class="w-full max-w-[1400px] mx-auto px-6 py-12 flex-grow">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-10">
+    <div>
+      <h1 class="text-4xl font-bold text-gray-900">Your Students</h1>
+      <p class="text-gray-500 mt-1">Manage applications and track student progress</p>
+    </div>
+
+    <div class="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl font-medium">
+      {{ user|length }} Student{{ user|length != 1 and 's' or '' }}
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="bg-white shadow-xl rounded-2xl border border-gray-200 overflow-hidden">
+    
+    <table class="w-full table-auto">
       
-      <!-- Header Section -->
-      <div class="flex justify-between items-center mb-8">
-        <div>
-          <h1 class="text-3xl font-extrabold text-emerald-700">Student Applications</h1>
-          <p class="text-gray-500 text-sm mt-1">Manage and review student requests</p>
-        </div>
-        <span class="bg-emerald-100 text-emerald-700 px-4 py-1 rounded-full text-sm font-medium">
-          {{ user|length }} Students
-        </span>
-      </div>
+      <!-- HEAD -->
+      <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
+        <tr>
+          <th class="px-6 py-4 text-left">Student</th>
+          <th class="px-6 py-4 text-left">Grade</th>
+          <th class="px-6 py-4 text-left">Applications</th>
+          <th class="px-6 py-4 text-center">Action</th>
+        </tr>
+      </thead>
 
-      <!-- Table -->
-      <div class="overflow-x-auto rounded-xl border border-gray-200">
-        <table class="min-w-full overflow-hidden">
+      <!-- BODY -->
+      <tbody>
+
+        {% for x in user %}
+
+        <!-- MAIN ROW -->
+        <tr id="student-{{ x['UserID'] }}" onclick="toggleRow('{{ x['ID'] }}')"
+            class="cursor-pointer border-t hover:bg-emerald-50 transition">
           
-          <!-- Table Head -->
-          <thead class="bg-emerald-100 text-gray-700 uppercase text-sm">
-            <tr>
-              <th class="py-3 px-4 text-left">ID</th>
-              <th class="py-3 px-4 text-left">Name</th>
-              <th class="py-3 px-4 text-left">Grade</th>
-              <th class="py-3 px-4 text-left">Message</th>
-              <th class="py-3 px-4 text-center">Action</th>
-            </tr>
-          </thead>
-
-          <!-- Table Body -->
-          <tbody class="text-gray-700">
-            {% for x in user %}
-            <tr class="border-t odd:bg-white even:bg-gray-50 hover:bg-emerald-50 transition">
+          <!-- STUDENT -->
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-4">
               
-              <td class="py-3 px-4 font-medium text-gray-800">
-                #{{ x['ID'] }}
+              <!-- Avatar -->
+              <div class="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-200 text-emerald-700 font-semibold">
+                {{ x['StudentName'][0] }}
+              </div>
+
+              <div>
+                <p class="font-semibold text-gray-800">
+                  {{ x['StudentName'] }}
+                </p>
+                <p class="text-sm text-gray-400">
+                  {{ x['StudentEmail'] }}
+                </p>
+              </div>
+
+            </div>
+          </td>
+
+          <!-- GRADE -->
+          <td class="px-6 py-4">
+            <span class="px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">
+              Grade {{ x['Grade'] }}
+            </span>
+          </td>
+
+          <!-- STATUS -->
+          <td class="px-6 py-4">
+            
+            {% if x['application_count'] > 0 %}
+              <span class="px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700 rounded-full">
+                {{ x['application_count'] }} Application{{ x['application_count'] != 1 and 's' or '' }}
+              </span>
+            {% else %}
+              <span class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-500 rounded-full">
+                No Applications
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- ACTION -->
+          <td class="px-6 py-4 text-center">
+            <a href="/counselor/recommendation/addapplication/{{ x['UserID'] }}" 
+               onclick="event.stopPropagation();"
+               class="px-4 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600 transition">
+              + Add
+            </a>
+          </td>
+          
+          <td class="px-2 py-2 text-center">
+              <a href="{{ url_for('chat', user_id=x['UserID']) }}"
+                   class="px-4 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600 transition">
+                  Chat
+                </a>
               </td>
 
-              <td class="py-3 px-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 flex items-center justify-center bg-emerald-200 text-emerald-700 rounded-full font-semibold">
-                    {{ x['Name'][0] }}
+        </tr>
+
+        <!-- EXPANDABLE ROW -->
+        <tr>
+          <td colspan="4" class="p-0">
+            
+            <div id="row-{{ x['ID'] }}" 
+                 class="overflow-hidden max-h-0 opacity-0 transition-all duration-500 ease-in-out bg-gray-50">
+              
+              <div class="p-6 flex gap-10">
+
+                <!-- LEFT SIDE -->
+                <div class="w-[350px] space-y-4">
+                  
+                  <div>
+                    <p class="text-xs text-gray-400">Student Info</p>
+                    <p class="font-semibold text-gray-800">
+                      {{ x['StudentName'] }}
+                    </p>
+                    <p class="text-sm text-gray-500">
+                      {{ x['StudentEmail'] }}
+                    </p>
                   </div>
-                  <span class="font-medium">{{ x['Name'] }}</span>
+
+                  <div>
+                    <p class="text-xs text-gray-400">Grade</p>
+                    <p class="font-medium">Grade {{ x['Grade'] }}</p>
+                  </div>
+
+                  <div>
+                    <p class="text-xs text-gray-400">Notes</p>
+                    <p class="text-sm text-gray-600">
+                      {{ x.get('Comments') or "No notes provided" }}
+                    </p>
+                  </div>
+
                 </div>
-              </td>
 
-              <td class="py-3 px-4">
-                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-                  Grade {{ x['Grade'] }}
-                </span>
-              </td>
+                <!-- RIGHT SIDE -->
+                <div class="flex-1">
 
-              <td class="py-3 px-4 max-w-xs truncate">
-                {{ x.get('Comments') or "No message provided" }}
-              </td>
+                  {% if x['applications'] and x['applications']|length > 0 %}
 
               <td class="py-3 px-4 text-center">
                 <a href="/counselor/recommendation/addapplication/{{ x['UserID'] }}" 
@@ -75,50 +158,247 @@
                   + Add
                 </a>
               </td>
+              
+                  <div class="relative">
 
-            </tr>
-            {% endfor %}
-          </tbody>
+                    <!-- SLIDES -->
+                    {% for app in x['applications'] %}
+                    <div class="app-slide-{{ x['ID'] }} {% if not loop.first %}hidden{% endif %}">
+                      
+                      <!-- VIEW MODE -->
+                      <div id="view-{{ app['ID'] }}" class="bg-white border rounded-xl p-5 shadow-sm">
 
-        </table>
-      </div>
+                        <div class="mb-2">
+                          <p class="text-xs text-gray-400">Major</p>
+                          <h3 class="font-semibold text-gray-800">
+                            {{ app['Major'] }}
+                          </h3>
+                        </div>
 
-    </div>
+                        <div class="mb-2">
+                          <p class="text-xs text-gray-400">Comments</p>
+                          <p class="text-sm text-gray-600">
+                            {{ app['Comments'] }}
+                          </p>
+                        </div>
 
-    {% else %}
-    <div class="flex-grow flex items-center justify-center px-6 py-20">
-      <div class="bg-white shadow-xl rounded-2xl p-12 text-center max-w-md border border-emerald-100">
+                        <div class="flex justify-between items-center mt-3">
+                          <span class="text-xs text-gray-400">
+                            {{ app['Date'] }}
+                          </span>
 
-        <!-- Icon -->
-        <div class="flex justify-center mb-6">
-          <div class="bg-emerald-100 p-4 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" 
-                 class="h-10 w-10 text-emerald-500" 
-                 fill="none" 
-                 viewBox="0 0 24 24" 
-                 stroke="currentColor">
-              <path stroke-linecap="round" 
-                    stroke-linejoin="round" 
-                    stroke-width="2" 
-                    d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v14l-5-3-5 3V6a2 2 0 012-2z"/>
-            </svg>
-          </div>
-        </div>
+                          <div class="flex gap-2">
 
-        <!-- Message -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-3">
-          No Applications Available
-        </h2>
+                            <!-- EDIT -->
+                            <button 
+                              onclick="event.stopPropagation(); toggleEdit('{{ app['ID'] }}')"
+                              class="px-3 py-1 text-xs bg-gray-100 rounded-lg hover:bg-gray-200">
+                              Edit
+                            </button>
 
-        <p class="text-gray-500 leading-relaxed">
-          There are currently no students assigned to you.<br>
-          Once students connect with you, they will appear here.
-        </p>
+                            <!-- DELETE -->
+                            <form 
+                              action="/counselor/recommendation/delete/{{ app['ID'] }}" 
+                              method="POST"
+                              onsubmit="return confirm('Delete this application?');"
+                            >
+                              <button 
+                                type="submit"
+                                onclick="event.stopPropagation();"
+                                class="px-3 py-1 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
+                                Delete
+                              </button>
+                            </form>
 
-      </div>
-    </div>
-    {% endif %}
+                          </div>
+                        </div>
 
-    {% include "components/footer.html.jinja" %}
-  </body>
+                      </div>
+
+                      <!-- EDIT MODE -->
+                      <form id="edit-{{ app['ID'] }}" 
+                            action="/counselor/recommendation/edit/{{ app['ID'] }}" 
+                            method="POST"
+                            class="hidden bg-white border rounded-xl p-5 shadow-sm space-y-3">
+
+                        <div>
+                          <label class="text-xs text-gray-400">Major</label>
+                          <input type="text" name="major" 
+                                value="{{ app['Major'] }}"
+                                class="w-full mt-1 px-3 py-2 border rounded-lg">
+                        </div>
+
+                        <div>
+                          <label class="text-xs text-gray-400">Comments</label>
+                          <textarea name="comments" rows="3"
+                            class="w-full mt-1 px-3 py-2 border rounded-lg">{{ app['Comments'] }}</textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-2">
+                          <button type="button"
+                            onclick="toggleEdit('{{ app['ID'] }}')"
+                            class="px-3 py-1 text-sm bg-gray-100 rounded-lg">
+                            Cancel
+                          </button>
+
+                          <button type="submit"
+                            class="px-4 py-1 text-sm bg-emerald-500 text-white rounded-lg hover:bg-emerald-600">
+                            Save
+                          </button>
+                        </div>
+
+                      </form>
+
+                    </div>
+                    {% endfor %}
+
+                    <!-- NAVIGATION -->
+                    <div class="flex items-center justify-between mt-4">
+
+                      <!-- LEFT -->
+                      <button onclick="prevApp('{{ x['ID'] }}')" 
+                        class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                        ←
+                      </button>
+
+                      <!-- INDICATOR -->
+                      <div class="text-xs text-gray-400">
+                        <span id="app-index-{{ x['ID'] }}">1</span> / {{ x['applications']|length }}
+                      </div>
+
+                      <!-- RIGHT -->
+                      <button onclick="nextApp('{{ x['ID'] }}')" 
+                        class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                        →
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                  {% else %}
+
+                    <div class="text-gray-400 text-sm">
+                      No applications submitted yet
+                    </div>
+
+                  {% endif %}
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </td>
+        </tr>
+
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</main>
+
+{% include "components/footer.html.jinja" %}
+
+<!-- JS -->
+<script>
+// ==========================
+// TOGGLE EXPANDABLE ROW
+// ==========================
+function toggleRow(id) {
+  const el = document.getElementById("row-" + id);
+
+  // 🔥 OPTIONAL: close all other rows (accordion style)
+  document.querySelectorAll("[id^='row-']").forEach(row => {
+    if (row.id !== "row-" + id) {
+      row.classList.remove("max-h-[500px]", "opacity-100");
+      row.classList.add("max-h-0", "opacity-0");
+    }
+  });
+
+  // Toggle current row
+  if (el.classList.contains("max-h-0")) {
+    el.classList.remove("max-h-0", "opacity-0");
+    el.classList.add("max-h-[500px]", "opacity-100");
+  } else {
+    el.classList.remove("max-h-[500px]", "opacity-100");
+    el.classList.add("max-h-0", "opacity-0");
+  }
+}
+
+
+// ==========================
+// TOGGLE EDIT MODE
+// ==========================
+function toggleEdit(id) {
+  const view = document.getElementById("view-" + id);
+  const edit = document.getElementById("edit-" + id);
+
+  if (!view || !edit) return;
+
+  view.classList.toggle("hidden");
+  edit.classList.toggle("hidden");
+}
+
+
+// ==========================
+// PREVENT ROW CLICK WHEN INTERACTING INSIDE
+// ==========================
+document.addEventListener("DOMContentLoaded", () => {
+
+  // Prevent toggle when clicking inside buttons/forms
+  document.querySelectorAll("button, a, input, textarea").forEach(el => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+  });
+
+});
+// ==========================
+// CAROUSEL LOGIC
+// ==========================
+const appIndex = {};
+
+function showApp(studentId, index) {
+  const slides = document.querySelectorAll(".app-slide-" + studentId);
+  if (!slides.length) return;
+
+  slides.forEach((el, i) => {
+    el.classList.toggle("hidden", i !== index);
+  });
+
+  appIndex[studentId] = index;
+
+  // Update indicator
+  const indicator = document.getElementById("app-index-" + studentId);
+  if (indicator) indicator.innerText = index + 1;
+}
+
+function nextApp(studentId) {
+  const slides = document.querySelectorAll(".app-slide-" + studentId);
+  if (!slides.length) return;
+
+  let index = appIndex[studentId] ?? 0;
+  index = (index + 1) % slides.length;
+
+  showApp(studentId, index);
+}
+
+function prevApp(studentId) {
+  const slides = document.querySelectorAll(".app-slide-" + studentId);
+  if (!slides.length) return;
+
+  let index = appIndex[studentId] ?? 0;
+  index = (index - 1 + slides.length) % slides.length;
+
+  showApp(studentId, index);
+}
+</script>
+
+</body>
 </html>
