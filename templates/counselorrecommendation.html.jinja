@@ -145,6 +145,19 @@
 
                   {% if x['applications'] and x['applications']|length > 0 %}
 
+              <td class="py-3 px-4 text-center">
+                <a href="/counselor/recommendation/addapplication/{{ x['UserID'] }}" 
+                   class="inline-block px-4 py-2 text-sm font-semibold text-white bg-emerald-500 rounded-lg shadow hover:bg-emerald-600 hover:scale-105 transition transform">
+                  + Add
+                </a>
+              </td>
+              
+              <td class="py-3 px-4 text-center">
+              <a href="{{ url_for('chat', user_id=x['UserID']) }}"
+                   class="inline-block px-4 py-2 text-sm font-semibold text-white bg-emerald-500 rounded-lg shadow hover:bg-emerald-600 hover:scale-105 transition transform">
+                  Chat
+                </a>
+              </td>
                   <div class="relative">
 
                     <!-- SLIDES -->
