@@ -16,14 +16,45 @@
 
 <main class="w-full max-w-[1200px] mx-auto px-6 py-14 flex-grow">
 
-  <!-- HEADER -->
-  <div class="mb-12">
-    <h1 class="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-      📄 Your Applications
-    </h1>
-    <p class="text-gray-500 text-lg">
-      Track what your counselor has recommended for you
-    </p>
+  <div class="mb-12 flex justify-between items-start">
+
+    <!-- LEFT: Title -->
+    <div>
+      <h1 class="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+        📄 Your Applications
+      </h1>
+      <p class="text-gray-500 text-lg">
+        Track what your counselor has recommended for you
+      </p>
+    </div>
+
+    <!-- RIGHT: Notifications -->
+    <a href="/student/recommendation/notifications"
+      class="relative flex items-center justify-center w-12 h-12 rounded-full bg-emerald-800 border border-gray-200 shadow-sm hover:shadow-md hover:bg-emerald-600 transition">
+
+      <!-- Bell Icon -->
+      <svg xmlns="http://www.w3.org/2000/svg"
+          class="w-6 h-6 text-white"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11
+                a6.002 6.002 0 00-4-5.659V5
+                a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159
+                c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1
+                a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+
+      <!-- Notification Badge (optional dynamic) -->
+      {% if notification_count and notification_count > 0 %}
+      <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+        {{ notification_count }}
+      </span>
+      {% endif %}
+
+    </a>
+
   </div>
 
   {% if not counselor_id %}

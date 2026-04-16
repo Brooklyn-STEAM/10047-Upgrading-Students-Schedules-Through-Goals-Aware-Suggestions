@@ -48,7 +48,7 @@
         {% for x in user %}
 
         <!-- MAIN ROW -->
-        <tr onclick="toggleRow('{{ x['ID'] }}')" 
+        <tr id="student-{{ x['UserID'] }}" onclick="toggleRow('{{ x['ID'] }}')"
             class="cursor-pointer border-t hover:bg-emerald-50 transition">
           
           <!-- STUDENT -->
