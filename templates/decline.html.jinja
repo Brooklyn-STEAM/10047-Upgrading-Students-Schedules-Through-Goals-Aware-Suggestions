@@ -1,0 +1,96 @@
+<!doctype html>
+<html class="scroll-smooth">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Remove Student - CourseTrack</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+  <!-- Tailwind -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+
+{% include "components/navbar.html.jinja" %}
+
+<main class="flex-grow flex justify-center px-6 py-12">
+
+<div class="w-full max-w-2xl relative">
+
+  <!-- Background blob -->
+  <div class="absolute -top-10 -right-10 w-72 h-72 bg-red-200 opacity-40 rounded-full blur-3xl"></div>
+
+  <!-- Card -->
+  <div class="bg-white rounded-xl shadow-xl p-8 border border-emerald-100 relative z-10">
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-6">
+      <div class="bg-red-100 p-3 rounded-full">
+        <i data-feather="user-x" class="text-red-600"></i>
+      </div>
+
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">
+          Remove {{ student_name }} from your dashboard
+        </h1>
+        <p class="text-gray-600 text-sm mt-1">
+          You're about to remove this student from your assigned list.
+        </p>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <p class="text-red-700 text-sm leading-relaxed">
+        This action will remove <span class="font-semibold">{{ student_name }}</span> from your dashboard.
+        You will no longer be able to view or manage this student's information unless they request you again.
+      </p>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" action="/counselor/dashboard/decline/{{user_id}}/processing" class="flex flex-col gap-6">
+    <textarea name="reason" required placeholder="Optional reason..."
+    class="w-full mb-3 p-3 border rounded-lg"></textarea>
+      <div class="flex justify-between items-center">
+        
+
+        <!-- Cancel -->
+        <a href="/counselor/dashboard"
+           class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg
+                  hover:bg-gray-100 transition">
+          Cancel
+        </a>
+
+        <!-- Confirm -->
+        <button type="submit"
+                class="px-5 py-2 bg-red-600 text-white font-semibold rounded-lg
+                       hover:bg-red-700 transition flex items-center gap-2">
+          <i data-feather="trash-2" class="w-4"></i>
+          Confirm Removal
+        </button>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+</main>
+
+{% include "components/footer.html.jinja" %}
+
+<script>
+feather.replace()
+</script>
+
+</body>
+</html>
