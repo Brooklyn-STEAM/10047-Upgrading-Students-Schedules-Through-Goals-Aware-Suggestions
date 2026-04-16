@@ -491,17 +491,6 @@ def add_counselor_form():
         ON DUPLICATE KEY UPDATE CounselorUserID = CounselorUserID;
     """, (counselor_id, current_user.id))
 
-    # Save recommendation request
-    cursor.execute("""
-        UPDATE StudentProfile
-        SET Grade = %s,
-            Comments = %s,
-            CounselorUserID = %s
-        WHERE UserID = %s
-    """, (grade, comments, counselor_id, current_user.id))
-        INSERT INTO Recommendation (Grade, Comments, UserID, CounselorID)
-        VALUES (%s, %s, %s, %s)
-    """, (grade, comments, current_user.id, counselor_id))
 
     connection.commit()
     connection.close()
@@ -532,34 +521,26 @@ def review_recommendation():
 @app.route("/student/recommendation/deleterecommendation", methods=["POST"])
 @login_required
 def delete_recommendation():
+
     connection = connect_db()
     cursor = connection.cursor()
 
     recommendation_id = request.form.get("id")
 
-    # Delete the specific recommendation row
+    # 1. Delete recommendation
     cursor.execute("""
-        UPDATE StudentProfile
-        SET CounselorUserID = %s
-        WHERE UserID = %s
-    """, (counselor_id, current_user.id, ))
         DELETE FROM Recommendation
         WHERE ID = %s AND UserID = %s
     """, (recommendation_id, current_user.id))
 
-    # Optional: clean up relationship table
+    # 2. Optional: remove counselor relationship
     cursor.execute("""
-        UPDATE StudentProfile
-        SET Grade = %s,
-            Comments = %s,
-            CounselorUserID = %s
-    WHERE UserID = %s
-    """, (grade, comments, counselor_id, current_user.id, ))
         DELETE FROM CounselorStudent
         WHERE StudentUserID = %s
     """, (current_user.id,))
 
     connection.commit()
+    cursor.close()
     connection.close()
 
     return redirect("/student/recommendation")
@@ -1325,13 +1306,13 @@ def chat(user_id):
     if current_user.role == "student":
 
         cur.execute("""
-            SELECT CounselorUserID
-            FROM StudentProfile
+            SELECT CounselorID
+            FROM Recommendation
             WHERE UserID = %s
         """, (current_user.id,))
 
         row = cur.fetchone()
-        active_counselor_id = row["CounselorUserID"] if row else None
+        active_counselor_id = row["CounselorID"] if row else None
 
         if active_counselor_id != user_id:
             conn.close()
@@ -1343,8 +1324,8 @@ def chat(user_id):
 
         cur.execute("""
             SELECT 1
-            FROM StudentProfile
-            WHERE UserID = %s AND CounselorUserID = %s
+            FROM Recommendation
+            WHERE UserID = %s AND CounselorID = %s
         """, (user_id, current_user.id))
 
         if not cur.fetchone():
@@ -1403,12 +1384,12 @@ def send_message():
     # -----------------------------------------
     if current_user.role == "student":
         cur.execute("""
-            SELECT CounselorUserID
-            FROM StudentProfile
+            SELECT CounselorID
+            FROM Recommendation
             WHERE UserID = %s
         """, (current_user.id,))
         row = cur.fetchone()
-        counselor_id = row["CounselorUserID"] if row else None
+        counselor_id = row["CounselorID"] if row else None
 
         if counselor_id != receiver_id:
             conn.close()
@@ -1416,12 +1397,12 @@ def send_message():
 
     else:
         cur.execute("""
-            SELECT CounselorUserID
-            FROM StudentProfile
+            SELECT CounselorID
+            FROM Recommendation
             WHERE UserID = %s
         """, (receiver_id,))
         row = cur.fetchone()
-        counselor_id = row["CounselorUserID"] if row else None
+        counselor_id = row["CounselorID"] if row else None
 
         if current_user.id != counselor_id:
             conn.close()
@@ -1454,13 +1435,13 @@ def get_messages(user_id):
 
     # Get active counselor from StudentProfile
     cur.execute("""
-        SELECT CounselorUserID
-        FROM StudentProfile
+        SELECT CounselorID
+        FROM Recommendation
         WHERE UserID = %s
     """, (current_user.id if current_user.role == "student" else user_id,))
 
     row = cur.fetchone()
-    counselor_id = row["CounselorUserID"] if row else None
+    counselor_id = row["CounselorID"] if row else None
 
     cur.execute("""
         SELECT 
