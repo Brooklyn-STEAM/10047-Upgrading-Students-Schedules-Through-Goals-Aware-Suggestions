@@ -139,7 +139,27 @@
                 onclick="startTranscript()">Continue</button>
         </div>
 
-        <!-- STEP 4 -->
+
+        <!-- CURRICULUM SELECTOR -->
+        <div id="curriculumSection" class="bg-white shadow-md rounded-lg p-4 mb-4 hidden">
+            <h2 class="text-xl font-semibold mb-2">Select Your Curriculum</h2>
+            <select id="curriculumSelect" class="w-full border border-gray-300 rounded-md p-2"
+                onchange="onCurriculumChange(this)">
+                <option value="USA">USA (Common Core / AP)</option>
+                <option value="IB">International Baccalaureate (IB)</option>
+                <option value="UK">UK (GCSE / A‑Level)</option>
+                <option value="CAMBRIDGE">Cambridge IGCSE / A‑Level</option>
+                <option value="CBSE">CBSE (India)</option>
+                <option value="ICSE">ICSE (India)</option>
+                <option value="BANGLADESH">Bangladesh (SSC / HSC)</option>
+                <option value="CANADA">Canada (Provincial)</option>
+                <option value="AUSTRALIA">Australia (HSC / VCE)</option>
+                <option value="OTHER">Other / International</option>
+            </select>
+        </div>
+
+
+        <!-- STEP 4: Saving transcipt -->
         <div id="transcriptSection" class="hidden relative">
             <div class="flex justify-end mb-2">
                 <button id="addGradeBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded hidden"
@@ -149,6 +169,58 @@
             <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 mt-4 rounded"
                 onclick="saveChanges()">Save</button>
         </div>
+
+
+
+        <div id="recommendationPanel" class="mt-6 hidden">
+
+            <!-- Empty State -->
+            <div id="emptyState" class="p-5 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 shadow-sm">
+                <p class="text-sm">No recommendations yet. Save your transcript to see personalized suggestions.</p>
+            </div>
+
+            <!-- Results Panel -->
+            <div id="resultsPanel" class="hidden space-y-6">
+
+                <!-- Header -->
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-semibold text-gray-800">Your Academic Insights</h2>
+                    <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">Beta</span>
+                </div>
+
+                <!-- Top Strengths -->
+                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-800">Top Strengths</h3>
+                    <div id="topCategories" class="flex flex-wrap gap-2 mt-3"></div>
+                </div>
+
+                <!-- High School Recommendations -->
+                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-800">Recommended High‑School Courses</h3>
+                    <ul id="hsRecs" class="mt-3 space-y-1 text-gray-700"></ul>
+                </div>
+
+                <!-- College Recommendations -->
+                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-800">Recommended College Courses</h3>
+                    <ul id="collegeRecs" class="mt-3 space-y-1 text-gray-700"></ul>
+                </div>
+
+                <!-- Suggested Track -->
+                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-800">Suggested Track</h3>
+                    <p id="trackRec" class="mt-2 text-gray-700 font-medium"></p>
+                </div>
+
+                <!-- Full Page Button -->
+                <button
+                    class="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition shadow-sm">
+                    View Full Recommendations
+                </button>
+            </div>
+        </div>
+
+
 
     </div>
 
@@ -160,100 +232,895 @@
         let gradesShown = []; // Track which grades are visible
         let transcriptLoaded = false; //flag to detect whether transcript is loaded.
 
+        let selectedCurriculum = "USA";
+
+
         const courseOptions = {
-            "Math": [
-                "General Math", "Mathematics", "Integrated Math", "Integrated Math I", "Integrated Math II", "Integrated Math III",
-                "Algebra I", "Algebra II", "Linear Algebra",
-                "Geometry", "Advanced Geometry",
-                "Trigonometry", "Pre-Calculus", "Functions & Relations",
-                "Calculus", "AP Calculus AB", "AP Calculus BC",
-                "Statistics", "AP Statistics", "Data Analysis",
-                "Higher Maths", "Further Maths", "Additional Mathematics", "Pure Mathematics", "Applied Mathematics",
-                "Mathematical Methods", "Specialist Mathematics",
-                "Cambridge IGCSE Mathematics", "Cambridge Additional Mathematics",
-                "CBSE Mathematics", "ICSE Mathematics",
-                "Other"
-            ],
-            "Science": [
-                "General Science", "Integrated Science", "Physical Science", "Life Science",
-                "Biology", "Advanced Biology", "AP Biology", "IB Biology SL", "IB Biology HL",
-                "Chemistry", "Advanced Chemistry", "AP Chemistry", "IB Chemistry SL", "IB Chemistry HL",
-                "Physics", "Advanced Physics", "AP Physics 1", "AP Physics 2",
-                "AP Physics C: Mechanics", "AP Physics C: Electricity & Magnetism",
-                "IB Physics SL", "IB Physics HL",
-                "Environmental Science", "AP Environmental Science", "Earth Science", "Marine Science",
-                "Home Science", "Food Science", "Health Science", "Agricultural Science",
-                "Cambridge IGCSE Biology", "Cambridge IGCSE Chemistry", "Cambridge IGCSE Physics",
-                "CBSE Science", "ICSE Science",
-                "Other"
-            ],
-            "English / Language Arts": [
-                "English", "English Language Arts (ELA)", "English Literature", "English Composition",
-                "English 1st Paper", "English 2nd Paper",
-                "English 9", "English 10", "English 11", "English 12",
-                "AP English Language", "AP English Literature",
-                "IB English A: Language & Literature SL", "IB English A: Language & Literature HL",
-                "IB English A: Literature SL", "IB English A: Literature HL",
-                "Cambridge IGCSE English", "Cambridge IGCSE Literature",
-                "CBSE English", "ICSE English",
-                "Other"
-            ],
-            "Social Studies / Humanities": [
-                "History", "World History", "US History", "European History",
-                "AP World History", "AP US History", "AP European History",
-                "Geography", "Civics", "Government", "Political Science",
-                "Sociology", "Psychology",
-                "Economics", "AP Microeconomics", "AP Macroeconomics",
-                "IB History SL", "IB History HL", "IB Economics SL", "IB Economics HL",
-                "Cambridge IGCSE History", "Cambridge IGCSE Geography",
-                "CBSE Social Science", "ICSE History & Civics",
-                "Other"
-            ],
-            "Computer Science / Technology": [
-                "Computer Science", "Information Technology", "Programming",
-                "Web Development", "Software Development",
-                "AP Computer Science A", "AP Computer Science Principles",
-                "IB Computer Science SL", "IB Computer Science HL",
-                "Data Science", "Robotics", "Artificial Intelligence",
-                "Digital Literacy",
-                "Cambridge IGCSE Computer Science",
-                "CBSE Computer Applications", "ICSE Computer Studies",
-                "Other"
-            ],
-            "Business / Commerce": [
-                "Business Studies", "Accounting", "Finance", "Marketing", "Entrepreneurship",
-                "Economics", "AP Microeconomics", "AP Macroeconomics",
-                "IB Business Management SL", "IB Business Management HL",
-                "Cambridge IGCSE Business Studies", "Cambridge IGCSE Accounting",
-                "CBSE Business Studies", "ICSE Commercial Studies",
-                "Other"
-            ],
-            "Arts": [
-                "Visual Arts", "Fine Arts", "Music", "Drama", "Theatre",
-                "Photography", "Graphic Design", "Digital Media",
-                "AP Art & Design",
-                "IB Visual Arts SL", "IB Visual Arts HL",
-                "Cambridge IGCSE Art & Design",
-                "Other"
-            ],
-            "Foreign Language": [
-                "Spanish", "French", "German", "Mandarin", "Arabic",
-                "Hindi", "Bengali", "Urdu", "Japanese", "Korean",
-                "Latin", "Greek",
-                "AP Spanish", "AP French",
-                "IB Language B SL", "IB Language B HL",
-                "Cambridge IGCSE Languages",
-                "Other"
-            ],
-            "Physical Education / Health": [
-                "Physical Education", "Health", "Sports Science", "Fitness", "Yoga",
-                "IB Sports, Exercise & Health Science",
-                "Cambridge IGCSE Physical Education",
-                "Other"
-            ],
-            "Other": [
-                "Other"
-            ]
+            "USA": {
+                "Math": {
+                    "high_school": [
+                        "General Math", "Mathematics", "Integrated Math",
+                        "Integrated Math I", "Integrated Math II", "Integrated Math III",
+                        "Algebra I", "Geometry", "Algebra II",
+                        "Trigonometry", "Pre-Calculus", "Honors Pre-Calculus",
+                        "Functions & Relations",
+                        "AP Calculus AB", "AP Calculus BC", "AP Statistics"
+                    ],
+                    "college": [
+                        "College Algebra", "Multivariable Calculus", "Linear Algebra",
+                        "Differential Equations", "Discrete Mathematics",
+                        "Probability Theory", "Mathematical Statistics"
+                    ]
+                },
+                "Science": {
+                    "high_school": [
+                        "General Science", "Integrated Science", "Physical Science", "Life Science",
+                        "Biology", "Honors Biology", "AP Biology",
+                        "Chemistry", "Honors Chemistry", "AP Chemistry",
+                        "Physics", "Honors Physics",
+                        "AP Physics 1", "AP Physics 2",
+                        "AP Physics C: Mechanics", "AP Physics C: Electricity & Magnetism",
+                        "Environmental Science", "AP Environmental Science",
+                        "Earth Science", "Marine Science"
+                    ],
+                    "college": [
+                        "General Biology I", "General Biology II",
+                        "General Chemistry I", "General Chemistry II",
+                        "Organic Chemistry I", "Organic Chemistry II",
+                        "Physics I (Mechanics)", "Physics II (Electricity & Magnetism)",
+                        "Cell Biology", "Genetics", "Biochemistry",
+                        "Environmental Science (College)", "Microbiology"
+                    ]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "English 9", "English 10", "English 11", "English 12",
+                        "English Language Arts (ELA)",
+                        "AP English Language", "AP English Literature"
+                    ],
+                    "college": [
+                        "College Composition", "Advanced Composition",
+                        "Literary Analysis", "Creative Writing",
+                        "Rhetoric and Writing", "World Literature"
+                    ]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "World History", "US History", "European History",
+                        "Government", "Civics", "Geography",
+                        "Economics", "Psychology", "Sociology",
+                        "AP World History", "AP US History", "AP European History",
+                        "AP Microeconomics", "AP Macroeconomics"
+                    ],
+                    "college": [
+                        "World History (College)", "US History (College)",
+                        "Political Science", "International Relations",
+                        "Sociology", "Psychology", "Macroeconomics",
+                        "Microeconomics", "Philosophy"
+                    ]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "Computer Science", "Information Technology", "Programming",
+                        "Web Development", "Software Development",
+                        "AP Computer Science A", "AP Computer Science Principles",
+                        "Robotics", "Data Science"
+                    ],
+                    "college": [
+                        "Introduction to Computer Science",
+                        "Data Structures and Algorithms",
+                        "Operating Systems", "Databases",
+                        "Computer Networks", "Software Engineering",
+                        "Artificial Intelligence", "Machine Learning"
+                    ]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "Business Studies", "Accounting", "Finance", "Marketing",
+                        "Entrepreneurship", "Economics",
+                        "AP Microeconomics", "AP Macroeconomics"
+                    ],
+                    "college": [
+                        "Introduction to Business", "Financial Accounting",
+                        "Managerial Accounting", "Principles of Marketing",
+                        "Corporate Finance", "Business Law"
+                    ]
+                },
+                "Arts": {
+                    "high_school": [
+                        "Visual Arts", "Fine Arts", "Music", "Drama", "Theatre",
+                        "Photography", "Graphic Design", "Digital Media",
+                        "AP Art & Design"
+                    ],
+                    "college": [
+                        "Drawing I", "Painting I", "Digital Art",
+                        "Graphic Design (College)", "Art History",
+                        "Film Studies", "Music Theory (College)"
+                    ]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "Spanish", "French", "German", "Mandarin", "Arabic",
+                        "Japanese", "Korean", "Latin",
+                        "AP Spanish", "AP French"
+                    ],
+                    "college": [
+                        "Intermediate Spanish", "Advanced Spanish",
+                        "Intermediate French", "Advanced French",
+                        "Linguistics"
+                    ]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "Physical Education", "Health", "Sports Science",
+                        "Fitness", "Yoga"
+                    ],
+                    "college": [
+                        "Exercise Physiology", "Kinesiology",
+                        "Sports Psychology", "Nutrition"
+                    ]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies", "Special Topics"]
+                }
+            },
+
+            "IB": {
+                "Math": {
+                    "high_school": [
+                        "IB Math AA SL", "IB Math AA HL",
+                        "IB Math AI SL", "IB Math AI HL"
+                    ],
+                    "college": [
+                        "Calculus I", "Linear Algebra", "Discrete Mathematics"
+                    ]
+                },
+                "Science": {
+                    "high_school": [
+                        "IB Biology SL", "IB Biology HL",
+                        "IB Chemistry SL", "IB Chemistry HL",
+                        "IB Physics SL", "IB Physics HL",
+                        "IB Environmental Systems and Societies"
+                    ],
+                    "college": [
+                        "General Biology I", "General Chemistry I",
+                        "Physics I (Mechanics)"
+                    ]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "IB English A: Language & Literature SL",
+                        "IB English A: Language & Literature HL",
+                        "IB English A: Literature SL",
+                        "IB English A: Literature HL"
+                    ],
+                    "college": [
+                        "Literary Analysis", "World Literature"
+                    ]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "IB History SL", "IB History HL",
+                        "IB Economics SL", "IB Economics HL",
+                        "IB Psychology SL", "IB Psychology HL"
+                    ],
+                    "college": [
+                        "International Relations", "Macroeconomics", "Microeconomics"
+                    ]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "IB Computer Science SL", "IB Computer Science HL"
+                    ],
+                    "college": [
+                        "Introduction to Computer Science"
+                    ]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "IB Business Management SL", "IB Business Management HL"
+                    ],
+                    "college": [
+                        "Introduction to Business", "Corporate Finance"
+                    ]
+                },
+                "Arts": {
+                    "high_school": [
+                        "IB Visual Arts SL", "IB Visual Arts HL",
+                        "IB Music SL", "IB Music HL",
+                        "IB Theatre SL", "IB Theatre HL"
+                    ],
+                    "college": [
+                        "Art History", "Film Studies"
+                    ]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "IB Language B SL", "IB Language B HL"
+                    ],
+                    "college": [
+                        "Intermediate Language Studies"
+                    ]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "IB Sports, Exercise & Health Science"
+                    ],
+                    "college": [
+                        "Exercise Physiology"
+                    ]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies"]
+                }
+            },
+
+            "UK": {
+                "Math": {
+                    "high_school": [
+                        "GCSE Mathematics",
+                        "A-Level Mathematics", "A-Level Further Mathematics"
+                    ],
+                    "college": [
+                        "Calculus I", "Linear Algebra"
+                    ]
+                },
+                "Science": {
+                    "high_school": [
+                        "GCSE Biology", "GCSE Chemistry", "GCSE Physics",
+                        "A-Level Biology", "A-Level Chemistry", "A-Level Physics"
+                    ],
+                    "college": [
+                        "General Biology I", "General Chemistry I", "Physics I (Mechanics)"
+                    ]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "GCSE English Language", "GCSE English Literature",
+                        "A-Level English Language", "A-Level English Literature"
+                    ],
+                    "college": [
+                        "Literary Analysis"
+                    ]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "GCSE History", "GCSE Geography",
+                        "A-Level History", "A-Level Geography",
+                        "A-Level Economics"
+                    ],
+                    "college": [
+                        "World History (College)", "Economics"
+                    ]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "GCSE Computer Science", "A-Level Computer Science"
+                    ],
+                    "college": [
+                        "Introduction to Computer Science"
+                    ]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "GCSE Business Studies", "A-Level Business Studies",
+                        "A-Level Accounting", "A-Level Economics"
+                    ],
+                    "college": [
+                        "Financial Accounting", "Principles of Marketing"
+                    ]
+                },
+                "Arts": {
+                    "high_school": [
+                        "GCSE Art & Design", "A-Level Art & Design",
+                        "GCSE Music", "A-Level Music"
+                    ],
+                    "college": [
+                        "Art History"
+                    ]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "GCSE French", "GCSE Spanish", "GCSE German",
+                        "A-Level French", "A-Level Spanish", "A-Level German"
+                    ],
+                    "college": [
+                        "Intermediate French", "Intermediate Spanish"
+                    ]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "GCSE Physical Education", "A-Level Physical Education"
+                    ],
+                    "college": [
+                        "Sports Science"
+                    ]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies"]
+                }
+            },
+
+            "CAMBRIDGE": {
+                "Math": {
+                    "high_school": [
+                        "Cambridge IGCSE Mathematics",
+                        "Cambridge Additional Mathematics",
+                        "A-Level Mathematics", "A-Level Further Mathematics"
+                    ],
+                    "college": [
+                        "Calculus I", "Linear Algebra"
+                    ]
+                },
+                "Science": {
+                    "high_school": [
+                        "Cambridge IGCSE Biology",
+                        "Cambridge IGCSE Chemistry",
+                        "Cambridge IGCSE Physics",
+                        "A-Level Biology", "A-Level Chemistry", "A-Level Physics"
+                    ],
+                    "college": [
+                        "General Biology I", "General Chemistry I", "Physics I (Mechanics)"
+                    ]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "Cambridge IGCSE English",
+                        "Cambridge IGCSE Literature"
+                    ],
+                    "college": [
+                        "World Literature"
+                    ]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "Cambridge IGCSE History",
+                        "Cambridge IGCSE Geography"
+                    ],
+                    "college": [
+                        "World History (College)"
+                    ]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "Cambridge IGCSE Computer Science"
+                    ],
+                    "college": [
+                        "Introduction to Computer Science"
+                    ]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "Cambridge IGCSE Business Studies",
+                        "Cambridge IGCSE Accounting"
+                    ],
+                    "college": [
+                        "Financial Accounting"
+                    ]
+                },
+                "Arts": {
+                    "high_school": [
+                        "Cambridge IGCSE Art & Design"
+                    ],
+                    "college": [
+                        "Art History"
+                    ]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "Cambridge IGCSE Languages"
+                    ],
+                    "college": [
+                        "Intermediate Language Studies"
+                    ]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "Cambridge IGCSE Physical Education"
+                    ],
+                    "college": [
+                        "Sports Science"
+                    ]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies"]
+                }
+            },
+
+            "CBSE": {
+                "Math": {
+                    "high_school": [
+                        "CBSE Mathematics", "Applied Mathematics", "Additional Mathematics"
+                    ],
+                    "college": [
+                        "Engineering Mathematics I", "Engineering Mathematics II"
+                    ]
+                },
+                "Science": {
+                    "high_school": [
+                        "CBSE Physics", "CBSE Chemistry", "CBSE Biology",
+                        "CBSE Science"
+                    ],
+                    "college": [
+                        "Physics I (Mechanics)", "General Chemistry I", "General Biology I"
+                    ]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "CBSE English"
+                    ],
+                    "college": [
+                        "College Composition"
+                    ]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "CBSE Social Science"
+                    ],
+                    "college": [
+                        "Economics", "Political Science"
+                    ]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "CBSE Computer Applications", "CBSE Informatics Practices"
+                    ],
+                    "college": [
+                        "Introduction to Computer Science"
+                    ]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "CBSE Business Studies", "CBSE Accountancy", "CBSE Economics"
+                    ],
+                    "college": [
+                        "Financial Accounting", "Principles of Marketing"
+                    ]
+                },
+                "Arts": {
+                    "high_school": [
+                        "CBSE Fine Arts"
+                    ],
+                    "college": [
+                        "Art History"
+                    ]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "Hindi", "Sanskrit", "French"
+                    ],
+                    "college": [
+                        "Intermediate Hindi"
+                    ]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "CBSE Physical Education"
+                    ],
+                    "college": [
+                        "Sports Science"
+                    ]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies"]
+                }
+            },
+
+            "ICSE": {
+                "Math": {
+                    "high_school": [
+                        "ICSE Mathematics"
+                    ],
+                    "college": [
+                        "Calculus I"
+                    ]
+                },
+                "Science": {
+                    "high_school": [
+                        "ICSE Physics", "ICSE Chemistry", "ICSE Biology", "ICSE Science"
+                    ],
+                    "college": [
+                        "General Biology I", "General Chemistry I"
+                    ]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "ICSE English"
+                    ],
+                    "college": [
+                        "College Composition"
+                    ]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "ICSE History & Civics", "ICSE Geography"
+                    ],
+                    "college": [
+                        "World History (College)"
+                    ]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "ICSE Computer Studies"
+                    ],
+                    "college": [
+                        "Introduction to Computer Science"
+                    ]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "ICSE Commercial Studies"
+                    ],
+                    "college": [
+                        "Financial Accounting"
+                    ]
+                },
+                "Arts": {
+                    "high_school": [
+                        "ICSE Art"
+                    ],
+                    "college": [
+                        "Art History"
+                    ]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "Hindi", "Bengali", "French"
+                    ],
+                    "college": [
+                        "Intermediate Hindi"
+                    ]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "ICSE Physical Education"
+                    ],
+                    "college": [
+                        "Sports Science"
+                    ]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies"]
+                }
+            },
+
+            "BANGLADESH": {
+                "Math": {
+                    "high_school": [
+                        "General Mathematics (SSC)",
+                        "Higher Mathematics (SSC)",
+                        "Higher Mathematics (HSC)"
+                    ],
+                    "college": ["University Calculus I"]
+                },
+                "Science": {
+                    "high_school": [
+                        "Physics (SSC)",
+                        "Chemistry (SSC)",
+                        "Biology (SSC)",
+                        "Physics (HSC)",
+                        "Chemistry (HSC)",
+                        "Biology (HSC)"
+                    ],
+                    "college": ["General Biology I"]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "English 1st Paper (SSC)",
+                        "English 2nd Paper (SSC)",
+                        "English 1st Paper (HSC)",
+                        "English 2nd Paper (HSC)"
+                    ],
+                    "college": ["College Composition"]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "Bangladesh and Global Studies (SSC)",
+                        "Civics (HSC)",
+                        "Economics (HSC)",
+                        "Logic (HSC)",
+                        "History of Bangladesh & World Civilization (SSC)"
+                    ],
+                    "college": ["Economics"]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "ICT (SSC)",
+                        "ICT (HSC)"
+                    ],
+                    "college": ["Introduction to Computer Science"]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "Accounting (SSC)",
+                        "Business Studies (SSC)",
+                        "Finance & Banking (SSC)",
+                        "Accounting (HSC)",
+                        "Business Studies (HSC)",
+                        "Finance & Banking (HSC)"
+                    ],
+                    "college": ["Financial Accounting"]
+                },
+                "Arts": {
+                    "high_school": [
+                        "Fine Arts (SSC)",
+                        "Fine Arts (HSC)"
+                    ],
+                    "college": ["Art History"]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "Bangla 1st Paper (SSC)",
+                        "Bangla 2nd Paper (SSC)",
+                        "Bangla 1st Paper (HSC)",
+                        "Bangla 2nd Paper (HSC)"
+                    ],
+                    "college": ["Bangla Literature"]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "Physical Education (SSC)",
+                        "Physical Education (HSC)"
+                    ],
+                    "college": ["Sports Science"]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies"]
+                }
+            },
+
+
+            "CANADA": {
+                "Math": {
+                    "high_school": [
+                        "Grade 9 Math", "Grade 10 Math",
+                        "Functions", "Advanced Functions",
+                        "Calculus & Vectors"
+                    ],
+                    "college": [
+                        "Calculus I", "Linear Algebra"
+                    ]
+                },
+                "Science": {
+                    "high_school": [
+                        "Grade 9 Science", "Grade 10 Science",
+                        "Biology 11", "Biology 12",
+                        "Chemistry 11", "Chemistry 12",
+                        "Physics 11", "Physics 12"
+                    ],
+                    "college": [
+                        "General Biology I", "General Chemistry I", "Physics I (Mechanics)"
+                    ]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "English 9", "English 10", "English 11", "English 12"
+                    ],
+                    "college": [
+                        "College Composition"
+                    ]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "Canadian History", "World History", "Civics"
+                    ],
+                    "college": [
+                        "World History (College)"
+                    ]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "Computer Science 11", "Computer Science 12"
+                    ],
+                    "college": [
+                        "Introduction to Computer Science"
+                    ]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "Accounting 11", "Accounting 12", "Business Studies"
+                    ],
+                    "college": [
+                        "Financial Accounting"
+                    ]
+                },
+                "Arts": {
+                    "high_school": [
+                        "Visual Arts 11", "Visual Arts 12"
+                    ],
+                    "college": [
+                        "Art History"
+                    ]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "Core French", "Extended French"
+                    ],
+                    "college": [
+                        "Intermediate French"
+                    ]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "Physical Education"
+                    ],
+                    "college": [
+                        "Sports Science"
+                    ]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies"]
+                }
+            },
+
+            "AUSTRALIA": {
+                "Math": {
+                    "high_school": [
+                        "Mathematics Standard", "Mathematics Advanced",
+                        "Mathematics Extension 1", "Mathematics Extension 2"
+                    ],
+                    "college": [
+                        "Calculus I", "Linear Algebra"
+                    ]
+                },
+                "Science": {
+                    "high_school": [
+                        "Biology", "Chemistry", "Physics", "Earth & Environmental Science"
+                    ],
+                    "college": [
+                        "General Biology I", "General Chemistry I", "Physics I (Mechanics)"
+                    ]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "English Standard", "English Advanced", "English Extension"
+                    ],
+                    "college": [
+                        "College Composition"
+                    ]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "Modern History", "Ancient History", "Economics"
+                    ],
+                    "college": [
+                        "World History (College)", "Economics"
+                    ]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "Information Processes and Technology", "Software Design and Development"
+                    ],
+                    "college": [
+                        "Introduction to Computer Science"
+                    ]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "Business Studies", "Accounting"
+                    ],
+                    "college": [
+                        "Financial Accounting"
+                    ]
+                },
+                "Arts": {
+                    "high_school": [
+                        "Visual Arts", "Music", "Drama"
+                    ],
+                    "college": [
+                        "Art History"
+                    ]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "Japanese", "French", "Chinese"
+                    ],
+                    "college": [
+                        "Intermediate Japanese"
+                    ]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "Personal Development, Health and Physical Education (PDHPE)"
+                    ],
+                    "college": [
+                        "Sports Science"
+                    ]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies"]
+                }
+            },
+
+            "OTHER": {
+                "Math": {
+                    "high_school": [
+                        "General Math", "Mathematics", "Algebra I", "Geometry", "Algebra II",
+                        "Trigonometry", "Pre-Calculus", "Calculus"
+                    ],
+                    "college": [
+                        "College Algebra", "Calculus I", "Linear Algebra"
+                    ]
+                },
+                "Science": {
+                    "high_school": [
+                        "General Science", "Biology", "Chemistry", "Physics",
+                        "Environmental Science"
+                    ],
+                    "college": [
+                        "General Biology I", "General Chemistry I", "Physics I (Mechanics)"
+                    ]
+                },
+                "English / Language Arts": {
+                    "high_school": [
+                        "English", "English Literature"
+                    ],
+                    "college": [
+                        "College Composition"
+                    ]
+                },
+                "Social Studies / Humanities": {
+                    "high_school": [
+                        "History", "Geography", "Civics", "Economics"
+                    ],
+                    "college": [
+                        "World History (College)", "Economics"
+                    ]
+                },
+                "Computer Science / Technology": {
+                    "high_school": [
+                        "Computer Science", "Information Technology"
+                    ],
+                    "college": [
+                        "Introduction to Computer Science"
+                    ]
+                },
+                "Business / Commerce": {
+                    "high_school": [
+                        "Business Studies", "Accounting"
+                    ],
+                    "college": [
+                        "Financial Accounting"
+                    ]
+                },
+                "Arts": {
+                    "high_school": [
+                        "Visual Arts", "Music", "Drama"
+                    ],
+                    "college": [
+                        "Art History"
+                    ]
+                },
+                "Foreign Language": {
+                    "high_school": [
+                        "Foreign Language"
+                    ],
+                    "college": [
+                        "Intermediate Language Studies"
+                    ]
+                },
+                "Physical Education / Health": {
+                    "high_school": [
+                        "Physical Education", "Health"
+                    ],
+                    "college": [
+                        "Sports Science"
+                    ]
+                },
+                "Other": {
+                    "high_school": ["Other"],
+                    "college": ["Interdisciplinary Studies"]
+                }
+            }
         };
 
         const mainCategories = Object.keys(courseOptions);
@@ -300,14 +1167,15 @@
             // Hide Step 3
             document.getElementById("step3").classList.add("hidden");
 
+            curriculumSection.classList.remove("hidden");
+
             // Show transcript section (Step 4)
             document.getElementById("transcriptSection").classList.remove("hidden");
 
             // Build transcript UI
             buildTranscript();
+
         }
-
-
 
         function buildScale() {
             gradingScale = [];
@@ -393,7 +1261,7 @@
                         </tr>
                     </thead>
 
-                    <tbody id="tableBody${g}"></tbody>
+                    <tbody id="tableBody${g}" data-grade-table="${g}"></tbody>
                 </table>
             </div>
             <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-2 rounded" onclick="addRow(${g})">+ Add
@@ -411,6 +1279,9 @@
             gradesShown.sort((a, b) => a - b); // ascending
             gradesShown.forEach(g => addGradeSection(g));
             updateAddGradeButton();
+
+            curriculumSection.classList.remove("hidden");
+
         }
 
         function updateAddGradeButton() {
@@ -448,7 +1319,7 @@
                                 <th class="px-4 py-2 text-left">Remove</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody${g}"></tbody>
+                        <tbody id="tableBody${g}" data-grade-table="${g}"></tbody>
                     </table>
                 </div>
 
@@ -537,7 +1408,10 @@
         function addRow(g) {
             const row = document.createElement("tr");
 
-            const categoryOptionsHtml = mainCategories
+            // ⭐ Get categories from selected curriculum
+            const categories = Object.keys(courseOptions[selectedCurriculum] || {});
+
+            const categoryOptionsHtml = categories
                 .map(c => `<option value="${c}">${c}</option>`)
                 .join("");
 
@@ -565,11 +1439,8 @@
         <!-- Marks -->
         <td class="border px-4 py-2">
             <input type="text"
-       oninput="forceNumeric(this); updateGrade(this, ${g})"
-       class="w-full border border-gray-300 rounded p-1">
-
-
-
+                   oninput="forceNumeric(this); updateGrade(this, ${g})"
+                   class="w-full border border-gray-300 rounded p-1">
         </td>
 
         <!-- Letter -->
@@ -581,10 +1452,8 @@
         <!-- Credits -->
         <td class="border px-4 py-2">
             <input type="text"
-       oninput="forceDecimal(this); updateGPA(${g})"
-       class="w-full border border-gray-300 rounded p-1">
-
-
+                   oninput="forceDecimal(this); updateGPA(${g})"
+                   class="w-full border border-gray-300 rounded p-1">
         </td>
 
         <!-- Preference -->
@@ -610,6 +1479,7 @@
         }
 
 
+
         function forceNumeric(input) {
             input.value = input.value.replace(/[^0-9]/g, "");
         }
@@ -626,30 +1496,77 @@
         }
 
 
-        function onCategoryChange(select, g) {
+        function onCurriculumChange(select) {
+            selectedCurriculum = select.value || "OTHER";
+
+            // Optional: refresh existing rows' course dropdowns
+            document.querySelectorAll("[data-grade-table]").forEach(tbody => {
+                const g = tbody.getAttribute("data-grade-table");
+                tbody.querySelectorAll("tr").forEach(row => {
+                    const categorySelect = row.children[0].querySelector("select");
+                    if (!categorySelect) return;
+                    onCategoryChange(categorySelect, g, { preserveSelection: true });
+                });
+            });
+        }
+
+
+
+
+        function getCoursesForCategory(category) {
+            if (!selectedCurriculum || !courseOptions[selectedCurriculum]) return [];
+            if (!courseOptions[selectedCurriculum][category]) return [];
+
+            const block = courseOptions[selectedCurriculum][category];
+            const list = block.high_school || [];
+
+            if (!list.includes("Other")) {
+                return [...list, "Other"];
+            }
+
+            return list;
+        }
+
+
+
+
+
+        function onCategoryChange(select, g, options = {}) {
             const row = select.closest("tr");
             const courseSelect = row.children[1].querySelector("select");
             const customInput = row.children[1].querySelector("input");
 
             const category = select.value;
+            const previousValue = options.preserveSelection ? courseSelect.value : "";
+
             courseSelect.innerHTML = `<option value="">Select course</option>`;
 
-            if (!category || !courseOptions[category]) {
+            // ❗ FIX: category must exist inside the selected curriculum
+            if (!category || !courseOptions[selectedCurriculum] || !courseOptions[selectedCurriculum][category]) {
                 customInput.classList.add("hidden");
                 customInput.value = "";
                 return;
             }
 
-            courseOptions[category].forEach(c => {
+            // ❗ FIX: get courses from curriculum → category
+            const list = getCoursesForCategory(category);
+
+            list.forEach(c => {
                 const opt = document.createElement("option");
                 opt.value = c;
                 opt.textContent = c;
                 courseSelect.appendChild(opt);
             });
 
+            if (options.preserveSelection && previousValue) {
+                courseSelect.value = previousValue;
+            }
+
             customInput.classList.add("hidden");
             customInput.value = "";
         }
+
+
 
         function onCourseChange(select, g) {
             const row = select.closest("tr");
@@ -710,6 +1627,8 @@
                 const cred = parseFloat(r.children[4].querySelector("input").value);
 
                 if (letter && !isNaN(cred) && cred > 0) {
+
+
                     total += letterToPoint(letter) * cred;
                     credits += cred;
                 }
@@ -718,6 +1637,62 @@
             const gpa = credits > 0 ? (total / credits).toFixed(2) : "0.00";
             document.getElementById("gpa" + g).innerText = gpa;
         }
+
+        function showRecommendations(data) {
+            const panel = document.getElementById("recommendationPanel");
+            const emptyState = document.getElementById("emptyState");
+            const resultsPanel = document.getElementById("resultsPanel");
+
+            panel.classList.remove("hidden");
+
+            if (!data.topCategories || data.topCategories.length === 0) {
+                emptyState.classList.remove("hidden");
+                resultsPanel.classList.add("hidden");
+                return;
+            }
+
+            emptyState.classList.add("hidden");
+            resultsPanel.classList.remove("hidden");
+
+            // Top categories
+            const topCatDiv = document.getElementById("topCategories");
+            topCatDiv.innerHTML = "";
+            data.topCategories.slice(0, 3).forEach(cat => {
+                const badge = `
+            <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium shadow-sm">
+                ${cat}
+            </span>`;
+                topCatDiv.innerHTML += badge;
+            });
+
+            // High school recs
+            const hsList = document.getElementById("hsRecs");
+            hsList.innerHTML = "";
+            data.recommendedHighSchoolCourses.slice(0, 3).forEach(c => {
+                hsList.innerHTML += `
+            <li class="flex items-center gap-2">
+                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                ${c}
+            </li>`;
+            });
+
+            // College recs
+            const colList = document.getElementById("collegeRecs");
+            colList.innerHTML = "";
+            data.recommendedCollegeCourses.slice(0, 3).forEach(c => {
+                colList.innerHTML += `
+            <li class="flex items-center gap-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                ${c}
+            </li>`;
+            });
+
+            // Track
+            document.getElementById("trackRec").innerText =
+                data.suggestedTracks?.[0] || "—";
+        }
+
+
 
 
         async function saveChanges() {
@@ -758,7 +1733,6 @@
                         Letter: letter || null,
                         Credits: isNaN(credits) ? null : credits,
                         Preference: isNaN(preference) ? null : preference,
-                        // Name kept for backward compatibility / display
                         Name: customCourseName || courseName || ""
                     });
                 });
@@ -793,13 +1767,57 @@
 
             console.log("Saving transcript:", { GPA: overallGPA, Grades: grades });
 
+            // Build transcript object for Course Assigner
+            const transcriptForAssigner = {
+                Grades: grades
+            };
+
+            // Build letter scale for Course Assigner
+            const letterScaleForAssigner = gradingScale.map(rule => ({
+                Letter: rule.letter,
+                Min: rule.min,
+                Points: letterToPoint(rule.letter)
+            }));
+
+
+            // ============================================================
+            // ⭐ CALL COURSE ASSIGNER + UPDATE PHASE 2 UI
+            // ============================================================
+            try {
+                const assignerResponse = await fetch("/api/course-assigner/calculate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        transcript: transcriptForAssigner,
+                        letterScale: letterScaleForAssigner,
+                        curriculum: selectedCurriculum
+                    })
+
+                });
+
+                const assignerData = await assignerResponse.json();
+                console.log("Course Assigner Result:", assignerData);
+
+                // ⭐ Phase 2 UI update
+                showRecommendations(assignerData);
+
+            } catch (err) {
+                console.error("Error calling Course Assigner:", err);
+            }
+            // ============================================================
+
+
+            // ============================================================
+            // SAVE TRANSCRIPT TO YOUR BACKEND
+            // ============================================================
             try {
                 const response = await fetch("/save_transcript", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         GPA: overallGPA,
-                        Grades: grades
+                        Grades: grades,
+                        Curriculum: selectedCurriculum
                     })
                 });
 
@@ -811,6 +1829,10 @@
                 alert("Error saving transcript. See console.");
             }
         }
+
+
+
+
 
 
 
@@ -829,109 +1851,150 @@
             step3.classList.add("hidden");
             transcriptSection.classList.remove("hidden");
 
-            // Build grade sections
+            // ⭐ Always show curriculum selector
+            curriculumSection.classList.remove("hidden");
+
+            // ⭐ Restore saved curriculum BEFORE rebuilding transcript
+            if (data.Curriculum) {
+                selectedCurriculum = data.Curriculum;
+                const cs = document.getElementById("curriculumSelect");
+                cs.value = selectedCurriculum;
+            }
+
+            // ⭐ Build grade sections
             gradesShown = data.Grades.map(g => g.GradeLevel);
             rebuildTranscript();
 
-            // Fill subjects
+            // ⭐ Apply curriculum filtering to all dropdowns BEFORE inserting rows
+            onCurriculumChange(document.getElementById("curriculumSelect"));
+
+            // ⭐ Fill subjects
             data.Grades.forEach(g => {
                 const tbody = document.querySelector(`#tableBody${g.GradeLevel}`);
 
                 g.Subjects.forEach(sub => {
                     const row = document.createElement("tr");
-                    const categoryOptionsHtml = mainCategories.map(c => `
-    <option value="${c}" ${sub.MainCategory === c ? "selected" : ""}>${c}</option>
-`).join("");
 
-                    // determine course list for this subject
+                    // Category dropdown
+                    const categories = Object.keys(courseOptions[selectedCurriculum] || {});
+                    const categoryOptionsHtml = categories.map(c => `
+                        <option value="${c}" ${sub.MainCategory === c ? "selected" : ""}>${c}</option>
+                        `).join("");
+
+
+                    // ⭐ Determine course list (curriculum-aware)
                     let courseList = [];
                     if (sub.MainCategory && courseOptions[sub.MainCategory]) {
-                        courseList = courseOptions[sub.MainCategory];
+                        courseList = getCoursesForCategory(sub.MainCategory);
+                    }
+
+                    // ⭐ Ensure saved course appears even if filtered out
+                    if (sub.CourseName && !courseList.includes(sub.CourseName)) {
+                        courseList.unshift(sub.CourseName);
                     }
 
                     const courseOptionsHtml = ['<option value="">Select course</option>']
-                        .concat(courseList.map(c => `<option value="${c}" ${sub.CourseName === c ? "selected" : ""}>${c}</option>`))
+                        .concat(courseList.map(c => `
+                    <option value="${c}" ${sub.CourseName === c ? "selected" : ""}>${c}</option>
+                `))
                         .join("");
 
                     const isOther = sub.CourseName === "Other";
                     const customName = sub.CustomCourseName || (isOther ? (sub.Name || "") : "");
 
                     row.innerHTML = `
-    <!-- Category -->
-    <td class="border px-4 py-2">
-        <select class="w-full border border-gray-300 rounded p-1"
-                onchange="onCategoryChange(this, ${g.GradeLevel})">
-            <option value="">Select category</option>
-            ${categoryOptionsHtml}
-        </select>
-    </td>
+                <!-- Category -->
+                <td class="border px-4 py-2">
+                    <select class="w-full border border-gray-300 rounded p-1"
+                            onchange="onCategoryChange(this, ${g.GradeLevel})">
+                        <option value="">Select category</option>
+                        ${categoryOptionsHtml}
+                    </select>
+                </td>
 
-    <!-- Subject (Course) -->
-    <td class="border px-4 py-2">
-        <select class="w-full border border-gray-300 rounded p-1"
-                onchange="onCourseChange(this, ${g.GradeLevel})">
-            ${courseOptionsHtml}
-        </select>
-        <input class="w-full border border-gray-300 rounded p-1 mt-1 ${isOther ? "" : "hidden"}"
-               placeholder="Enter course name"
-               value="${customName}">
-    </td>
+                <!-- Subject (Course) -->
+                <td class="border px-4 py-2">
+                    <select class="w-full border border-gray-300 rounded p-1"
+                            onchange="onCourseChange(this, ${g.GradeLevel})">
+                        ${courseOptionsHtml}
+                    </select>
+                    <input class="w-full border border-gray-300 rounded p-1 mt-1 ${isOther ? "" : "hidden"}"
+                           placeholder="Enter course name"
+                           value="${customName}">
+                </td>
 
-    <!-- Marks -->
-    <td class="border px-4 py-2">
-       <input type="text"
-       value="${sub.Marks ?? ''}"
-       oninput="forceNumeric(this); updateGrade(this, ${g.GradeLevel})"
-       class="w-full border rounded p-1">
+                <!-- Marks -->
+                <td class="border px-4 py-2">
+                    <input type="text"
+                           value="${sub.Marks ?? ''}"
+                           oninput="forceNumeric(this); updateGrade(this, ${g.GradeLevel})"
+                           class="w-full border rounded p-1">
+                </td>
 
+                <!-- Letter -->
+                <td class="border px-4 py-2">
+                    <input value="${sub.Letter ?? ''}" readonly 
+                           class="w-full border rounded p-1 bg-gray-100">
+                </td>
 
-    </td>
+                <!-- Credits -->
+                <td class="border px-4 py-2">
+                    <input type="text"
+                           value="${sub.Credits ?? ''}"
+                           oninput="forceDecimal(this); updateGPA(${g.GradeLevel})"
+                           class="w-full border rounded p-1">
+                </td>
 
-    <!-- Letter -->
-    <td class="border px-4 py-2">
-        <input value="${sub.Letter ?? ''}" readonly 
-               class="w-full border rounded p-1 bg-gray-100">
-    </td>
+                <!-- Preference -->
+                <td class="border px-4 py-2">
+                    <select class="w-full border border-gray-300 rounded p-1">
+                        <option value="">--</option>
+                        <option value="1" ${sub.Preference == 1 ? "selected" : ""}>1</option>
+                        <option value="2" ${sub.Preference == 2 ? "selected" : ""}>2</option>
+                        <option value="3" ${sub.Preference == 3 ? "selected" : ""}>3</option>
+                        <option value="4" ${sub.Preference == 4 ? "selected" : ""}>4</option>
+                        <option value="5" ${sub.Preference == 5 ? "selected" : ""}>5</option>
+                    </select>
+                </td>
 
-    <!-- Credits -->
-    <td class="border px-4 py-2">
-        <input type="text"
-       value="${sub.Credits ?? ''}"
-       oninput="forceDecimal(this); updateGPA(${g.GradeLevel})"
-       class="w-full border rounded p-1">
-
-
-    </td>
-
-    <!-- Preference -->
-    <td class="border px-4 py-2">
-        <select class="w-full border border-gray-300 rounded p-1">
-            <option value="">--</option>
-            <option value="1" ${sub.Preference == 1 ? "selected" : ""}>1</option>
-            <option value="2" ${sub.Preference == 2 ? "selected" : ""}>2</option>
-            <option value="3" ${sub.Preference == 3 ? "selected" : ""}>3</option>
-            <option value="4" ${sub.Preference == 4 ? "selected" : ""}>4</option>
-            <option value="5" ${sub.Preference == 5 ? "selected" : ""}>5</option>
-        </select>
-    </td>
-
-    <!-- Remove -->
-    <td class="border px-4 py-2">
-        <button onclick="deleteRow(this, ${g.GradeLevel})"
-                class="bg-red-600 text-white px-2 py-1 rounded">
-            X
-        </button>
-    </td>
-`;
-
-
+                <!-- Remove -->
+                <td class="border px-4 py-2">
+                    <button onclick="deleteRow(this, ${g.GradeLevel})"
+                            class="bg-red-600 text-white px-2 py-1 rounded">
+                        X
+                    </button>
+                </td>
+            `;
 
                     tbody.appendChild(row);
+                    
+                    // ⭐ Rebuild course dropdown using curriculum + category
+                    const categorySelect = row.children[0].querySelector("select");
+                    const courseSelect = row.children[1].querySelector("select");
+                    const customInput = row.children[1].querySelector("input");
+
+                    // Trigger category change to repopulate course list
+                    onCategoryChange(categorySelect, g.GradeLevel);
+
+                    // Restore saved course selection
+                    if (sub.CourseName) {
+                        courseSelect.value = sub.CourseName;
+                    }
+
+                    // Restore custom course input visibility
+                    if (sub.CourseName === "Other") {
+                        customInput.classList.remove("hidden");
+                        customInput.value = sub.CustomCourseName || sub.Name || "";
+                    } else {
+                        customInput.classList.add("hidden");
+                    }
+
                 });
 
                 updateGPA(g.GradeLevel);
             });
         }
+
 
         if (savedTranscript) {
             loadSavedTranscript(savedTranscript);
