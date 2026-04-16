@@ -13,6 +13,13 @@ import pymysql
 from dynaconf import Dynaconf
 import json
 
+
+from course_assigner import (
+    compute_category_scores,
+    recommend_courses_hybrid,
+    suggest_tracks,
+)
+
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "static/profile_pics"
@@ -78,6 +85,40 @@ def connect_db():
 @app.route("/")
 def index():
     return render_template("homepage.html.jinja")
+
+
+@app.route("/api/course-assigner/calculate", methods=["POST"])
+def calculate_course_assigner():
+    data = request.get_json()
+
+    # Extract payload
+    transcript = data.get("transcript", {})
+    letter_scale = data.get("letterScale", [])
+    curriculum = data.get("curriculum", "USA")
+
+    # 1. Compute category scores
+    category_scores = compute_category_scores(transcript, letter_scale)
+
+    # 2. Curriculum‑aware hybrid recommender
+    top_categories, recommended_hs, recommended_college = recommend_courses_hybrid(
+        transcript,
+        category_scores,
+        curriculum=curriculum
+    )
+
+    # 3. Track suggestions (must use category_scores, not top_categories)
+    suggested_tracks = suggest_tracks(category_scores)
+
+    # 4. Return everything to frontend
+    return jsonify({
+        "categoryScores": category_scores,
+        "topCategories": top_categories,
+        "recommendedHighSchoolCourses": recommended_hs,
+        "recommendedCollegeCourses": recommended_college,
+        "suggestedTracks": suggested_tracks
+    })
+
+
 
 
 
@@ -696,8 +737,10 @@ def student_academic_record():
 
             transcript_data = {
                 "GPA": float(transcript["GPA"]) if transcript["GPA"] is not None else None,
-                "Grades": grade_list
+                "Grades": grade_list,
+                "Curriculum": transcript.get("Curriculum")
             }
+
 
     cur.close()
     conn.close()
@@ -737,10 +780,11 @@ def save_transcript():
 
         # insert transcript (you’re using CourseID=NULL, so DB must have CourseID)
         cur.execute(
-            "INSERT INTO Transcript (StudentID, CourseID, GPA, CreatedAt) "
-            "VALUES (%s, NULL, %s, NOW())",
-            (student_profile_id, overall_gpa)
-        )
+        "INSERT INTO Transcript (StudentID, CourseID, GPA, Curriculum, CreatedAt) "
+        "VALUES (%s, NULL, %s, %s, NOW())",
+        (student_profile_id, overall_gpa, data.get("Curriculum"))
+    )
+
         transcript_id = cur.lastrowid
 
         # insert grades + subjects
