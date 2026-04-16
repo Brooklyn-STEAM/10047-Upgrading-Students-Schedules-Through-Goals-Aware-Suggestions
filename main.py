@@ -364,6 +364,10 @@ def dashboard():
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
+    counselor_decision = None
+    counselor_email = None
+    counselor_name = None
+
     # 1. Load counselor info
     cursor.execute("""
         SELECT User.Email, User.Name, Recommendation.Status
