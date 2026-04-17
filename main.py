@@ -605,14 +605,19 @@ def add_counselor_form():
     cursor.execute("""
         INSERT INTO CounselorStudent (CounselorUserID, StudentUserID)
         VALUES (%s, %s)
-        ON DUPLICATE KEY UPDATE CounselorUserID = CounselorUserID;
     """, (counselor_id, current_user.id))
 
+    # Save recommendation request
+    cursor.execute("""
+        INSERT INTO Recommendation (Grade, Comments, UserID, CounselorID)
+        VALUES (%s, %s, %s, %s)
+    """, (grade, comments, current_user.id, counselor_id))
 
     connection.commit()
     connection.close()
 
     return redirect("/student/dashboard")
+
 
 @app.route("/student/recommendation/editrecommendations")
 @login_required
