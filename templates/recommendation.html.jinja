@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js"></script>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
   <title>CourseTrack - Recommendations</title>
   <link href="/static/styles.css" rel="stylesheet">
@@ -14,30 +13,29 @@
 
 {% include "components/navbar.html.jinja" %}
 
-<main class="w-full max-w-[1200px] mx-auto px-6 py-14 flex-grow">
+<main class="w-full max-w-[1100px] mx-auto px-6 py-16 flex-grow">
 
-  <div class="mb-12 flex justify-between items-start">
+  <!-- HEADER -->
+  <div class="flex justify-between items-start mb-14">
 
-    <!-- LEFT: Title -->
     <div>
-      <h1 class="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-        📄 Your Applications
+      <h1 class="text-5xl font-bold text-gray-900 mb-3">
+        Your Applications
       </h1>
       <p class="text-gray-500 text-lg">
-        Track what your counselor has recommended for you
+        Track recommendations from your counselor
       </p>
     </div>
 
-    <!-- RIGHT: Notifications -->
+    <!-- Notifications -->
     <a href="/student/recommendation/notifications"
-      class="relative flex items-center justify-center w-12 h-12 rounded-full bg-emerald-800 border border-gray-200 shadow-sm hover:shadow-md hover:bg-emerald-600 transition">
+       class="relative flex items-center justify-center w-12 h-12 rounded-full bg-emerald-700 hover:bg-emerald-600 transition shadow-md">
 
-      <!-- Bell Icon -->
       <svg xmlns="http://www.w3.org/2000/svg"
-          class="w-6 h-6 text-white"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor">
+           class="w-6 h-6 text-white"
+           fill="none"
+           viewBox="0 0 24 24"
+           stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
               d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11
                 a6.002 6.002 0 00-4-5.659V5
@@ -46,179 +44,152 @@
                 a3 3 0 11-6 0v-1m6 0H9"/>
       </svg>
 
-      <!-- Notification Badge (optional dynamic) -->
       {% if notification_count and notification_count > 0 %}
-      <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+      <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
         {{ notification_count }}
       </span>
       {% endif %}
-
     </a>
 
   </div>
 
+
   {% if not counselor_id %}
 
   <!-- NO COUNSELOR -->
-  <div class="flex justify-center">
-    <div class="bg-white shadow-lg rounded-2xl p-10 text-center max-w-md border border-gray-200">
-      
-      <div class="mb-4 text-emerald-500 text-5xl">👤</div>
+  <div class="text-center py-20">
 
-      <h2 class="text-2xl font-bold text-gray-800 mb-3">
-        No Counselor Assigned
-      </h2>
+    <div class="text-6xl mb-4">👤</div>
 
-      <p class="text-gray-500 mb-6">
-        Connect with a counselor to start receiving applications.
-      </p>
+    <h2 class="text-3xl font-bold text-gray-800 mb-3">
+      No Counselor Assigned
+    </h2>
 
-      <a href="/student/recommendation/addcounselor"
-         class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
-        ➕ Add Counselor
-      </a>
+    <p class="text-gray-500 mb-8">
+      Connect with a counselor to start receiving recommendations.
+    </p>
 
-    </div>
+    <a href="/student/recommendation/addcounselor"
+       class="px-8 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
+      ➕ Add Counselor
+    </a>
+
   </div>
+
 
   {% else %}
 
-    {% if information and information|length > 0 %}
+  <!-- COUNSELOR HEADER -->
+  <div class="mb-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
 
-    <!-- APPLICATION FEED -->
-    <div class="space-y-6">
-
-      {% for x in information %}
-      <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
-
-        <!-- TOP -->
-        <div class="flex justify-between items-start mb-4">
-          
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-emerald-200 text-emerald-700 font-semibold">
-              {{ x['Name'][0] }}
-            </div>
-            <div>
-              <p class="font-semibold text-gray-800">
-                {{ x['Name'] }}
-              </p>
-              <p class="text-xs text-gray-400 flex items-center gap-1">
-                👨‍🏫 Counselor
-              </p>
-            </div>
-          </div>
-
-          <!-- Title -->
-          <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">
-            Counselor & Recommendations
-          </h2>
-
-          {% if counselor_id %}s.
-            </p>
-
-            <!-- Buttons -->
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-
-
-            <a href="{{ url_for('chat', user_id=counselor_id) }}"
-          class="px-6 py-3 text-white bg-blue-500 rounded-xl shadow-md hover:bg-blue-600 hover:scale-105 transition transform text-center">
-              💬 Chat with Counselor
-            </a>
-
-
-            </div>
-
-          {% else %}
-
-
-
-
-
-              <span class="px-6 py-3 text-gray-400 border border-gray-300 rounded-xl text-center">
-                💬 Chat unavailable
-              </span>
-
-            </div>
-
-          {% endif %}
-          <span class="text-xs text-gray-400 flex items-center gap-1">
-            📅 {{ x['Date'] }}
-          </span>
-
-        </div>
-
-        <!-- CONTENT -->
-        <div class="grid md:grid-cols-2 gap-6">
-
-          <!-- MAJOR -->
-          <div>
-            <p class="text-xs text-gray-400 mb-1 flex items-center gap-1">
-              🎓 Recommended Major
-            </p>
-            <h3 class="text-lg font-semibold text-emerald-700">
-              {{ x['Major'] }}
-            </h3>
-          </div>
-
-          <!-- COMMENTS -->
-          <div>
-            <p class="text-xs text-gray-400 mb-1 flex items-center gap-1">
-              💬 Comments
-            </p>
-            <p class="text-sm text-gray-600 leading-relaxed">
-              {{ x['Comments'] }}
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-      {% endfor %}
-
+    <div>
+      <p class="text-sm text-gray-400">Your Counselor</p>
+      <h2 class="text-2xl font-semibold text-gray-800">
+        {{ information[0]['Name'] if information else "Pending" }}
+      </h2>
     </div>
 
-    <!-- ACTION -->
-    <div class="mt-12 text-center">
-      <a href="/student/recommendation/editrecommendations"
-         class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 hover:scale-105 transition">
-        ✏️ Manage Your Recommendation
-      </a>
-    </div>
+    <!-- Chat Button -->
+    <a href="{{ url_for('chat', user_id=counselor_id) }}"
+       class="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition shadow">
+      💬 Chat
+    </a>
 
-    {% else %}
+  </div>
 
-    <!-- EMPTY -->
-    <div class="flex justify-center">
-      <div class="bg-white border border-gray-200 shadow-lg rounded-2xl p-10 text-center max-w-lg">
 
-        <div class="text-5xl mb-4">📭</div>
+  {% if information and information|length > 0 %}
 
-        <h2 class="text-2xl font-bold text-gray-800 mb-3">
-          No Applications Yet
-        </h2>
+  <!-- APPLICATIONS -->
+  <div class="space-y-10">
 
-        <p class="text-gray-500 mb-6">
-          Your counselor hasn’t submitted any recommendations yet.
+    {% for x in information %}
+    <div class="relative">
+
+      <!-- Timeline line -->
+      <div class="absolute left-5 top-0 bottom-0 w-[2px] bg-emerald-200"></div>
+
+      <div class="ml-12">
+
+        <!-- Date -->
+        <p class="text-sm text-gray-400 mb-2">
+          {{ x['Date'] }}
         </p>
 
-        <a href="/student/recommendation/editrecommendations"
-           class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
-          📌 View Your Request
-        </a>
+        <!-- Card -->
+        <div class="bg-white/80 backdrop-blur rounded-2xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition">
 
+          <div class="grid md:grid-cols-2 gap-6">
 
-        <a href="{{ url_for('chat', user_id=counselor_id) }}"
-           class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
-          💬 Chat with Counselor
-        </a>
-
-
+            <!-- Major -->
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Recommended Major</p>
+              <h3 class="text-xl font-semibold text-emerald-700">
+                {{ x['Major'] }}
+              </h3>
             </div>
 
+            <!-- Comments -->
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Comments</p>
+              <p class="text-gray-600 leading-relaxed">
+                {{ x['Comments'] }}
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
+
+    </div>
+    {% endfor %}
+
+  </div>
+
+
+  <!-- ACTION -->
+  <div class="mt-16 text-center">
+    <a href="/student/recommendation/editrecommendations"
+       class="px-8 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 hover:scale-105 transition">
+      ✏️ Manage Your Request
+    </a>
+  </div>
+
+
+  {% else %}
+
+  <!-- EMPTY -->
+  <div class="text-center py-20">
+
+    <div class="text-6xl mb-4">📭</div>
+
+    <h2 class="text-2xl font-bold text-gray-800 mb-3">
+      No Applications Yet
+    </h2>
+
+    <p class="text-gray-500 mb-8">
+      Your counselor hasn’t submitted any recommendations yet.
+    </p>
+
+    <div class="flex flex-col sm:flex-row justify-center gap-4">
+
+      <a href="/student/recommendation/editrecommendations"
+         class="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
+        📌 View Request
+      </a>
+
+      <a href="{{ url_for('chat', user_id=counselor_id) }}"
+         class="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition">
+        💬 Chat
+      </a>
+
     </div>
 
-    {% endif %}
+  </div>
+
+  {% endif %}
 
   {% endif %}
 
