@@ -16,49 +16,21 @@
 <main class="w-full max-w-[1100px] mx-auto px-6 py-16 flex-grow">
 
   <!-- HEADER -->
-  <div class="flex justify-between items-start mb-14">
-
-    <div>
-      <h1 class="text-5xl font-bold text-gray-900 mb-3">
-        Your Applications
-      </h1>
-      <p class="text-gray-500 text-lg">
-        Track recommendations from your counselor
-      </p>
-    </div>
-
-    <!-- Notifications -->
-    <a href="/student/recommendation/notifications"
-       class="relative flex items-center justify-center w-12 h-12 rounded-full bg-emerald-700 hover:bg-emerald-600 transition shadow-md">
-
-      <svg xmlns="http://www.w3.org/2000/svg"
-           class="w-6 h-6 text-white"
-           fill="none"
-           viewBox="0 0 24 24"
-           stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11
-                a6.002 6.002 0 00-4-5.659V5
-                a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159
-                c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1
-                a3 3 0 11-6 0v-1m6 0H9"/>
-      </svg>
-
-      {% if notification_count and notification_count > 0 %}
-      <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-        {{ notification_count }}
-      </span>
-      {% endif %}
-    </a>
-
+  <div class="mb-14">
+    <h1 class="text-5xl font-bold text-gray-900 mb-3">
+      Your Applications
+    </h1>
+    <p class="text-gray-500 text-lg">
+      Track recommendations from your counselor
+    </p>
   </div>
 
-
+  <!-- -------------------------------- -->
+  <!-- CASE 1: NO COUNSELOR REQUEST -->
+  <!-- -------------------------------- -->
   {% if not counselor_id %}
 
-  <!-- NO COUNSELOR -->
   <div class="text-center py-20">
-
     <div class="text-6xl mb-4">👤</div>
 
     <h2 class="text-3xl font-bold text-gray-800 mb-3">
@@ -73,11 +45,29 @@
        class="px-8 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
       ➕ Add Counselor
     </a>
-
   </div>
 
+  <!-- -------------------------------- -->
+  <!-- CASE 2: COUNSELOR PENDING -->
+  <!-- -------------------------------- -->
+  {% elif counselor_status == 'pending' %}
 
-  {% else %}
+  <div class="text-center py-20">
+    <div class="text-6xl mb-4">⏳</div>
+
+    <h2 class="text-3xl font-bold text-gray-800 mb-3">
+      Waiting for Counselor Approval
+    </h2>
+
+    <p class="text-gray-500 mb-8">
+      {{ counselor_name }} has not accepted your request yet.
+    </p>
+  </div>
+
+  <!-- -------------------------------- -->
+  <!-- CASE 3: COUNSELOR ACCEPTED -->
+  <!-- -------------------------------- -->
+  {% elif counselor_status == 'accepted' %}
 
   <!-- COUNSELOR HEADER -->
   <div class="mb-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
@@ -85,11 +75,10 @@
     <div>
       <p class="text-sm text-gray-400">Your Counselor</p>
       <h2 class="text-2xl font-semibold text-gray-800">
-        {{ information[0]['Name'] if information else "Pending" }}
+        {{ counselor_name }}
       </h2>
     </div>
 
-    <!-- Chat Button -->
     <a href="{{ url_for('chat', user_id=counselor_id) }}"
        class="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition shadow">
       💬 Chat
@@ -97,31 +86,26 @@
 
   </div>
 
-
+  <!-- APPLICATIONS -->
   {% if information and information|length > 0 %}
 
-  <!-- APPLICATIONS -->
   <div class="space-y-10">
 
     {% for x in information %}
     <div class="relative">
 
-      <!-- Timeline line -->
       <div class="absolute left-5 top-0 bottom-0 w-[2px] bg-emerald-200"></div>
 
       <div class="ml-12">
 
-        <!-- Date -->
         <p class="text-sm text-gray-400 mb-2">
           {{ x['Date'] }}
         </p>
 
-        <!-- Card -->
         <div class="bg-white/80 backdrop-blur rounded-2xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition">
 
           <div class="grid md:grid-cols-2 gap-6">
 
-            <!-- Major -->
             <div>
               <p class="text-xs text-gray-400 mb-1">Recommended Major</p>
               <h3 class="text-xl font-semibold text-emerald-700">
@@ -129,7 +113,6 @@
               </h3>
             </div>
 
-            <!-- Comments -->
             <div>
               <p class="text-xs text-gray-400 mb-1">Comments</p>
               <p class="text-gray-600 leading-relaxed">
@@ -142,38 +125,26 @@
         </div>
 
       </div>
-
     </div>
     {% endfor %}
 
   </div>
 
-
-  <!-- ACTION -->
-  <div class="mt-16 text-center">
-    <a href="/student/recommendation/editrecommendations"
-       class="px-8 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 hover:scale-105 transition">
-      ✏️ Manage Your Request
-    </a>
-  </div>
-
-
   {% else %}
 
-  <!-- EMPTY -->
   <div class="text-center py-20">
-
     <div class="text-6xl mb-4">📭</div>
 
     <h2 class="text-2xl font-bold text-gray-800 mb-3">
       No Applications Yet
     </h2>
 
-    <p class="text-gray-500 mb-8">
+    <p class="text-gray-500">
       Your counselor hasn’t submitted any recommendations yet.
     </p>
+  </div>
 
-    <div class="flex flex-col sm:flex-row justify-center gap-4">
+      <div class="flex flex-col sm:flex-row justify-center gap-4">
 
       <a href="/student/recommendation/editrecommendations"
          class="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
@@ -181,8 +152,6 @@
       </a>
 
     </div>
-
-  </div>
 
   {% endif %}
 
