@@ -32,12 +32,16 @@
           Counselor Decision Overview: {{ counselor_decision }}
           <br>
     
-      Your counselor -
       
-<a href="{{ url_for('counselor_profile', counselor_id=counselor_id) }}"
-   class="text-emerald-600 underline">
-   {{ counselor_name }}
-</a>
+      
+{% if counselor_id %}
+  <a href="{{ url_for('counselor_profile', counselor_id=counselor_id) }}"
+     class="text-emerald-600 underline">
+    Your counselor - {{ counselor_name }}
+  </a>
+{% else %}
+  <span class="text-gray-400">No counselor assigned</span>
+{% endif %}
           
          
         </h2>

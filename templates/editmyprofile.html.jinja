@@ -43,18 +43,23 @@
             id="profile-preview"
           >
           <!-- Overlay -->
-          <div class="absolute inset-0 rounded-full bg-black bg-opacity-25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M16 3.5a2.828 2.828 0 114 4L7 20H3v-4L16 3.5z"/>
-            </svg>
-          </div>
+<div class="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center 
+            opacity-100 md:opacity-0 md:group-hover:opacity-100 
+            transition cursor-pointer pointer-events-none">
+  <svg xmlns="http://www.w3.org/2000/svg" 
+       class="h-6 w-6 text-white" 
+       fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+          d="M15.232 5.232l3.536 3.536M16 3.5a2.828 2.828 0 114 4L7 20H3v-4L16 3.5z"/>
+  </svg>
+</div>
           <!-- File input -->
-          <input
-            type="file"
-            name="profile_picture"
-            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-full"
-            onchange="previewProfilePicture(event)"
-          >
+<input
+  type="file"
+  name="profile_picture"
+  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer rounded-full z-10"
+  onchange="previewProfilePicture(event)"
+>
         </div>
 
         <div>
