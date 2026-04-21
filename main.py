@@ -30,6 +30,47 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+@app.context_processor
+def inject_notification_count():
+    if current_user.is_authenticated:
+        connection = connect_db()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute("""
+            SELECT COUNT(*) AS count
+            FROM Notification
+            WHERE StudentID = %s AND Seen = FALSE
+        """, (current_user.id,))
+
+        result = cursor.fetchone()["count"]
+
+        connection.close()
+
+        return dict(notification_count=result)
+
+    return dict(notification_count=0)
+
+@app.context_processor
+def inject_counselor_notification_count():
+    if current_user.is_authenticated and current_user.role == "counselor":
+        connection = connect_db()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute("""
+            SELECT COUNT(*) AS count
+            FROM CounselorNotification
+            WHERE CounselorID = %s AND Seen = FALSE
+        """, (current_user.id,))
+
+        result = cursor.fetchone()
+        count = result["count"] if result else 0
+
+        connection.close()
+
+        return dict(counselor_notification_count=count)
+
+    return dict(counselor_notification_count=0)
+
 config = Dynaconf(settings_file = ["settings.toml"])
 
 app.secret_key = config.secret_key
@@ -80,6 +121,8 @@ def connect_db():
         cursorclass=pymysql.cursors.DictCursor
     )
     return conn
+
+
 
 
 @app.route("/")
@@ -458,21 +501,37 @@ def recommendations():
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    # Get current counselor from StudentProfile (SOURCE OF TRUTH)
+    # -----------------------------------
+    # 1. Get counselor + status (SOURCE OF TRUTH)
+    # -----------------------------------
     cursor.execute("""
-        SELECT CounselorUserID
-        FROM StudentProfile
-        WHERE UserID = %s
+        SELECT 
+            Recommendation.CounselorID,
+            Recommendation.Status,
+            User.Name
+        FROM Recommendation
+        LEFT JOIN User ON Recommendation.CounselorID = User.ID
+        WHERE Recommendation.UserID = %s
+        LIMIT 1
     """, (current_user.id,))
 
     row = cursor.fetchone()
-    counselor_id = row["CounselorUserID"] if row else None
 
-    # Always define this (IMPORTANT)
+    counselor_id = None
+    counselor_name = None
+    counselor_status = None
+
+    if row:
+        counselor_id = row["CounselorID"]
+        counselor_name = row["Name"]
+        counselor_status = row["Status"]
+
+    # -----------------------------------
+    # 2. Load recommendations (ONLY if accepted)
+    # -----------------------------------
     information = []
 
-    # Only load data if counselor exists
-    if counselor_id:
+    if counselor_status == "accepted":
         cursor.execute("""
             SELECT Application.*, User.Name
             FROM Application
@@ -481,49 +540,26 @@ def recommendations():
               AND Application.UserID = %s
         """, (current_user.id, counselor_id))
 
-    # ✅ Check if student has a counselor
-    cursor.execute("""
-        SELECT CounselorID 
-        FROM Recommendation
-        WHERE UserID = %s
-    """, (current_user.id,))
-    student = cursor.fetchone()
-
-    counselor_id = student["CounselorID"] if student else None
-
-    information = []
-
-    # ✅ If counselor exists → get recommendations
-    if counselor_id:
-        cursor.execute("""
-        SELECT Application.*, User.Name 
-        FROM Application
-        JOIN User ON Application.UserID = User.ID
-        WHERE StudentUserID = %s
-        AND Application.UserID = %s
-        """, (current_user.id, counselor_id))
-        
         information = cursor.fetchall()
 
-    # 🔔 NEW: Get unread notification count
-    cursor.execute("""
-        SELECT COUNT(*) AS count
-        FROM Declined
-        WHERE StudentID = %s AND Seen = FALSE
-    """, (current_user.id,))
-
-    notification_count = cursor.fetchone()["count"]
-
+    # -----------------------------------
+    # 3. Close DB
+    # -----------------------------------
+    cursor.close()
     connection.close()
 
+    # -----------------------------------
+    # 4. Render
+    # -----------------------------------
     return render_template(
         "recommendation.html.jinja",
         counselor_id=counselor_id,
-        information=information,
-        notification_count=notification_count  # ✅ pass to frontend
+        counselor_name=counselor_name,
+        counselor_status=counselor_status,
+        information=information
     )
 
-@app.route("/student/recommendation/notifications")
+@app.route("/student/notifications")
 @login_required
 def student_notifications():
     if current_user.role != "student":
@@ -532,15 +568,26 @@ def student_notifications():
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
+    # Mark all as seen
+    cursor.execute("""
+        UPDATE Notification
+        SET Seen = TRUE
+        WHERE StudentID = %s AND Seen = FALSE
+    """, (current_user.id,))
+    connection.commit()
+
+    # Fetch notifications
     cursor.execute("""
         SELECT 
-            Declined.Reason,
-            Declined.ID,
+            Notification.ID,
+            Notification.Type,
+            Notification.Message,
+            Notification.CreatedAt,
             User.Name AS CounselorName
-        FROM Declined
-        JOIN User ON Declined.UserID = User.ID
-        WHERE Declined.StudentID = %s
-        ORDER BY Declined.ID DESC
+        FROM Notification
+        JOIN User ON Notification.CounselorID = User.ID
+        WHERE Notification.StudentID = %s
+        ORDER BY Notification.CreatedAt DESC
     """, (current_user.id,))
 
     notifications = cursor.fetchall()
@@ -572,7 +619,6 @@ def mark_notification_read(notification_id):
     connection.close()
 
     return redirect("/student/recommendation")
-
 
 @app.route("/student/recommendation/addcounselor")
 @login_required
@@ -612,6 +658,18 @@ def add_counselor_form():
         INSERT INTO Recommendation (Grade, Comments, UserID, CounselorID)
         VALUES (%s, %s, %s, %s)
     """, (grade, comments, current_user.id, counselor_id))
+
+    # ✅ NEW: Insert counselor notification
+    cursor.execute("""
+        INSERT INTO CounselorNotification 
+        (CounselorID, StudentID, Type, Message)
+        VALUES (%s, %s, %s, %s)
+    """, (
+        counselor_id,
+        current_user.id,
+        "request",
+        f"{current_user.name} requested you as a counselor"
+    ))
 
     connection.commit()
     connection.close()
@@ -819,6 +877,52 @@ def save_counselor_notes(student_profile_id):
 
     return redirect(f"/counselor/dashboard/{student_profile_id}")
 
+@app.route("/counselor/notifications")
+@login_required
+def counselor_notifications():
+    if current_user.role != "counselor":
+        abort(403)
+
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # ✅ Mark notifications as seen
+    cursor.execute("""
+        UPDATE CounselorNotification
+        SET Seen = TRUE
+        WHERE CounselorID = %s AND Seen = FALSE
+    """, (current_user.id,))
+    connection.commit()
+
+    # ✅ Fetch notifications (MATCHES TEMPLATE EXACTLY)
+    cursor.execute("""
+        SELECT 
+            cn.ID,
+            cn.Type,
+            cn.Message,
+            cn.CreatedAt AS Date,
+            u.Name AS StudentName,
+            r.Grade,
+            r.Comments,
+            NULL AS Major  -- placeholder (for template compatibility)
+        FROM CounselorNotification cn
+        JOIN User u 
+            ON cn.StudentID = u.ID
+        LEFT JOIN Recommendation r 
+            ON r.UserID = cn.StudentID 
+           AND r.CounselorID = cn.CounselorID
+        WHERE cn.CounselorID = %s
+        ORDER BY cn.CreatedAt DESC
+    """, (current_user.id,))
+
+    notifications = cursor.fetchall()
+
+    connection.close()
+
+    return render_template(
+        "notif2.html.jinja",
+        notifications=notifications
+    )
 
 @app.route("/counselor/recommendation")
 @login_required
@@ -893,6 +997,16 @@ def accept_student(user_id):
         SET Status = 'accepted'
         WHERE UserID = %s AND CounselorID = %s
     """, (user_id, current_user.id))
+
+    # 🔔 Step 3: INSERT NOTIFICATION (ADD THIS)
+    cursor.execute("""
+        INSERT INTO Notification (StudentID, CounselorID, Type, Message, Seen)
+        VALUES (%s, %s, 'accepted', %s, FALSE)
+    """, (
+        user_id,
+        current_user.id,
+        f"You have been accepted by your counselor."
+    ))
 
     connection.commit()
     connection.close()

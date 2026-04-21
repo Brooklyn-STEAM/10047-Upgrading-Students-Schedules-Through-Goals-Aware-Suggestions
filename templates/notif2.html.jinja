@@ -1,12 +1,11 @@
 <!doctype html>
-<html class="scroll-smooth">
+<html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Notifications - CourseTrack</title>
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+  <title>Counselor Notifications - CourseTrack</title>
   <link href="/static/styles.css" rel="stylesheet">
 </head>
 
@@ -19,10 +18,10 @@
   <!-- HEADER -->
   <div class="mb-10 flex justify-between items-center">
     <h1 class="text-3xl font-bold text-gray-900">
-      🔔 Notifications
+      📢 Counselor Notifications
     </h1>
 
-    <a href="/student/recommendation"
+    <a href="/counselor/dashboard"
        class="text-sm text-emerald-600 hover:underline">
       ← Back
     </a>
@@ -33,44 +32,47 @@
   <div class="space-y-4">
 
     {% for n in notifications %}
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition">
 
-    <a href="/student/notifications/read/{{ n['ID'] }}"
-       class="block rounded-xl p-5 shadow-sm hover:shadow-md transition border
-       {% if n['Type'] == 'accepted' %}
-         bg-green-50 border-green-200
-       {% elif n['Type'] == 'declined' %}
-         bg-white border-gray-200
-       {% endif %}">
-
-      <!-- Top -->
+      <!-- Top row -->
       <div class="flex justify-between items-center mb-2">
 
         <p class="font-semibold text-gray-800">
-          {{ n['CounselorName'] }}
+          {{ n['StudentName'] }}
         </p>
 
-        {% if n['Type'] == 'declined' %}
-          <span class="text-xs text-red-500 font-medium">Declined</span>
-        {% elif n['Type'] == 'accepted' %}
-          <span class="text-xs text-green-600 font-medium">Accepted</span>
-        {% endif %}
+        <span class="text-xs px-2 py-1 rounded-full
+          {% if n['Type'] == 'accepted' %}
+            bg-green-100 text-green-700
+          {% elif n['Type'] == 'declined' %}
+            bg-red-100 text-red-600
+          {% else %}
+            bg-gray-100 text-gray-600
+          {% endif %}
+        ">
+          {{ n['Type']|capitalize }}
+        </span>
 
       </div>
 
       <!-- Message -->
-      <p class="text-sm text-gray-700 leading-relaxed">
+      <p class="text-sm text-gray-600">
         {{ n['Message'] }}
       </p>
 
-      <!-- Optional timestamp -->
-      {% if n['CreatedAt'] %}
-      <p class="text-xs text-gray-400 mt-3">
-        {{ n['CreatedAt'] }}
+      <!-- Optional extra info -->
+      {% if n['Major'] %}
+      <p class="text-sm text-emerald-700 mt-2">
+        <span class="font-medium">Requested Major:</span> {{ n['Major'] }}
       </p>
       {% endif %}
 
-    </a>
+      <!-- Date -->
+      <p class="text-xs text-gray-400 mt-3">
+        {{ n['Date'] }}
+      </p>
 
+    </div>
     {% endfor %}
 
   </div>
@@ -84,7 +86,7 @@
       No Notifications
     </h2>
     <p class="text-gray-500">
-      You're all caught up!
+      You’re all caught up!
     </p>
   </div>
 
