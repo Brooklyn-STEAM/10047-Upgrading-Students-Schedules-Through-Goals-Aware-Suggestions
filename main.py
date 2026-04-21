@@ -367,38 +367,64 @@ def dashboard():
     counselor_decision = None
     counselor_email = None
     counselor_name = None
+    counselor_id = None  # 🔥 ADD THIS
 
-    # 1. Load counselor info
+    # -----------------------------
+    # 🔥 GET CURRENT COUNSELOR (REAL SOURCE)
+    # -----------------------------
     cursor.execute("""
-        SELECT User.Email, User.Name, Recommendation.Status
-        FROM Recommendation
-        JOIN User ON Recommendation.CounselorID = User.ID
-        WHERE Recommendation.UserID = %s
+        SELECT CounselorUserID
+        FROM CounselorStudent
+        WHERE StudentUserID = %s
+        ORDER BY ID DESC
+        LIMIT 1
     """, (current_user.id,))
-    
+
+    row = cursor.fetchone()
+
+    if row:
+        counselor_id = row["CounselorUserID"]
+
+        # get counselor info
+        cursor.execute("""
+            SELECT Name, Email
+            FROM User
+            WHERE ID = %s
+        """, (counselor_id,))
+
+        counselor = cursor.fetchone()
+
+        if counselor:
+            counselor_name = counselor["Name"]
+            counselor_email = counselor["Email"]
+
+    # -----------------------------
+    # OPTIONAL: recommendation status
+    # -----------------------------
+    cursor.execute("""
+        SELECT Status
+        FROM Recommendation
+        WHERE UserID = %s
+        ORDER BY ID DESC
+        LIMIT 1
+    """, (current_user.id,))
+
     result = cursor.fetchone()
 
     if result:
-        if result["Status"] == "accepted":
-            counselor_decision = "Accepted"
-            counselor_email = result["Email"]
-            counselor_name = result["Name"]
-        else:
-            counselor_email = None
-            counselor_name = "Pending"
-    else:
-        counselor_email = None
-        counselor_name = None
+        counselor_decision = result["Status"]
 
-    # 2. Load real student profile
+    # -----------------------------
+    # STUDENT PROFILE
+    # -----------------------------
     cursor.execute("""
         SELECT *
         FROM StudentProfile
         WHERE UserID = %s
     """, (current_user.id,))
+
     student = cursor.fetchone()
 
-    # 3. If no profile exists yet, create a default one
     if not student:
         student = {
             "Grade": "N/A",
@@ -409,7 +435,9 @@ def dashboard():
             "AllowCounselorEdit": 0
         }
 
-    # 4. Placeholder courses
+    # -----------------------------
+    # COURSES
+    # -----------------------------
     courses = [
         {"name": "Whatever", "grade": "N/A"},
         {"name": "Whatever", "grade": "N/A"},
@@ -425,7 +453,8 @@ def dashboard():
         courses=courses,
         counselor_name=counselor_name,
         counselor_email=counselor_email,
-        counselor_decision = counselor_decision
+        counselor_decision=counselor_decision,
+        counselor_id=counselor_id   # 🔥 THIS FIXES EVERYTHING
     )
 
 
@@ -741,6 +770,46 @@ def counselor_dashboard():
     connection.close()
 
     return render_template("counselor_dashboard.html.jinja", user=result)
+
+@app.route("/counselorprofile/<int:counselor_id>")
+@login_required
+def counselor_profile(counselor_id):
+
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # Get counselor profile (from URL)
+    cursor.execute("""
+        SELECT cp.*, u.Name, u.Email
+        FROM CounselorProfile cp
+        JOIN User u ON u.ID = cp.UserID
+        WHERE cp.UserID = %s
+    """, (counselor_id,))
+
+    profile = cursor.fetchone()
+
+    # Get student's assigned counselor (DO NOT overwrite route variable)
+    cursor.execute("""
+        SELECT CounselorUserID
+        FROM StudentProfile
+        WHERE UserID = %s
+    """, (current_user.id,))
+
+    row = cursor.fetchone()
+    student_counselor_id = row["CounselorUserID"] if row else None
+
+    connection.close()
+
+    if not profile:
+        return "Counselor not found", 404
+
+    return render_template(
+        "counselorprofile.html.jinja",
+        profile=profile,
+        counselor_id=counselor_id,
+        student_counselor_id=student_counselor_id
+    )
+
 
 @app.route("/counselor/dashboard/<int:student_profile_id>")
 @login_required

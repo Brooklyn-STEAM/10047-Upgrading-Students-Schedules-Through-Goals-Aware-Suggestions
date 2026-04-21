@@ -144,7 +144,7 @@
         <input
           type="text"
           name="phone"
-          value="{{ profile.Phone if profile else '' }}"
+          value="{{ profile.Phone if profile else 'N/A' }}"
           placeholder="Enter phone number"
           class="w-full border border-emerald-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
         >
@@ -172,9 +172,10 @@
       <textarea
         name="office_hours"
         rows="3"
+        value="{{profile.OfficeHours if profile else ''}}"
         class="w-full bg-emerald-50 border border-emerald-200 rounded-lg p-4 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
         placeholder="Example: Mon–Fri 9:00 AM – 3:00 PM"
-      >{{ current_user.office_hours }}</textarea>
+      ></textarea>
     </div>
 
     <!-- Professional Bio -->
@@ -186,9 +187,10 @@
       <textarea
         name="bio"
         rows="4"
+        value="{{profile.Bio if profile else ''}}"
         class="w-full bg-emerald-50 border border-emerald-200 rounded-lg p-4 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
         placeholder="Tell students about your experience..."
-      >{{ current_user.bio }}</textarea>
+      ></textarea>
     </div>
 
     {% endif %}
