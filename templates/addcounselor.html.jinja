@@ -27,6 +27,32 @@
       </p>
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-6 space-y-3">
+          {% for category, message in messages %}
+
+            <div class="px-4 py-3 rounded-lg shadow-sm border
+              {% if category == 'danger' %}
+                bg-red-50 text-red-700 border-red-200
+              {% elif category == 'warning' %}
+                bg-yellow-50 text-yellow-700 border-yellow-200
+              {% elif category == 'success' %}
+                bg-emerald-50 text-emerald-700 border-emerald-200
+              {% else %}
+                bg-gray-50 text-gray-700 border-gray-200
+              {% endif %}
+            ">
+
+              {{ message }}
+
+            </div>
+
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <!-- Form Card -->
     <form method="post"
           action="/student/recommendation/addcounselor/processing"
