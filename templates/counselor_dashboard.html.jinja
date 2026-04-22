@@ -56,7 +56,45 @@ View your students requests for applications:
 
 </div>
 
+<!-- Request Limit Control -->
+<div class="mb-6 relative z-10">
 
+  <div class="bg-white border border-emerald-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+    <!-- Left Info -->
+    <div>
+      <p class="text-sm text-gray-500">Request Limit</p>
+      <p class="text-lg font-semibold text-emerald-800">
+        Set how many student requests you are able to accept
+      </p>
+      <p class="text-lg font-semibold text-emerald-800">
+      Current limit: {{ request_limit if request_limit else "Not set" }}
+      </p>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" action="/counselor/set_request_limit" class="flex items-center gap-3">
+
+      <input 
+        type="number" 
+        name="limit" 
+        min="1" 
+        placeholder="e.g. 10"
+        class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:outline-none"
+        required
+      >
+
+      <button 
+        type="submit"
+        class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">
+        Save
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
 
 <!-- Student List -->
 {% if user %}
@@ -70,7 +108,7 @@ View your students requests for applications:
 
 <!-- Card (now a div instead of anchor) -->
 <a href="/counselor/dashboard/{{ x['student_profile_id'] }}">
-  <div class="flex justify-between items-center p-5
+  <div class="flex justify-between items-center p-5 my-2
     rounded-xl border border-emerald-200
     hover:bg-emerald-50
     hover:shadow-lg

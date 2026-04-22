@@ -676,19 +676,53 @@ def add_counselor_form():
     connection = connect_db()
     cursor = connection.cursor()
 
-    # Link student to counselor
+    # ✅ Step 1: Get counselor limit
+    cursor.execute("""
+        SELECT RequestLimit 
+        FROM CounselorProfile 
+        WHERE UserID = %s
+    """, (counselor_id,))
+
+    row = cursor.fetchone()
+    request_limit = row["RequestLimit"] if row else None
+
+    # ✅ Step 2: Count current accepted students
+    cursor.execute("""
+        SELECT COUNT(*) AS count
+        FROM Recommendation
+        WHERE CounselorID = %s AND Status = 'accepted'
+    """, (counselor_id,))
+
+    accepted_count = cursor.fetchone()["count"]
+
+    # 🚫 Step 3: Block if full
+    if request_limit is not None and accepted_count >= request_limit:
+        connection.close()
+        flash("This counselor is no longer accepting requests.", "danger")
+        return redirect("/student/recommendation/addcounselor")
+
+    # ✅ Step 4: (optional but SMART) prevent duplicate request
+    cursor.execute("""
+        SELECT 1 FROM Recommendation
+        WHERE UserID = %s AND CounselorID = %s
+    """, (current_user.id, counselor_id))
+
+    if cursor.fetchone():
+        connection.close()
+        flash("You have already requested this counselor.", "warning")
+        return redirect("/student/recommendation")
+
+    # ✅ Step 5: Insert normally
     cursor.execute("""
         INSERT INTO CounselorStudent (CounselorUserID, StudentUserID)
         VALUES (%s, %s)
     """, (counselor_id, current_user.id))
 
-    # Save recommendation request
     cursor.execute("""
         INSERT INTO Recommendation (Grade, Comments, UserID, CounselorID)
         VALUES (%s, %s, %s, %s)
     """, (grade, comments, current_user.id, counselor_id))
 
-    # ✅ NEW: Insert counselor notification
     cursor.execute("""
         INSERT INTO CounselorNotification 
         (CounselorID, StudentID, Type, Message)
@@ -825,9 +859,44 @@ def counselor_dashboard():
 
     result = cursor.fetchall()
 
+    cursor.execute("""
+    SELECT RequestLimit 
+    FROM CounselorProfile 
+    WHERE UserID = %s
+    """, (current_user.id,))
+
+    row = cursor.fetchone()
+    request_limit = row["RequestLimit"] if row else None
+
     connection.close()
 
-    return render_template("counselor_dashboard.html.jinja", user=result)
+    return render_template(
+    "counselor_dashboard.html.jinja",
+    user=result,
+    request_limit=request_limit
+)
+
+@app.route("/counselor/set_request_limit", methods=["POST"])
+@login_required
+def set_request_limit():
+    if current_user.role != "counselor":
+        abort(403)
+
+    limit = request.form.get("limit")
+
+    conn = connect_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE CounselorProfile
+        SET RequestLimit = %s
+        WHERE UserID = %s
+    """, (limit, current_user.id))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/counselor/dashboard")
 
 @app.route("/counselorprofile/<int:counselor_id>")
 @login_required
@@ -1060,21 +1129,46 @@ def accept_student(user_id):
         connection.close()
         abort(404)
 
-    # ✅ Step 2: Update status to accepted
+    # ✅ Step 2: Get counselor request limit
+    cursor.execute("""
+        SELECT RequestLimit 
+        FROM CounselorProfile 
+        WHERE UserID = %s
+    """, (current_user.id,))
+
+    row = cursor.fetchone()
+    request_limit = row["RequestLimit"] if row else None
+
+    # ✅ Step 3: Count accepted students
+    cursor.execute("""
+        SELECT COUNT(*) AS count
+        FROM Recommendation
+        WHERE CounselorID = %s AND Status = 'accepted'
+    """, (current_user.id,))
+
+    accepted_count = cursor.fetchone()["count"]
+
+    # 🚫 Step 4: Enforce limit
+    if request_limit is not None and accepted_count >= request_limit:
+        connection.close()
+        flash("You have reached your maximum student limit.", "danger")
+        return redirect("/counselor/dashboard")
+
+    # ✅ Step 5: Accept student
     cursor.execute("""
         UPDATE Recommendation
         SET Status = 'accepted'
         WHERE UserID = %s AND CounselorID = %s
     """, (user_id, current_user.id))
 
-    # 🔔 Step 3: INSERT NOTIFICATION (ADD THIS)
+    # 🔔 Step 6: Notify student
     cursor.execute("""
         INSERT INTO Notification (StudentID, CounselorID, Type, Message, Seen)
         VALUES (%s, %s, 'accepted', %s, FALSE)
     """, (
         user_id,
         current_user.id,
-        f"You have been accepted by your counselor."
+        "You have been accepted by your counselor."
     ))
 
     connection.commit()
