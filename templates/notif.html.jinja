@@ -34,25 +34,37 @@
 
     {% for n in notifications %}
 
-    <a href="/student/notifications/read/{{ n['ID'] }}"
+    <div
        class="block rounded-xl p-5 shadow-sm hover:shadow-md transition border
-       {% if n['Type'] == 'accepted' %}
+
+       {% if n['Source'] == 'declined' %}
+         bg-red-50 border-red-200
+       {% elif n['Type'] == 'accepted' %}
          bg-green-50 border-green-200
-       {% elif n['Type'] == 'declined' %}
+       {% else %}
          bg-white border-gray-200
-       {% endif %}">
+       {% endif %}
+    ">
 
       <!-- Top -->
       <div class="flex justify-between items-center mb-2">
 
         <p class="font-semibold text-gray-800">
-          {{ n['CounselorName'] }}
+          {% if n['Source'] == 'declined' %}
+            Counselor
+          {% else %}
+            {{ n.get('CounselorName', 'Counselor') }}
+          {% endif %}
         </p>
 
-        {% if n['Type'] == 'declined' %}
-          <span class="text-xs text-red-500 font-medium">Declined</span>
+        {% if n['Source'] == 'declined' %}
+          <span class="text-xs text-red-600 font-medium">Declined</span>
         {% elif n['Type'] == 'accepted' %}
           <span class="text-xs text-green-600 font-medium">Accepted</span>
+        {% else %}
+          <span class="text-xs text-gray-500 font-medium">
+            {{ n['Type'] | capitalize }}
+          </span>
         {% endif %}
 
       </div>
@@ -62,14 +74,14 @@
         {{ n['Message'] }}
       </p>
 
-      <!-- Optional timestamp -->
+      <!-- Timestamp -->
       {% if n['CreatedAt'] %}
       <p class="text-xs text-gray-400 mt-3">
         {{ n['CreatedAt'] }}
       </p>
       {% endif %}
 
-    </a>
+    </div>
 
     {% endfor %}
 
