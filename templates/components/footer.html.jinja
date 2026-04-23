@@ -4,8 +4,6 @@
         display: inline-block;
     }
 
-
-
     .footer-link::after {
         content: "";
         position: absolute;
@@ -13,8 +11,7 @@
         bottom: -4px;
         width: 0;
         height: 2px;
-        background-color: #a7f3d0;
-        /* green-200 */
+        background-color: #a7f3d0; /* green-200 */
         transition: all 0.3s ease;
         transform: translateX(-50%);
     }
@@ -23,7 +20,6 @@
         width: 100%;
     }
 </style>
-
 
 <footer class="bg-emerald-900 text-green-100">
     <div class="max-w-7xl mx-auto px-6 py-10">
@@ -47,14 +43,27 @@
                 </a>
 
                 <ul class="space-y-2 text-sm mt-2">
-                    <li><a href="/student/dashboard" class="footer-link">Dashboard</a></li>
-                    <li><a href="/student/academic_record" class="footer-link">Academic Record</a></li>
-                    <li><a href="/student/recommendation" class="footer-link">Recommendations</a></li>
-                    <li><a href="/student/preference" class="footer-link">Preferences</a></li>
+
+                    {% if current_user.is_authenticated %}
+
+                        {% if current_user.role == 'student' %}
+                            <li><a href="/student/dashboard" class="footer-link">Dashboard</a></li>
+                            <li><a href="/student/academic_record" class="footer-link">Academic Record</a></li>
+                            <li><a href="/student/recommendation" class="footer-link">Recommendations</a></li>
+
+                        {% elif current_user.role == 'counselor' %}
+                            <li><a href="/counselor/dashboard" class="footer-link">Dashboard</a></li>
+                            <li><a href="/counselor/academic_record" class="footer-link">Academic Record</a></li>
+                            <li><a href="/counselor/recommendation" class="footer-link">Recommendations</a></li>
+                        {% endif %}
+
+                    {% else %}
+                        <li><a href="/login" class="footer-link">Log In</a></li>
+                        <li><a href="/register" class="footer-link">Register</a></li>
+                    {% endif %}
+
                 </ul>
-
             </div>
-
 
             <!-- Contact -->
             <div>
@@ -62,21 +71,14 @@
                     Contacts
                 </a>
 
-                <p class="text-sm text-green-200">
-                    haq.wazih@gmail.com
-                </p>
-                <p class="text-sm text-green-200">
-                    kaelguerrero22@gmail.com
-                </p>
-                <p class="text-sm text-green-200">
-                    liampustam@gmail.com
-                </p>
+                <p class="text-sm text-green-200">haq.wazih@gmail.com</p>
+                <p class="text-sm text-green-200">kaelguerrero22@gmail.com</p>
+                <p class="text-sm text-green-200">liampustam@gmail.com</p>
 
                 <p class="text-sm text-green-200 mt-2">
                     Academic Project – 2026
                 </p>
             </div>
-
 
         </div>
 
