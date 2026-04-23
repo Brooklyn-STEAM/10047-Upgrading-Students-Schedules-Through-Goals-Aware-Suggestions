@@ -12,218 +12,221 @@
 
 <body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
 
-    {% include "components/navbar.html.jinja" %}
+    <div class="flex-grow">
+        {% include "components/navbar.html.jinja" %}
 
-    <div class="container mx-auto my-10 px-4 max-w-6xl">
+        <div class="container mx-auto my-10 px-4 max-w-6xl">
 
-        <!-- STEP 1 -->
-        <div id="step1" class="bg-white shadow-md rounded-lg p-6 mb-6">
-            <h2 class="text-2xl font-bold mb-4">Select Student Type</h2>
-            <select id="studentType" class="w-full border border-gray-300 rounded-md p-2 mb-4">
-                <option value="">Select</option>
-                <option value="hs">High School Student</option>
-                <option value="grad">High School Graduate / University Student</option>
-            </select>
-            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
-                onclick="goToStep2()">Next</button>
-        </div>
-
-        <!-- STEP 2 -->
-        <div id="step2" class="bg-white shadow-md rounded-lg p-6 mb-6 hidden">
-            <h2 class="text-2xl font-bold mb-4">Select Current Grade</h2>
-            <select id="currentGrade" class="w-full border border-gray-300 rounded-md p-2 mb-4">
-                <option value="">Select Grade</option>
-                <option>9</option>
-                <option>10</option>
-                <option>11</option>
-                <option>12</option>
-            </select>
-            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
-                onclick="goToStep3()">Next</button>
-        </div>
-
-        <!-- STEP 3 -->
-        <div id="step3" class="bg-white shadow-md rounded-lg p-6 mb-6 hidden">
-            <h2 class="text-2xl font-bold mb-2">Customize Grading Scale</h2>
-            <p class="mb-4 text-gray-700">You can edit the default grading scale below.</p>
-
-            <div class="overflow-x-auto">
-                <table id="scaleTable" class="min-w-full border border-gray-200">
-                    <thead class="bg-gray-200">
-                        <tr>
-                            <th class="px-4 py-2 text-left">Minimum %</th>
-                            <th class="px-4 py-2 text-left">Letter Grade</th>
-                            <th class="px-4 py-2 text-left">Remove</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="97"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="A+"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="93"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="A"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="90"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="A-"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="87"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="B+"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="83"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="B"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="80"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="B-"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="70"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="C"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="60"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="D"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                        <tr>
-                            <td class="border px-4 py-2"><input value="0"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><input value="F"
-                                    class="w-full border border-gray-300 rounded p-1"></td>
-                            <td class="border px-4 py-2"><button onclick="removeScale(this)"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- STEP 1 -->
+            <div id="step1" class="bg-white shadow-md rounded-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4">Select Student Type</h2>
+                <select id="studentType" class="w-full border border-gray-300 rounded-md p-2 mb-4">
+                    <option value="">Select</option>
+                    <option value="hs">High School Student</option>
+                    <option value="grad">High School Graduate / University Student</option>
+                </select>
+                <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
+                    onclick="goToStep2()">Next</button>
             </div>
 
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-4 rounded" onclick="addScaleRow()">+
-                Add Scale Row</button>
-            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 mt-4 ml-2 rounded"
-                onclick="startTranscript()">Continue</button>
-        </div>
-
-
-        <!-- CURRICULUM SELECTOR -->
-        <div id="curriculumSection" class="bg-white shadow-md rounded-lg p-4 mb-4 hidden">
-            <h2 class="text-xl font-semibold mb-2">Select Your Curriculum</h2>
-            <select id="curriculumSelect" class="w-full border border-gray-300 rounded-md p-2"
-                onchange="onCurriculumChange(this)">
-                <option value="USA">USA (Common Core / AP)</option>
-                <option value="IB">International Baccalaureate (IB)</option>
-                <option value="UK">UK (GCSE / A‑Level)</option>
-                <option value="CAMBRIDGE">Cambridge IGCSE / A‑Level</option>
-                <option value="CBSE">CBSE (India)</option>
-                <option value="ICSE">ICSE (India)</option>
-                <option value="BANGLADESH">Bangladesh (SSC / HSC)</option>
-                <option value="CANADA">Canada (Provincial)</option>
-                <option value="AUSTRALIA">Australia (HSC / VCE)</option>
-                <option value="OTHER">Other / International</option>
-            </select>
-        </div>
-
-
-        <!-- STEP 4: Saving transcipt -->
-        <div id="transcriptSection" class="hidden relative">
-            <div class="flex justify-end mb-2">
-                <button id="addGradeBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded hidden"
-                    onclick="addNextGrade()">Add Grade</button>
-            </div>
-            <div id="transcriptContainer" class="space-y-4"></div>
-            <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 mt-4 rounded"
-                onclick="saveChanges()">Save</button>
-        </div>
-
-
-
-        <div id="recommendationPanel" class="mt-6 hidden">
-
-            <!-- Empty State -->
-            <div id="emptyState" class="p-5 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 shadow-sm">
-                <p class="text-sm">No recommendations yet. Save your transcript to see personalized suggestions.</p>
+            <!-- STEP 2 -->
+            <div id="step2" class="bg-white shadow-md rounded-lg p-6 mb-6 hidden">
+                <h2 class="text-2xl font-bold mb-4">Select Current Grade</h2>
+                <select id="currentGrade" class="w-full border border-gray-300 rounded-md p-2 mb-4">
+                    <option value="">Select Grade</option>
+                    <option>9</option>
+                    <option>10</option>
+                    <option>11</option>
+                    <option>12</option>
+                </select>
+                <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
+                    onclick="goToStep3()">Next</button>
             </div>
 
-            <!-- Results Panel -->
-            <div id="resultsPanel" class="hidden space-y-6">
+            <!-- STEP 3 -->
+            <div id="step3" class="bg-white shadow-md rounded-lg p-6 mb-6 hidden">
+                <h2 class="text-2xl font-bold mb-2">Customize Grading Scale</h2>
+                <p class="mb-4 text-gray-700">You can edit the default grading scale below.</p>
 
-                <!-- Header -->
-                <div class="flex items-center gap-2">
-                    <h2 class="text-xl font-semibold text-gray-800">Your Academic Insights</h2>
-                    <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">Beta</span>
+                <div class="overflow-x-auto">
+                    <table id="scaleTable" class="min-w-full border border-gray-200">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="px-4 py-2 text-left">Minimum %</th>
+                                <th class="px-4 py-2 text-left">Letter Grade</th>
+                                <th class="px-4 py-2 text-left">Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="border px-4 py-2"><input value="97"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><input value="A+"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                            </tr>
+                            <tr>
+                                <td class="border px-4 py-2"><input value="93"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><input value="A"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                            </tr>
+                            <tr>
+                                <td class="border px-4 py-2"><input value="90"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><input value="A-"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                            </tr>
+                            <tr>
+                                <td class="border px-4 py-2"><input value="87"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><input value="B+"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                            </tr>
+                            <tr>
+                                <td class="border px-4 py-2"><input value="83"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><input value="B"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                            </tr>
+                            <tr>
+                                <td class="border px-4 py-2"><input value="80"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><input value="B-"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                            </tr>
+                            <tr>
+                                <td class="border px-4 py-2"><input value="70"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><input value="C"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                            </tr>
+                            <tr>
+                                <td class="border px-4 py-2"><input value="60"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><input value="D"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                            </tr>
+                            <tr>
+                                <td class="border px-4 py-2"><input value="0"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><input value="F"
+                                        class="w-full border border-gray-300 rounded p-1"></td>
+                                <td class="border px-4 py-2"><button onclick="removeScale(this)"
+                                        class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">X</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <!-- Top Strengths -->
-                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-                    <h3 class="text-lg font-semibold text-gray-800">Top Strengths</h3>
-                    <div id="topCategories" class="flex flex-wrap gap-2 mt-3"></div>
-                </div>
-
-                <!-- High School Recommendations -->
-                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-                    <h3 class="text-lg font-semibold text-gray-800">Recommended High‑School Courses</h3>
-                    <ul id="hsRecs" class="mt-3 space-y-1 text-gray-700"></ul>
-                </div>
-
-                <!-- College Recommendations -->
-                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-                    <h3 class="text-lg font-semibold text-gray-800">Recommended College Courses</h3>
-                    <ul id="collegeRecs" class="mt-3 space-y-1 text-gray-700"></ul>
-                </div>
-
-                <!-- Suggested Track -->
-                <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
-                    <h3 class="text-lg font-semibold text-gray-800">Suggested Track</h3>
-                    <p id="trackRec" class="mt-2 text-gray-700 font-medium"></p>
-                </div>
-
-                <!-- Full Page Button -->
-                <button
-                    class="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition shadow-sm">
-                    View Full Recommendations
-                </button>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 mt-4 rounded"
+                    onclick="addScaleRow()">+
+                    Add Scale Row</button>
+                <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 mt-4 ml-2 rounded"
+                    onclick="startTranscript()">Continue</button>
             </div>
+
+
+            <!-- CURRICULUM SELECTOR -->
+            <div id="curriculumSection" class="bg-white shadow-md rounded-lg p-4 mb-4 hidden">
+                <h2 class="text-xl font-semibold mb-2">Select Your Curriculum</h2>
+                <select id="curriculumSelect" class="w-full border border-gray-300 rounded-md p-2"
+                    onchange="onCurriculumChange(this)">
+                    <option value="USA">USA (Common Core / AP)</option>
+                    <option value="IB">International Baccalaureate (IB)</option>
+                    <option value="UK">UK (GCSE / A‑Level)</option>
+                    <option value="CAMBRIDGE">Cambridge IGCSE / A‑Level</option>
+                    <option value="CBSE">CBSE (India)</option>
+                    <option value="ICSE">ICSE (India)</option>
+                    <option value="BANGLADESH">Bangladesh (SSC / HSC)</option>
+                    <option value="CANADA">Canada (Provincial)</option>
+                    <option value="AUSTRALIA">Australia (HSC / VCE)</option>
+                    <option value="OTHER">Other / International</option>
+                </select>
+            </div>
+
+
+            <!-- STEP 4: Saving transcipt -->
+            <div id="transcriptSection" class="hidden relative">
+                <div class="flex justify-end mb-2">
+                    <button id="addGradeBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded hidden"
+                        onclick="addNextGrade()">Add Grade</button>
+                </div>
+                <div id="transcriptContainer" class="space-y-4"></div>
+                <button class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 mt-4 rounded"
+                    onclick="saveChanges()">Save</button>
+            </div>
+
+
+
+            <div id="recommendationPanel" class="mt-6 hidden">
+
+                <!-- Empty State -->
+                <div id="emptyState" class="p-5 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 shadow-sm">
+                    <p class="text-sm">No recommendations yet. Save your transcript to see personalized suggestions.</p>
+                </div>
+
+                <!-- Results Panel -->
+                <div id="resultsPanel" class="hidden space-y-6">
+
+                    <!-- Header -->
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-xl font-semibold text-gray-800">Your Academic Insights</h2>
+                        <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">Beta</span>
+                    </div>
+
+                    <!-- Top Strengths -->
+                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-800">Top Strengths</h3>
+                        <div id="topCategories" class="flex flex-wrap gap-2 mt-3"></div>
+                    </div>
+
+                    <!-- High School Recommendations -->
+                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-800">Recommended High‑School Courses</h3>
+                        <ul id="hsRecs" class="mt-3 space-y-1 text-gray-700"></ul>
+                    </div>
+
+                    <!-- College Recommendations -->
+                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-800">Recommended College Courses</h3>
+                        <ul id="collegeRecs" class="mt-3 space-y-1 text-gray-700"></ul>
+                    </div>
+
+                    <!-- Suggested Track -->
+                    <div class="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                        <h3 class="text-lg font-semibold text-gray-800">Suggested Track</h3>
+                        <p id="trackRec" class="mt-2 text-gray-700 font-medium"></p>
+                    </div>
+
+                    <!-- Full Page Button -->
+                    <button
+                        class="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition shadow-sm">
+                        View Full Recommendations
+                    </button>
+                </div>
+            </div>
+
+
+
         </div>
-
-
-
     </div>
-
+    {% include "components/footer.html.jinja" %}
     <script>
 
         const savedTranscript = {{ transcript_json| safe}};
@@ -369,11 +372,17 @@
             "IB": {
                 "Math": {
                     "high_school": [
-                        "IB Math AA SL", "IB Math AA HL",
-                        "IB Math AI SL", "IB Math AI HL"
+                        "MYP Mathematics",
+                        "MYP Extended Mathematics",
+                        "IB Math AA SL",
+                        "IB Math AI SL",
+                        "IB Math AA HL",
+                        "IB Math AI HL"
                     ],
                     "college": [
-                        "Calculus I", "Linear Algebra", "Discrete Mathematics"
+                        "University Calculus",
+                        "University Linear Algebra",
+                        "University Statistics"
                     ]
                 },
                 "Science": {
@@ -461,10 +470,16 @@
                 "Math": {
                     "high_school": [
                         "GCSE Mathematics",
-                        "A-Level Mathematics", "A-Level Further Mathematics"
+                        "GCSE Further Mathematics",
+                        "AS Mathematics",
+                        "AS Further Mathematics",
+                        "A-Level Mathematics",
+                        "A-Level Further Mathematics"
                     ],
                     "college": [
-                        "Calculus I", "Linear Algebra"
+                        "University Calculus",
+                        "University Linear Algebra",
+                        "University Statistics"
                     ]
                 },
                 "Science": {
@@ -547,12 +562,17 @@
             "CAMBRIDGE": {
                 "Math": {
                     "high_school": [
-                        "Cambridge IGCSE Mathematics",
-                        "Cambridge Additional Mathematics",
-                        "A-Level Mathematics", "A-Level Further Mathematics"
+                        "IGCSE Mathematics",
+                        "IGCSE Additional Mathematics",
+                        "AS Mathematics",
+                        "AS Further Mathematics",
+                        "A-Level Mathematics",
+                        "A-Level Further Mathematics"
                     ],
                     "college": [
-                        "Calculus I", "Linear Algebra"
+                        "University Calculus",
+                        "University Linear Algebra",
+                        "University Statistics"
                     ]
                 },
                 "Science": {
@@ -634,10 +654,15 @@
             "CBSE": {
                 "Math": {
                     "high_school": [
-                        "CBSE Mathematics", "Applied Mathematics", "Additional Mathematics"
+                        "CBSE Mathematics (Basic)",
+                        "CBSE Mathematics (Standard)",
+                        "CBSE Mathematics (Core)",
+                        "CBSE Applied Mathematics"
                     ],
                     "college": [
-                        "Engineering Mathematics I", "Engineering Mathematics II"
+                        "University Calculus",
+                        "University Linear Algebra",
+                        "University Statistics"
                     ]
                 },
                 "Science": {
@@ -714,10 +739,15 @@
             "ICSE": {
                 "Math": {
                     "high_school": [
-                        "ICSE Mathematics"
+                        "ICSE Mathematics",
+                        "ICSE Commercial Mathematics",
+                        "ISC Mathematics",
+                        "ISC Applied Mathematics"
                     ],
                     "college": [
-                        "Calculus I"
+                        "University Calculus",
+                        "University Linear Algebra",
+                        "University Statistics"
                     ]
                 },
                 "Science": {
@@ -797,7 +827,12 @@
                         "Higher Mathematics (SSC)",
                         "Higher Mathematics (HSC)"
                     ],
-                    "college": ["University Calculus I"]
+                    "college": [
+                        "University Calculus I",
+                        "University Calculus II",
+                        "University Linear Algebra",
+                        "University Statistics"
+                    ]
                 },
                 "Science": {
                     "high_school": [
@@ -880,12 +915,21 @@
             "CANADA": {
                 "Math": {
                     "high_school": [
-                        "Grade 9 Math", "Grade 10 Math",
-                        "Functions", "Advanced Functions",
-                        "Calculus & Vectors"
+                        "MTH1W",
+                        "MPM2D",
+                        "MFM2P",
+                        "MCR3U",
+                        "MCF3M",
+                        "MBF3C",
+                        "MHF4U",
+                        "MCV4U",
+                        "MDM4U",
+                        "MAP4C"
                     ],
                     "college": [
-                        "Calculus I", "Linear Algebra"
+                        "University Calculus",
+                        "University Linear Algebra",
+                        "University Statistics"
                     ]
                 },
                 "Science": {
@@ -964,11 +1008,19 @@
             "AUSTRALIA": {
                 "Math": {
                     "high_school": [
-                        "Mathematics Standard", "Mathematics Advanced",
-                        "Mathematics Extension 1", "Mathematics Extension 2"
+                        "Mathematics (Year 7)",
+                        "Mathematics (Year 8)",
+                        "Mathematics (Year 9)",
+                        "Mathematics (Year 10)",
+                        "Essential Mathematics",
+                        "General Mathematics",
+                        "Mathematical Methods",
+                        "Specialist Mathematics"
                     ],
                     "college": [
-                        "Calculus I", "Linear Algebra"
+                        "University Calculus",
+                        "University Linear Algebra",
+                        "University Statistics"
                     ]
                 },
                 "Science": {
@@ -1967,7 +2019,7 @@
             `;
 
                     tbody.appendChild(row);
-                    
+
                     // ⭐ Rebuild course dropdown using curriculum + category
                     const categorySelect = row.children[0].querySelector("select");
                     const courseSelect = row.children[1].querySelector("select");
@@ -2002,7 +2054,6 @@
 
     </script>
 
-    {% include "components/footer.html.jinja" %}
 
 
 </body>

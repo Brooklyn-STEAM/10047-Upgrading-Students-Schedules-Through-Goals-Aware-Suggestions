@@ -994,10 +994,29 @@ COURSE_PROGRESSION = {
 
     "IB": {
         "Math": {
-            "IB Math AI SL": ["IB Math AI HL"],
-            "IB Math AI HL": ["College Calculus"],
+            # MYP
+            "MYP Mathematics": ["MYP Extended Mathematics", "IB Math AA SL", "IB Math AI SL"],
+            "MYP Extended Mathematics": ["IB Math AA SL", "IB Math AI SL"],
+
+            # SL
             "IB Math AA SL": ["IB Math AA HL"],
-            "IB Math AA HL": ["College Calculus", "Linear Algebra"]
+            "IB Math AI SL": ["IB Math AI HL"],
+
+            # HL
+            "IB Math AA HL": [
+                "University Calculus",
+                "University Linear Algebra",
+                "University Statistics"
+            ],
+            "IB Math AI HL": [
+                "University Statistics",
+                "University Calculus"
+            ],
+
+            # University
+            "University Calculus": ["University Linear Algebra", "University Statistics"],
+            "University Linear Algebra": ["University Statistics"],
+            "University Statistics": []
         },
         "Science": {
             "IB Biology SL": ["IB Biology HL"],
@@ -1049,20 +1068,21 @@ COURSE_PROGRESSION = {
 
     "UK": {
         "Math": {
-            "Key Stage 3 Mathematics": ["GCSE Foundation Mathematics"],
-            "GCSE Foundation Mathematics": ["GCSE Higher Mathematics"],
-            "GCSE Higher Mathematics": ["Additional Mathematics", "AS Level Mathematics"],
-            "IGCSE Mathematics": ["Additional Mathematics", "AS Level Mathematics"],
-            "Additional Mathematics": ["AS Level Mathematics"],
-            "AS Level Mathematics": ["A Level Mathematics"],
-            "A Level Mathematics": [
-                "AS Level Further Mathematics",
-                "A Level Further Mathematics",
-                "A Level Statistics"
-            ],
-            "AS Level Further Mathematics": ["A Level Further Mathematics"],
-            "A Level Further Mathematics": ["A Level Statistics"],
-            "A Level Statistics": []
+            "GCSE Mathematics": ["GCSE Further Mathematics", "AS Mathematics"],
+            "GCSE Further Mathematics": ["AS Mathematics", "AS Further Mathematics"],
+
+            "AS Mathematics": ["A-Level Mathematics"],
+            "AS Further Mathematics": ["A-Level Further Mathematics"],
+
+            "A-Level Mathematics": ["A-Level Further Mathematics", "University Calculus"],
+            "A-Level Further Mathematics": [
+            "University Calculus",
+            "University Linear Algebra",
+            "University Statistics"],
+
+            "University Calculus": ["University Linear Algebra", "University Statistics"],
+            "University Linear Algebra": ["University Statistics"],
+            "University Statistics": []
         },
         "Science": {
             "GCSE Biology": ["A-Level Biology"],
@@ -1115,10 +1135,29 @@ COURSE_PROGRESSION = {
 
     "CAMBRIDGE": {
         "Math": {
-            "Cambridge IGCSE Mathematics": ["Cambridge Additional Mathematics"],
-            "Cambridge Additional Mathematics": ["A-Level Mathematics"],
-            "A-Level Mathematics": ["A-Level Further Mathematics"],
-            "A-Level Further Mathematics": ["University Calculus"]
+            # IGCSE
+            "IGCSE Mathematics": ["IGCSE Additional Mathematics", "AS Mathematics"],
+            "IGCSE Additional Mathematics": ["AS Mathematics", "AS Further Mathematics"],
+
+            # AS Level
+            "AS Mathematics": ["A-Level Mathematics"],
+            "AS Further Mathematics": ["A-Level Further Mathematics"],
+
+            # A-Level
+            "A-Level Mathematics": [
+                "A-Level Further Mathematics",
+                "University Calculus"
+            ],
+            "A-Level Further Mathematics": [
+                "University Calculus",
+                "University Linear Algebra",
+                "University Statistics"
+            ],
+
+            # University
+            "University Calculus": ["University Linear Algebra", "University Statistics"],
+            "University Linear Algebra": ["University Statistics"],
+            "University Statistics": []
         },
         "Science": {
             "Cambridge IGCSE Biology": ["A-Level Biology"],
@@ -1156,10 +1195,25 @@ COURSE_PROGRESSION = {
 
     "CBSE": {
         "Math": {
-            "CBSE Mathematics": ["Applied Mathematics", "Additional Mathematics"],
-            "Applied Mathematics": ["Engineering Mathematics I"],
-            "Additional Mathematics": ["Engineering Mathematics I"],
-            "Engineering Mathematics I": []
+            # Secondary
+            "CBSE Mathematics (Basic)": ["CBSE Mathematics (Standard)"],
+            "CBSE Mathematics (Standard)": ["CBSE Mathematics (Core)", "CBSE Applied Mathematics"],
+
+            # Senior Secondary
+            "CBSE Mathematics (Core)": [
+                "CBSE Applied Mathematics",
+                "University Calculus"
+            ],
+            "CBSE Applied Mathematics": [
+                "University Calculus",
+                "University Statistics",
+                "University Linear Algebra"
+            ],
+
+            # University
+            "University Calculus": ["University Linear Algebra", "University Statistics"],
+            "University Linear Algebra": ["University Statistics"],
+            "University Statistics": []
         },
         "Science": {
             "CBSE Physics": ["CBSE Chemistry"],
@@ -1197,8 +1251,25 @@ COURSE_PROGRESSION = {
 
     "ICSE": {
         "Math": {
-            "ICSE Mathematics": ["ISC Mathematics"],
-            "ISC Mathematics": ["University Calculus"]
+            # ICSE
+            "ICSE Mathematics": ["ICSE Commercial Mathematics", "ISC Mathematics"],
+            "ICSE Commercial Mathematics": ["ISC Mathematics", "ISC Applied Mathematics"],
+
+            # ISC
+            "ISC Mathematics": [
+                "ISC Applied Mathematics",
+                "University Calculus"
+            ],
+            "ISC Applied Mathematics": [
+                "University Calculus",
+                "University Statistics",
+                "University Linear Algebra"
+            ],
+
+            # University
+            "University Calculus": ["University Linear Algebra", "University Statistics"],
+            "University Linear Algebra": ["University Statistics"],
+            "University Statistics": []
         },
         "Science": {
             "ICSE Physics": ["ICSE Chemistry"],
@@ -1234,10 +1305,21 @@ COURSE_PROGRESSION = {
 
     "BANGLADESH": {
         "Math": {
+            # SSC
             "General Mathematics (SSC)": ["Higher Mathematics (SSC)"],
             "Higher Mathematics (SSC)": ["Higher Mathematics (HSC)"],
-            "Higher Mathematics (HSC)": ["University Calculus I"],
-            "University Calculus I": []
+
+            # HSC
+            "Higher Mathematics (HSC)": [
+                "University Calculus I",
+                "University Statistics"
+            ],
+
+            # University
+            "University Calculus I": ["University Calculus II", "University Linear Algebra"],
+            "University Calculus II": ["University Linear Algebra", "University Statistics"],
+            "University Linear Algebra": ["University Statistics"],
+            "University Statistics": []
         },
         "Science": {
             "Physics (SSC)": ["Physics (HSC)"],
@@ -1290,11 +1372,32 @@ COURSE_PROGRESSION = {
 
     "CANADA": {
         "Math": {
-            "Grade 9 Math": ["Grade 10 Math"],
-            "Grade 10 Math": ["Functions"],
-            "Functions": ["Advanced Functions"],
-            "Advanced Functions": ["Calculus & Vectors"],
-            "Calculus & Vectors": ["University Calculus"]
+            # Grade 9
+            "MTH1W": ["MPM2D", "MFM2P"],
+
+            # Grade 10
+            "MPM2D": ["MCR3U", "MCF3M"],
+            "MFM2P": ["MCF3M", "MBF3C"],
+
+            # Grade 11
+            "MCR3U": ["MHF4U", "MCV4U"],
+            "MCF3M": ["MHF4U", "MDM4U"],
+            "MBF3C": ["MAP4C"],
+
+            # Grade 12
+            "MHF4U": ["MCV4U", "University Calculus"],
+            "MCV4U": [
+                "University Calculus",
+                "University Linear Algebra",
+                "University Statistics"
+            ],
+            "MDM4U": ["University Statistics"],
+            "MAP4C": [],
+
+            # University
+            "University Calculus": ["University Linear Algebra", "University Statistics"],
+            "University Linear Algebra": ["University Statistics"],
+            "University Statistics": []
         },
         "Science": {
             "Grade 9 Science": ["Grade 10 Science"],
@@ -1341,10 +1444,33 @@ COURSE_PROGRESSION = {
 
     "AUSTRALIA": {
         "Math": {
-            "Mathematics Standard": ["Mathematics Advanced"],
-            "Mathematics Advanced": ["Mathematics Extension 1"],
-            "Mathematics Extension 1": ["Mathematics Extension 2"],
-            "Mathematics Extension 2": ["University Calculus"]
+            # Years 7–10
+            "Mathematics (Year 7)": ["Mathematics (Year 8)"],
+            "Mathematics (Year 8)": ["Mathematics (Year 9)"],
+            "Mathematics (Year 9)": ["Mathematics (Year 10)"],
+            "Mathematics (Year 10)": [
+                "Essential Mathematics",
+                "General Mathematics",
+                "Mathematical Methods"
+            ],
+
+            # ATAR Senior Secondary
+            "Essential Mathematics": [],
+            "General Mathematics": ["Mathematical Methods"],
+            "Mathematical Methods": [
+                "Specialist Mathematics",
+                "University Calculus"
+            ],
+            "Specialist Mathematics": [
+                "University Calculus",
+                "University Linear Algebra",
+                "University Statistics"
+            ],
+
+            # University
+            "University Calculus": ["University Linear Algebra", "University Statistics"],
+            "University Linear Algebra": ["University Statistics"],
+            "University Statistics": []
         },
         "Science": {
             "Biology": ["University Biology"],
@@ -1399,37 +1525,214 @@ MATH_ORDER["USA"] = [
     "AP Statistics"
 ]
 
-MATH_ORDER["UK"] = [
-    "Key Stage 3 Mathematics",
-    "GCSE Foundation Mathematics",
-    "GCSE Higher Mathematics",
-    "IGCSE Mathematics",
-    "Additional Mathematics",
-    "AS Level Mathematics",
-    "A Level Mathematics",
-    "AS Level Further Mathematics",
-    "A Level Further Mathematics",
-    "A Level Statistics"
+MATH_ORDER["IB"] = [
+    # MYP
+    "MYP Mathematics",
+    "MYP Extended Mathematics",
+
+    # DP SL
+    "IB Math AA SL",
+    "IB Math AI SL",
+
+    # DP HL
+    "IB Math AA HL",
+    "IB Math AI HL",
+
+    # University Prep
+    "University Calculus",
+    "University Linear Algebra",
+    "University Statistics"
 ]
+
+MATH_ORDER["UK"] = [
+    # GCSE Level
+    "GCSE Mathematics",
+    "GCSE Further Mathematics",
+
+    # AS Level
+    "AS Mathematics",
+    "AS Further Mathematics",
+
+    # A-Level
+    "A-Level Mathematics",
+    "A-Level Further Mathematics",
+
+    # University Prep / Advanced
+    "University Calculus",
+    "University Linear Algebra",
+    "University Statistics"
+]
+
+MATH_ORDER["Cambridge"] = [
+    # IGCSE
+    "IGCSE Mathematics",
+    "IGCSE Additional Mathematics",
+
+    # AS Level
+    "AS Mathematics",
+    "AS Further Mathematics",
+
+    # A-Level
+    "A-Level Mathematics",
+    "A-Level Further Mathematics",
+
+    # University Prep
+    "University Calculus",
+    "University Linear Algebra",
+    "University Statistics"
+]
+
+MATH_ORDER["CBSE"] = [
+    # Secondary (9–10)
+    "CBSE Mathematics (Basic)",
+    "CBSE Mathematics (Standard)",
+
+    # Senior Secondary (11–12)
+    "CBSE Mathematics (Core)",
+    "CBSE Applied Mathematics",
+
+    # University Prep
+    "University Calculus",
+    "University Linear Algebra",
+    "University Statistics"
+]
+
+MATH_ORDER["ICSE"] = [
+    # ICSE (Class 9–10)
+    "ICSE Mathematics",
+    "ICSE Commercial Mathematics",
+
+    # ISC (Class 11–12)
+    "ISC Mathematics",
+    "ISC Applied Mathematics",
+
+    # University Prep
+    "University Calculus",
+    "University Linear Algebra",
+    "University Statistics"
+]
+
+MATH_ORDER["Bangladesh"] = [
+    # SSC
+    "General Mathematics (SSC)",
+    "Higher Mathematics (SSC)",
+
+    # HSC
+    "Higher Mathematics (HSC)",
+
+    # University Prep
+    "University Calculus I",
+    "University Calculus II",
+    "University Linear Algebra",
+    "University Statistics"
+]
+
+MATH_ORDER["Canada"] = [
+    # Grade 9
+    "MTH1W",
+
+    # Grade 10
+    "MPM2D",
+    "MFM2P",
+
+    # Grade 11
+    "MCR3U",
+    "MCF3M",
+    "MBF3C",
+
+    # Grade 12
+    "MHF4U",
+    "MCV4U",
+    "MDM4U",
+    "MAP4C",
+
+    # University Prep
+    "University Calculus",
+    "University Linear Algebra",
+    "University Statistics"
+]
+
+MATH_ORDER["Australia"] = [
+    # Years 7–10
+    "Mathematics (Year 7)",
+    "Mathematics (Year 8)",
+    "Mathematics (Year 9)",
+    "Mathematics (Year 10)",
+
+    # ATAR Senior Secondary
+    "Essential Mathematics",
+    "General Mathematics",
+    "Mathematical Methods",
+    "Specialist Mathematics",
+
+    # University Prep
+    "University Calculus",
+    "University Linear Algebra",
+    "University Statistics"
+]
+
+SCIENCE_ORDER = {
+    "General Science": [
+        "General Science", "Integrated Science", "Physical Science", "Life Science"
+    ],
+
+    "Biology": [
+        "Biology", "Honors Biology", "AP Biology"
+    ],
+
+    "Chemistry": [
+        "Chemistry", "Honors Chemistry", "AP Chemistry"
+    ],
+
+    "Physics": [
+        "Physics", "Honors Physics",
+        "AP Physics 1", "AP Physics 2",
+        "AP Physics C: Mechanics",
+        "AP Physics C: Electricity & Magnetism"
+    ],
+
+    "Environmental Science": [
+        "Environmental Science", "AP Environmental Science"
+    ],
+
+    "Earth Science": [
+        "Earth Science"
+    ],
+
+    "Marine Science": [
+        "Marine Science"
+    ]
+}
+
+
+
 
 
 #helper to remove lower level courses
 
-def _remove_lower_level_math(courses, taken):
+def _remove_lower_level_math(courses, taken, curriculum):
+    # Get the ordering list for this curriculum
+    order = MATH_ORDER.get(curriculum, [])
+
     # Find highest-level taken math course
     highest_index = -1
     for t in taken:
-        if t in MATH_ORDER:
-            idx = MATH_ORDER.index(t)
+        if t in order:
+            idx = order.index(t)
             highest_index = max(highest_index, idx)
 
-    # If no math taken, return original list
+
+    # If no taken math matches the order list, return original
     if highest_index == -1:
         return courses
 
-    # Remove all courses BELOW the highest taken
-    allowed = set(MATH_ORDER[highest_index+1:])  # only above
-    return [c for c in courses if c in allowed]
+    # Allowed = all courses at or ABOVE the highest taken
+    allowed = set(order[highest_index:])
+
+    filtered = [c for c in courses if c in allowed]
+
+    return filtered
+
 
 #----------------------------------------------------------------------
 
@@ -1470,6 +1773,7 @@ def get_next_courses(curriculum, category, completed_courses):
 # ============================================================
 
 def compute_category_scores(transcript, letter_scale):
+
     letter_points = {item["Letter"]: item["Points"] for item in letter_scale}
     category_scores = defaultdict(float)
 
@@ -1524,29 +1828,26 @@ def _augment_with_similarity_and_progression(transcript, curriculum, base_by_cat
                 continue
 
             cat = raw_cat.strip()
-            name = raw_name.strip()
+            base_name = get_science_base_subject(raw_name.strip())
 
             augmented.setdefault(cat, [])
 
-            # 1. PROGRESSION FIRST (highest priority)
-            next_courses = _get_progression_next(curriculum, cat, name)
-            for nxt in reversed(next_courses):  # reversed so first stays first
-                if nxt in taken:
-                    continue
-                if nxt in augmented[cat]:
-                    augmented[cat].remove(nxt)
-                augmented[cat].insert(0, nxt)
+            # 1. PROGRESSION
+            next_courses = _get_progression_next(curriculum, cat, base_name)
+            for nxt in reversed(next_courses):
+                if nxt not in taken and nxt not in augmented[cat]:
+                    augmented[cat].append(nxt)
 
-            # 2. SIMILARITY SECOND
-            similar = COURSE_SIMILARITY.get(name, [])
+            # 2. SIMILARITY
+            similar = COURSE_SIMILARITY.get(base_name, [])
             for c in reversed(similar):
-                if c in taken:
-                    continue
-                if c in augmented[cat]:
-                    augmented[cat].remove(c)
-                augmented[cat].insert(0, c)
+                if c not in taken and c not in augmented[cat]:
+                    augmented[cat].append(c)
 
     return augmented
+
+
+
 
 
 
@@ -1567,12 +1868,19 @@ def get_top_categories(category_scores, threshold=0.95):
 
 def _get_taken_courses(transcript):
     taken = set()
+
     for grade in transcript.get("Grades", []):
         for sub in grade.get("Subjects", []):
-            name = sub.get("Name") or sub.get("CourseName") or sub.get("CustomCourseName")
-            if name:
-                taken.add(name.strip())
+            raw = sub.get("Name") or sub.get("CourseName") or sub.get("CustomCourseName")
+            if not raw:
+                continue
+
+            base = get_science_base_subject(raw)
+            taken.add(base)
+
     return taken
+
+
 
 
 def _filter_and_rank_courses(base_list, taken_courses):
@@ -1609,10 +1917,6 @@ def _balanced_merge(category_to_courses, total_limit=10):
 # ============================================================
 
 def recommend_courses_hybrid(transcript, category_scores, curriculum="USA"):
-    print("\n=== DEBUG TRANSCRIPT ===")
-    import json
-    print(json.dumps(transcript, indent=2))
-    print("=== END DEBUG ===\n")
 
     if not category_scores:
         return [], [], []
@@ -1625,33 +1929,54 @@ def recommend_courses_hybrid(transcript, category_scores, curriculum="USA"):
     hs_by_cat = {}
     college_by_cat = {}
 
+    letter_scale = transcript.get("letterScale", [])
+
     for cat in top_categories:
         cat_catalog = catalog_for_curr.get(cat) or catalog_for_curr.get("Other") or {}
         hs_list = cat_catalog.get("high_school", [])
         college_list = cat_catalog.get("college", [])
 
-        # Filter out taken courses
+        # ⭐ SCIENCE ENGINE
+        if cat.lower() == "science":
+            sub_scores = compute_subsubject_scores(transcript, letter_scale)
+            ordered_subs = sort_subsubjects_by_strength(sub_scores)
+
+            merged = []
+
+            for sub in ordered_subs:
+                if sub in SCIENCE_ORDER:
+                    for course in SCIENCE_ORDER[sub]:
+                        if course in hs_list and course not in merged:
+                            merged.append(course)
+
+            for c in hs_list:
+                if c not in merged:
+                    merged.append(c)
+
+            hs_by_cat[cat] = [c for c in merged if c not in taken]
+            college_by_cat[cat] = _filter_and_rank_courses(college_list, taken)
+            continue
+
+        # ⭐ OTHER CATEGORIES
         filtered = _filter_and_rank_courses(hs_list, taken)
+
         if cat == "Math":
-            filtered = _remove_lower_level_math(filtered, taken)
+            filtered = _remove_lower_level_math(filtered, taken, curriculum)
 
         hs_by_cat[cat] = filtered
-
         college_by_cat[cat] = _filter_and_rank_courses(college_list, taken)
 
-    # ⭐ Apply progression + similarity ONLY to HIGH SCHOOL
+    # ⭐ AUGMENTATION
     hs_by_cat = _augment_with_similarity_and_progression(transcript, curriculum, hs_by_cat)
 
-    # Merge into final lists
+    # ⭐ MERGE
     hs_recs = _balanced_merge(hs_by_cat, total_limit=10)
     college_recs = _balanced_merge(college_by_cat, total_limit=10)
 
-    # ⭐ Correct debug print
-    print("=== FINAL HS RECS ===")
-    print(hs_recs)
-    print("======================")
-
     return top_categories, hs_recs, college_recs
+
+
+
 
 
 
@@ -1698,3 +2023,141 @@ def suggest_tracks(category_scores):
             out.append(t)
 
     return out
+
+
+#calculating sub subject scores for science subjects.------------------------
+
+def _convert_grade_to_score(sub, letter_scale):
+    """
+    Convert a subject's grade into a normalized performance score [0,1]
+    using the SAME logic as the frontend:
+    - marks → letter (via user grading scale)
+    - letter → points (via letterToPoint)
+    """
+
+    # 1. Extract marks (your system uses Marks or Percentage)
+    marks = (
+        sub.get("Marks") or
+        sub.get("Percentage") or
+        sub.get("Score") or
+        None
+    )
+
+    # 2. Extract letter if already present
+    letter = (
+        sub.get("LetterGrade") or
+        sub.get("Grade") or
+        None
+    )
+
+    # --- CASE A: If marks exist, convert marks → letter using letter_scale ---
+    if marks is not None and letter_scale:
+        for rule in letter_scale:
+            if marks >= rule.get("min", 0):
+                letter = rule.get("letter")
+                break
+
+    # --- CASE B: If no letter found, fallback to neutral ---
+    if not letter:
+        return 0.6  # neutral fallback
+
+    # --- Convert letter → points (your exact frontend mapping) ---
+    letter_points_map = {
+        "A+": 4, "A": 4, "A-": 3.7,
+        "B+": 3.3, "B": 3, "B-": 2.7,
+        "C+": 2.3, "C": 2,
+        "D": 1, "F": 0
+    }
+
+    points = letter_points_map.get(letter.upper(), 0)
+
+    # --- Normalize points to 0–1 scale ---
+    score = points / 4.0
+
+    return max(0.0, min(1.0, score))
+
+def compute_subject_strength(sub, letter_scale):
+    """
+    Convert a subject entry into a normalized 0–1 strength score.
+    Uses marks, letter grade, and preference.
+    """
+
+    # 1. Marks (0–100 → 0–1)
+    marks = sub.get("Marks")
+    marks_score = (marks / 100) if isinstance(marks, (int, float)) else 0
+
+    # 2. Letter grade (A, B, C → numeric)
+    letter = sub.get("Letter")
+    letter_score = 0
+    if letter and letter_scale:
+        # letter_scale is like: [{"letter": "A", "value": 4.0}, ...]
+        for item in letter_scale:
+            if item.get("letter") == letter:
+                # Normalize 0–4 scale → 0–1
+                letter_score = item.get("value", 0) / 4.0
+                break
+
+    # 3. Preference (1–5 → 0–1)
+    pref = sub.get("Preference")
+    pref_score = (pref / 5) if isinstance(pref, (int, float)) else 0
+
+    # Weighted average (you can adjust weights)
+    return (marks_score * 0.5) + (letter_score * 0.3) + (pref_score * 0.2)
+
+
+
+def compute_subsubject_scores(transcript, letter_scale):
+    scores = {}
+
+    for grade in transcript.get("Grades", []):
+        for sub in grade.get("Subjects", []):
+            raw = sub.get("Name") or sub.get("CourseName") or sub.get("CustomCourseName")
+            if not raw:
+                continue
+
+            base = get_science_base_subject(raw)
+            if not base:
+                continue
+
+            score = compute_subject_strength(sub, letter_scale)
+            scores[base] = scores.get(base, 0) + score
+
+    return scores
+
+
+
+def sort_subsubjects_by_strength(sub_scores):
+    return sorted(
+        sub_scores.keys(),
+        key=lambda s: (-sub_scores[s], s)  # tie-break alphabetically
+    )
+
+
+
+
+def get_science_base_subject(name):
+    if not name:
+        return None
+
+    n = name.lower()
+
+    if "biology" in n:
+        return "Biology"
+    if "chemistry" in n:
+        return "Chemistry"
+    if "physics" in n:
+        return "Physics"
+    if "environmental" in n:
+        return "Environmental Science"
+    if "earth" in n:
+        return "Earth Science"
+    if "marine" in n:
+        return "Marine Science"
+    if "integrated" in n or "general" in n or "physical science" in n or "life science" in n:
+        return "General Science"
+
+    return name.strip()
+
+
+
+
