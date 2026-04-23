@@ -32,21 +32,31 @@ def allowed_file(filename):
 
 @app.context_processor
 def inject_notification_count():
-    if current_user.is_authenticated:
+    if current_user.is_authenticated and current_user.role == "student":
         connection = connect_db()
         cursor = connection.cursor(pymysql.cursors.DictCursor)
 
+        # 🔔 Normal notifications
         cursor.execute("""
             SELECT COUNT(*) AS count
             FROM Notification
             WHERE StudentID = %s AND Seen = FALSE
         """, (current_user.id,))
+        notif_count = cursor.fetchone()["count"]
 
-        result = cursor.fetchone()["count"]
+        # ❌ Declined notifications
+        cursor.execute("""
+            SELECT COUNT(*) AS count
+            FROM Declined
+            WHERE StudentID = %s AND Seen = FALSE
+        """, (current_user.id,))
+        declined_count = cursor.fetchone()["count"]
 
         connection.close()
 
-        return dict(notification_count=result)
+        total = notif_count + declined_count
+
+        return dict(notification_count=total)
 
     return dict(notification_count=0)
 
@@ -70,6 +80,26 @@ def inject_counselor_notification_count():
         return dict(counselor_notification_count=count)
 
     return dict(counselor_notification_count=0)
+
+@app.context_processor
+def inject_navbar_profile():
+    profile = None
+    if current_user.is_authenticated:
+        connection = connect_db()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+        try:
+            if current_user.role == "student":
+                cursor.execute("SELECT ProfilePicture FROM StudentProfile WHERE UserID=%s", (current_user.id,))
+                profile = cursor.fetchone()
+            elif current_user.role == "counselor":
+                cursor.execute("SELECT ProfilePicture FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
+                profile = cursor.fetchone()
+        except Exception as e:
+            print("Navbar profile fetch error:", e)
+        finally:
+            cursor.close()
+            connection.close()
+    return dict(navbar_profile=profile) 
 
 config = Dynaconf(settings_file = ["settings.toml"])
 
@@ -597,35 +627,57 @@ def student_notifications():
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    # Mark all as seen
+    # ✅ 1. Mark ALL as seen (Notification)
     cursor.execute("""
         UPDATE Notification
         SET Seen = TRUE
         WHERE StudentID = %s AND Seen = FALSE
     """, (current_user.id,))
-    connection.commit()
 
-    # Fetch notifications
+    # ✅ 2. Mark ALL as seen (Declined)
     cursor.execute("""
-        SELECT 
-            Notification.ID,
-            Notification.Type,
-            Notification.Message,
-            Notification.CreatedAt,
-            User.Name AS CounselorName
-        FROM Notification
-        JOIN User ON Notification.CounselorID = User.ID
-        WHERE Notification.StudentID = %s
-        ORDER BY Notification.CreatedAt DESC
+        UPDATE Declined
+        SET Seen = TRUE
+        WHERE StudentID = %s AND Seen = FALSE
     """, (current_user.id,))
 
+    connection.commit()
+
+    # ✅ 3. Get normal notifications
+    cursor.execute("""
+        SELECT 
+            ID,
+            Type,
+            Message,
+            CreatedAt,
+            'normal' AS Source
+        FROM Notification
+        WHERE StudentID = %s
+    """, (current_user.id,))
     notifications = cursor.fetchall()
+
+    # ✅ 4. Get declined notifications
+    cursor.execute("""
+        SELECT 
+            ID,
+            'declined' AS Type,
+            Reason AS Message,
+            CreatedAt,
+            'declined' AS Source
+        FROM Declined
+        WHERE StudentID = %s
+    """, (current_user.id,))
+    declined = cursor.fetchall()
 
     connection.close()
 
+    # ✅ 5. Merge + sort by date
+    all_notifications = notifications + declined
+    all_notifications.sort(key=lambda x: x["CreatedAt"], reverse=True)
+
     return render_template(
         "notif.html.jinja",
-        notifications=notifications
+        notifications=all_notifications
     )
 
 @app.route("/student/notifications/read/<int:notification_id>")
@@ -737,6 +789,7 @@ def add_counselor_form():
     connection.commit()
     connection.close()
 
+    flash("Counselor requested successfully! Please wait for their response.", "success")
     return redirect("/student/dashboard")
 
 
@@ -786,6 +839,7 @@ def delete_recommendation():
     cursor.close()
     connection.close()
 
+    flash("Recommendation deleted successfully.", "success")
     return redirect("/student/recommendation")
 
 @app.route("/student/recommendation/edit/<id>")
@@ -833,6 +887,7 @@ def edit_specific_recommendation_processing(id):
     connection.commit()
     connection.close()
 
+    flash("Recommendation updated successfully!", "success")
     return redirect("/student/recommendation/editrecommendations")
 
 #dashboard for counselors.
@@ -1782,25 +1837,7 @@ def counselor_save_transcript(student_user_id):
     return jsonify({"status": "success", "message": "Transcript updated by counselor."})
 
 
-@app.context_processor
-def inject_navbar_profile():
-    profile = None
-    if current_user.is_authenticated:
-        connection = connect_db()
-        cursor = connection.cursor(pymysql.cursors.DictCursor)
-        try:
-            if current_user.role == "student":
-                cursor.execute("SELECT ProfilePicture FROM StudentProfile WHERE UserID=%s", (current_user.id,))
-                profile = cursor.fetchone()
-            elif current_user.role == "counselor":
-                cursor.execute("SELECT ProfilePicture FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
-                profile = cursor.fetchone()
-        except Exception as e:
-            print("Navbar profile fetch error:", e)
-        finally:
-            cursor.close()
-            connection.close()
-    return dict(navbar_profile=profile) 
+
 
 @app.route("/chat/<int:user_id>")
 @login_required

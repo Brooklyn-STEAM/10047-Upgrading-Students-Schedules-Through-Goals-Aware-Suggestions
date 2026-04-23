@@ -17,6 +17,8 @@
 <main class="flex-grow px-4 py-16">
   <div class="max-w-4xl mx-auto">
 
+
+
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
       <div>
@@ -33,7 +35,31 @@
         ← Back
       </a>
     </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-8 space-y-3">
 
+            {% for category, message in messages %}
+
+              <div class="px-4 py-3 rounded-xl text-sm font-medium border shadow-sm
+                {% if category == 'success' %}
+                  bg-emerald-100 text-emerald-700 border-emerald-200
+                {% elif category == 'warning' %}
+                  bg-yellow-100 text-yellow-700 border-yellow-200
+                {% elif category == 'danger' %}
+                  bg-red-100 text-red-700 border-red-200
+                {% else %}
+                  bg-blue-100 text-blue-700 border-blue-200
+                {% endif %}
+              ">
+                {{ message }}
+              </div>
+
+            {% endfor %}
+
+          </div>
+        {% endif %}
+      {% endwith %}
     {% for row in information %}
     <!-- BIG CARD -->
     <div class="relative bg-white rounded-2xl shadow-xl border border-gray-200 p-8 mb-8 overflow-hidden">
