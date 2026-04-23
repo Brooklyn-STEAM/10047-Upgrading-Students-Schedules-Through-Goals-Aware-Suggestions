@@ -56,7 +56,45 @@ View your students requests for applications:
 
 </div>
 
+<!-- Request Limit Control -->
+<div class="mb-6 relative z-10">
 
+  <div class="bg-white border border-emerald-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+    <!-- Left Info -->
+    <div>
+      <p class="text-sm text-gray-500">Request Limit</p>
+      <p class="text-lg font-semibold text-emerald-800">
+        Set how many student requests you are able to accept
+      </p>
+      <p class="text-lg font-semibold text-emerald-800">
+      Current limit: {{ request_limit if request_limit else "Not set" }}
+      </p>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" action="/counselor/set_request_limit" class="flex items-center gap-3">
+
+      <input 
+        type="number" 
+        name="limit" 
+        min="1" 
+        placeholder="e.g. 10"
+        class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:outline-none"
+        required
+      >
+
+      <button 
+        type="submit"
+        class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">
+        Save
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
 
 <!-- Student List -->
 {% if user %}
@@ -69,69 +107,73 @@ View your students requests for applications:
 {% if x["Role"] == "student" %}
 
 <!-- Card (now a div instead of anchor) -->
-<div class="flex justify-between items-center p-5
-rounded-xl border border-emerald-200
-hover:bg-emerald-50
-hover:shadow-lg
-hover:-translate-y-1
-transition-all duration-200">
-
-  <!-- Student Info -->
-  <div class="flex items-center gap-4">
-
-    <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-      <i data-feather="user" class="text-emerald-700 w-5"></i>
+<a href="/counselor/dashboard/{{ x['student_profile_id'] }}">
+  <div class="flex justify-between items-center p-5 my-2
+    rounded-xl border border-emerald-200
+    hover:bg-emerald-50
+    hover:shadow-lg
+    hover:-translate-y-1
+    transition-all duration-200">
+  
+    <!-- Student Info -->
+    <div class="flex items-center gap-4">
+  
+      <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+        <i data-feather="user" class="text-emerald-700 w-5"></i>
+      </div>
+  
+      <!-- Clickable name -->
+      <div
+         class="text-lg font-medium text-gray-800">
+        {{ x["Name"] }}
+  
+      </div>
+  
     </div>
-
-    <!-- Clickable name -->
-    <div
-       class="text-lg font-medium text-gray-800">
-      {{ x["Name"] }}
-    </div>
-
-  </div>
-
-  <!-- Action Buttons -->
-  <div class="flex items-center gap-3">
-
-    {% if x['Status'] == 'Pending' %}
-
-      <!-- Accept -->
-      <a href="/counselor/dashboard/accept/{{ x['UserID'] }}"
-        class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg
-                hover:bg-emerald-700 transition">
-        Accept
-      </a>
-
-      <!-- Decline -->
-      <a href="/counselor/dashboard/decline/{{ x['UserID'] }}"
-        class="px-4 py-2 border border-red-500 text-red-500 text-sm font-semibold rounded-lg
-                hover:bg-red-50 transition">
-        Decline
-      </a>
-
-    {% elif x['Status'] == 'accepted' %}
-
-      <!-- VIEW (arrow button) -->
-      <a href="/counselor/dashboard/{{ x['student_profile_id'] }}"
-        class="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 hover:bg-emerald-200 transition">
+  
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-3">
+  
+      {% if x['Status'] == 'Pending' %}
+  
+        <!-- Accept -->
+        <a href="/counselor/dashboard/accept/{{ x['UserID'] }}"
+          class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg
+                  hover:bg-emerald-700 transition">
+          Accept
+        </a>
+  
+        <!-- Decline -->
+        <a href="/counselor/dashboard/decline/{{ x['UserID'] }}"
+          class="px-4 py-2 border border-red-500 text-red-500 text-sm font-semibold rounded-lg
+                  hover:bg-red-50 transition">
+          Decline
+        </a>
+  
+      {% elif x['Status'] == 'accepted' %}
+  
+        <!-- VIEW (arrow button) -->
         
-        <svg xmlns="http://www.w3.org/2000/svg" 
-            class="w-5 h-5 text-emerald-700"
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M9 5l7 7-7 7" />
-        </svg>
-
-      </a>
-
-    {% endif %}
-
+          <div
+            class="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 hover:bg-emerald-200 transition">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                class="w-5 h-5 text-emerald-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+  
+        
+  
+      {% endif %}
+  
+    </div>
+  
   </div>
-
-</div>
+</a>
 
 {% endif %}
 {% endfor %}

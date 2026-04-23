@@ -46,14 +46,30 @@
       Empowering Education Through Technology
     </p>
 
-    <a href="/login"
+    <!-- ✅ SMART BUTTON -->
+    <a href="{% if current_user.is_authenticated %}
+                {% if current_user.role == 'student' %}
+                    {{ url_for('dashboard') }}
+                {% elif current_user.role == 'counselor' %}
+                    {{ url_for('counselor_dashboard') }}
+                {% else %}
+                    {{ url_for('index') }}
+                {% endif %}
+             {% else %}
+                {{ url_for('login') }}
+             {% endif %}"
        class="inline-flex items-center gap-2 bg-white text-emerald-800 font-semibold 
               px-8 py-3 rounded-lg shadow-lg 
               hover:bg-emerald-100 hover:scale-105 
               transition duration-200">
 
       <i data-feather="log-in"></i>
-      Get Started
+
+      {% if current_user.is_authenticated %}
+        Go to Dashboard
+      {% else %}
+        Get Started
+      {% endif %}
     </a>
 
   </div>

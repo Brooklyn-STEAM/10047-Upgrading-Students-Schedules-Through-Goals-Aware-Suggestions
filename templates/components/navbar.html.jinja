@@ -13,135 +13,126 @@
         {% if current_user.is_authenticated %}
 
           {% if current_user.role == 'student' %}
+
             <!-- Student Links -->
-            <a href="/student/dashboard"
-               class="relative py-1 transition text-white
-               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px]
-               {% if request.path == '/student/dashboard' %}
-                   after:w-full after:bg-green-200
-               {% else %}
-                   after:w-0 after:bg-green-200 hover:after:w-full
-               {% endif %}
-               after:transition-all after:duration-300">
-               Dashboard
+            <a href="/student/dashboard" class="relative py-1 transition text-white after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:bottom-0 after:h-[2px] {% if request.path == '/student/dashboard' %} after:w-full after:bg-green-200 {% else %} after:w-0 after:bg-green-200 hover:after:w-full {% endif %} after:transition-all after:duration-300">
+              Dashboard
             </a>
 
-            <a href="/student/academic_record"
-               class="relative py-1 transition text-white
-               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px]
-               {% if request.path == '/student/academic_record' %}
-                   after:w-full after:bg-green-200
-               {% else %}
-                   after:w-0 after:bg-green-200 hover:after:w-full
-               {% endif %}
-               after:transition-all after:duration-300">
-               Academic Record
+            <a href="/student/academic_record" class="relative py-1 transition text-white after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:bottom-0 after:h-[2px] {% if request.path == '/student/academic_record' %} after:w-full after:bg-green-200 {% else %} after:w-0 after:bg-green-200 hover:after:w-full {% endif %} after:transition-all after:duration-300">
+              Academic Record
             </a>
 
-            <a href="/student/recommendation"
-               class="relative py-1 transition text-white
-               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px]
-               {% if request.path == '/student/recommendation' %}
-                   after:w-full after:bg-green-200
-               {% else %}
-                   after:w-0 after:bg-green-200 hover:after:w-full
-               {% endif %}
-               after:transition-all after:duration-300">
-               Recommendations
+            <a href="/student/recommendation" class="relative py-1 transition text-white after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:bottom-0 after:h-[2px] {% if request.path == '/student/recommendation' %} after:w-full after:bg-green-200 {% else %} after:w-0 after:bg-green-200 hover:after:w-full {% endif %} after:transition-all after:duration-300">
+              Recommendations
+            </a>
+
+            <!-- 🔔 Student Notifications -->
+            <a href="{% if current_user.role == 'student' %}/student/notifications{% endif %}"
+              class="relative flex items-center justify-center w-10 h-10 rounded-full 
+                      border-2 border-white/70 hover:border-white 
+                      hover:bg-emerald-700 transition duration-200">
+
+              <svg xmlns="http://www.w3.org/2000/svg" 
+                   class="w-5 h-5 text-white" 
+                   fill="none" 
+                   viewBox="0 0 24 24" 
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+
+              {% if notification_count and notification_count > 0 %}
+              <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full border border-white">
+                {{ notification_count }}
+              </span>
+              {% endif %}
             </a>
 
           {% else %}
+
             <!-- Counselor Links -->
-            <a href="/counselor/dashboard"
-               class="relative py-1 transition text-white
-               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px]
-               {% if request.path == '/counselor/dashboard' %}
-                   after:w-full after:bg-green-200
-               {% else %}
-                   after:w-0 after:bg-green-200 hover:after:w-full
-               {% endif %}
-               after:transition-all after:duration-300">
-               Dashboard
+            <a href="/counselor/dashboard" class="relative py-1 transition text-white after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:bottom-0 after:h-[2px] {% if request.path == '/counselor/dashboard' %} after:w-full after:bg-green-200 {% else %} after:w-0 after:bg-green-200 hover:after:w-full {% endif %} after:transition-all after:duration-300">
+              Dashboard
             </a>
 
-            <a href="/counselor/academic_record"
-               class="relative py-1 transition text-white
-               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px]
-               {% if request.path == '/counselor/academic_record' %}
-                   after:w-full after:bg-green-200
-               {% else %}
-                   after:w-0 after:bg-green-200 hover:after:w-full
-               {% endif %}
-               after:transition-all after:duration-300">
-               Academic Record
+            <a href="/counselor/academic_record" class="relative py-1 transition text-white after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:bottom-0 after:h-[2px] {% if request.path == '/counselor/academic_record' %} after:w-full after:bg-green-200 {% else %} after:w-0 after:bg-green-200 hover:after:w-full {% endif %} after:transition-all after:duration-300">
+              Academic Record
             </a>
 
-            <a href="/counselor/recommendation"
-               class="relative py-1 transition text-white
-               after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2
-               after:bottom-0 after:h-[2px]
-               {% if request.path == '/counselor/recommendation' %}
-                   after:w-full after:bg-green-200
-               {% else %}
-                   after:w-0 after:bg-green-200 hover:after:w-full
-               {% endif %}
-               after:transition-all after:duration-300">
-               Recommendations
+            <a href="/counselor/recommendation" class="relative py-1 transition text-white after:content-[''] after:absolute after:left-1/2 after:-translate-x-1/2 after:bottom-0 after:h-[2px] {% if request.path == '/counselor/recommendation' %} after:w-full after:bg-green-200 {% else %} after:w-0 after:bg-green-200 hover:after:w-full {% endif %} after:transition-all after:duration-300">
+              Recommendations
             </a>
+
+            <!-- 🔔 Counselor Notifications -->
+            <a href="/counselor/notifications"
+              class="relative flex items-center justify-center w-10 h-10 rounded-full 
+                      border-2 border-white/70 hover:border-white 
+                      hover:bg-emerald-700 transition duration-200">
+
+              <svg xmlns="http://www.w3.org/2000/svg" 
+                   class="w-5 h-5 text-white" 
+                   fill="none" 
+                   viewBox="0 0 24 24" 
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+
+            {% if counselor_notification_count and counselor_notification_count > 0 %}
+              <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full border border-white">
+                {{ counselor_notification_count }}
+              </span>
+            {% endif %}
+            </a>
+
           {% endif %}
 
-          <!-- Profile Dropdown (Hover) -->
+          <!-- Profile Dropdown -->
           <div class="relative group z-50">
             <div class="flex items-center cursor-pointer">
               <span class="hidden sm:inline text-sm font-medium">
                 Hello, {{ current_user.name }}
               </span>
-<img src="{% if navbar_profile and navbar_profile.ProfilePicture %}/static/profile_pics/{{ navbar_profile.ProfilePicture }}{% else %}/static/images/profile-icon.png{% endif %}"
-     alt="Profile"
-     class="w-9 h-9 rounded-full border-2 border-white ml-2">
+
+              <img src="{% if navbar_profile and navbar_profile.ProfilePicture %}/static/profile_pics/{{ navbar_profile.ProfilePicture }}{% else %}/static/images/profile-icon.png{% endif %}"
+                   class="w-9 h-9 rounded-full border-2 border-white ml-2">
             </div>
 
-            <!-- Dropdown -->
-            <div class="absolute right-0 mt-2 w-40 bg-white text-gray-700 rounded-md shadow-lg py-2
-                        opacity-0 invisible group-hover:opacity-100 group-hover:visible
-                        transition-all duration-200 z-50">
+            <div class="absolute right-0 mt-2 w-40 bg-white text-gray-700 rounded-md shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
               <a href="/myprofile" class="block px-4 py-2 hover:bg-gray-100">My Profile</a>
               <a href="/logout" class="block px-4 py-2 hover:bg-gray-100">Log Out</a>
             </div>
           </div>
 
         {% else %}
+
           <a href="/login" class="py-1 px-3 rounded hover:bg-green-600 transition">Log In</a>
           <a href="/register" class="py-1 px-3 rounded hover:bg-green-600 transition">Register</a>
+
         {% endif %}
       </div>
 
-      <!-- Mobile Menu Button -->
+      <!-- Mobile Button -->
       <div class="md:hidden ml-auto">
-        <button id="mobileMenuBtn" class="focus:outline-none">
+        <button id="mobileMenuBtn">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
         </button>
       </div>
+
     </div>
   </div>
 
   <!-- Mobile Menu -->
   <div id="mobileMenu" class="hidden md:hidden bg-emerald-700 px-4 pb-4 space-y-2">
+
     {% if current_user.is_authenticated %}
 
       <div class="flex items-center space-x-3 py-3 border-b border-emerald-600">
-<img src="{{ '/static/profile_pics/' + navbar_profile['ProfilePicture'] 
-            if navbar_profile and navbar_profile.get('ProfilePicture') 
-            else '/static/images/profile-icon.png' }}"
-     alt="Profile"
-     class="w-9 h-9 rounded-full border-2 border-white ml-2">
+        <img src="{{ '/static/profile_pics/' + navbar_profile['ProfilePicture'] if navbar_profile and navbar_profile.get('ProfilePicture') else '/static/images/profile-icon.png' }}"
+             class="w-9 h-9 rounded-full border-2 border-white">
         <div>
           <p class="text-sm text-emerald-200">Hello,</p>
           <p class="font-semibold text-white">{{ current_user.name }}</p>
@@ -152,13 +143,18 @@
         <a href="/student/dashboard" class="block hover:text-green-200">Dashboard</a>
         <a href="/student/academic_record" class="block hover:text-green-200">Academic Record</a>
         <a href="/student/recommendation" class="block hover:text-green-200">Recommendations</a>
+        <a href="/student/recommendation/notifications" class="block hover:text-green-200">
+          Notifications {% if notification_count and notification_count > 0 %} ({{ notification_count }}) {% endif %}
+        </a>
       {% else %}
         <a href="/counselor/dashboard" class="block hover:text-green-200">Dashboard</a>
         <a href="/counselor/academic_record" class="block hover:text-green-200">Academic Record</a>
         <a href="/counselor/recommendation" class="block hover:text-green-200">Recommendations</a>
+        <a href="/counselor/notifications" class="block hover:text-green-200">Notifications</a>
       {% endif %}
 
       <hr class="border-emerald-600">
+
       <a href="/myprofile" class="block hover:text-green-200">My Profile</a>
       <a href="/logout" class="block hover:text-green-200">Log Out</a>
 
