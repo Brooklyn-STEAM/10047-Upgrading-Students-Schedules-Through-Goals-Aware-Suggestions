@@ -10,6 +10,7 @@
 </head>
 
 <body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+    <div id="top"></div>
 
     {% include "components/navbar.html.jinja" %}
     <div class="flex-grow">
@@ -93,23 +94,34 @@
                         <div class="mt-4 font-semibold">
                             Overall GPA: <span id="overallGpa">N/A</span>
                         </div>
+
+                        <!-- Recommendation Viewer -->
+                        <div class="mt-6">
+                            <button id="viewRecsBtn"
+                                class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm px-4 py-2 rounded"
+                                onclick="loadStudentRecommendations()">
+                                View Student Recommendations
+                            </button>
+
+                            <div id="recommendationPanel"
+                                class="hidden mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-gray-800">
+                                <p class="text-gray-500">Recommendations will appear here after loading.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-
     {% include "components/footer.html.jinja" %}
 
-    
     <script>
         // Global state
         let currentStudentId = null;
         let currentStudentCanEdit = false;
         let editMode = false;
         let currentTranscript = null; // store loaded transcript
-
 
         const courseOptions = {
             "Math": [
@@ -222,6 +234,18 @@
             document.getElementById("transcriptContainer").innerHTML = "";
             document.getElementById("overallGpa").innerText = "N/A";
 
+            // Reset recommendation panel
+            const recPanel = document.getElementById("recommendationPanel");
+            const recBtn = document.getElementById("viewRecsBtn");
+            if (recPanel) {
+                recPanel.classList.add("hidden");
+                recPanel.innerHTML = `<p class="text-gray-500">Recommendations will appear here after loading.</p>`;
+            }
+            if (recBtn) {
+                recBtn.disabled = false;
+                recBtn.innerText = "View Student Recommendations";
+            }
+
             // Header
             document.getElementById("studentName").innerText = studentName;
             document.getElementById("studentMeta").innerText = "";
@@ -325,10 +349,6 @@
                 g.Subjects.forEach(sub => {
                     const row = document.createElement("tr");
 
-                    const categoryOptionsHtml = mainCategories.map(c => `
-        <option value="${c}" ${sub.MainCategory === c ? "selected" : ""}>${c}</option>
-    `).join("");
-
                     let courseList = [];
                     if (sub.MainCategory && courseOptions[sub.MainCategory]) {
                         courseList = courseOptions[sub.MainCategory];
@@ -410,11 +430,8 @@
                                     </td>
                                 `;
 
-
-
                     tbody.appendChild(row);
                 });
-
 
                 updateGPA(g.GradeLevel);
             });
@@ -504,9 +521,6 @@
             });
         }
 
-
-
-
         // Add a new subject row to a grade
         function addRow(gradeLevel) {
             const tbody = document.querySelector(`#gradeBody-${gradeLevel}`);
@@ -576,9 +590,7 @@
             tbody.appendChild(row);
         }
 
-
-
-        // Calculate letter from marks (simple mapping; you can sync with your scale if needed)
+        // Calculate letter from marks
         function calculateLetter(mark) {
             if (mark >= 97) return "A+";
             if (mark >= 93) return "A";
@@ -606,7 +618,6 @@
 
             updateGPA(gradeLevel);
         }
-
 
         function deleteRow(btn, gradeLevel) {
             btn.closest("tr").remove();
@@ -641,7 +652,6 @@
 
             recomputeOverallGPA();
         }
-
 
         function recomputeOverallGPA() {
             const gpaSpans = document.querySelectorAll("[id^='gpa-']");
@@ -689,8 +699,6 @@
                     const credits = parseFloat(creditsInput.value);
                     const preference = parseInt(prefSelect.value);
 
-
-
                     // try to preserve category/course/custom from existing transcript
                     let mainCategory = null;
                     let courseName = null;
@@ -720,8 +728,6 @@
                             ? (courseSelect.value || "")
                             : (customInput.value.trim() || "")
                     });
-
-
                 });
 
                 if (subjects.length > 0) {
@@ -782,9 +788,6 @@
             }
         }
 
-
-
-
         function onCategoryChangeCounselor(select, gradeLevel) {
             const row = select.closest("tr");
             const courseSelect = row.querySelector("td:nth-child(2) select");
@@ -815,7 +818,6 @@
             }
         }
 
-
         function forceNumeric(input) {
             input.value = input.value.replace(/[^0-9]/g, "");
         }
@@ -826,7 +828,138 @@
                 .replace(/(\..*)\./g, "$1");
         }
 
+        // === Counselor Recommendation Viewer ===
 
+        async function loadStudentRecommendations() {
+            if (!currentStudentId || !currentTranscript) {
+                alert("Select a student and load their transcript first.");
+                return;
+            }
+
+            const btn = document.getElementById("viewRecsBtn");
+            const panel = document.getElementById("recommendationPanel");
+
+            btn.disabled = true;
+            btn.innerText = "Loading recommendations...";
+
+            try {
+                const response = await fetch("/api/course-assigner/calculate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        student_id: currentStudentId,
+                        transcript: currentTranscript
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to load recommendations.");
+                }
+
+                const data = await response.json();
+                renderRecommendationsForCounselor(data);
+            } catch (err) {
+                console.error(err);
+                panel.classList.remove("hidden");
+                panel.innerHTML = `<p class="text-red-600">Error loading recommendations.</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "View Student Recommendations";
+            }
+        }
+
+        function renderRecommendationsForCounselor(data) {
+            const panel = document.getElementById("recommendationPanel");
+            panel.classList.remove("hidden");
+
+            // Try to render structured sections if keys exist
+            const hs =
+                data.high_school_recommendations ||
+                data.highSchoolRecommendations ||
+                data.recommendedHighSchoolCourses ||   // <-- your real key
+                [];
+
+            const college =
+                data.college_recommendations ||
+                data.collegeRecommendations ||
+                data.recommendedCollegeCourses ||      // <-- your real key
+                [];
+
+            const categoryScores = data.category_scores || data.categoryScores || null;
+
+            let html = `<h3 class="font-semibold text-emerald-900 mb-3">Recommendations</h3>`;
+
+            if (hs.length > 0) {
+                html += `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm text-emerald-800 mb-1">High School Course Recommendations</h4>
+                        <ul class="space-y-1">
+                            ${hs.map(r => `
+                                <li class="bg-white border border-emerald-100 rounded px-3 py-2">
+                                    <div class="font-medium">${typeof r === "string" ? r : (r.Name || r.CourseName || "Course")}</div>
+                                </li>
+                            `).join("")}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (college.length > 0) {
+                html += `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm text-emerald-800 mb-1">College / Program Recommendations</h4>
+                        <ul class="space-y-1">
+                            ${college.map(r => `
+                                <li class="bg-white border border-emerald-100 rounded px-3 py-2">
+                                    <div class="font-medium">
+                                        ${typeof r === "string"
+                                    ? r
+                                    : (r.Name || r.CollegeName || r.CourseName || "Program")}
+                                    </div>
+                                    ${r.Reason ? `<div class="text-xs text-gray-600 mt-1">${r.Reason}</div>` : ""}
+                                </li>
+                            `).join("")}
+                        </ul>
+                    </div>
+                `;
+            }
+
+
+            if (categoryScores) {
+                html += `
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-sm text-emerald-800 mb-1">Category Strengths</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            ${Object.keys(categoryScores).map(key => `
+                                <div class="bg-white border border-emerald-100 rounded px-3 py-2 flex justify-between text-xs">
+                                    <span class="font-medium">${key}</span>
+                                    <span>${categoryScores[key]}</span>
+                                </div>
+                            `).join("")}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Fallback: show raw JSON if nothing structured was detected
+            if (!hs.length && !college.length && !categoryScores) {
+                html += `
+                    <p class="text-xs text-gray-600 mb-2">Raw recommendation data:</p>
+                    <pre class="bg-white border border-emerald-100 rounded p-3 overflow-x-auto text-xs">${escapeHtml(
+                    JSON.stringify(data, null, 2)
+                )}</pre>
+                `;
+            }
+
+            panel.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
     </script>
 
 </body>
