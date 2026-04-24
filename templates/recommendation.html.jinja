@@ -154,9 +154,14 @@
       </div>
     </div>
     {% endfor %}
-
+    
+    <div class="flex justify-center gap-4">
+      <a href="/student/recommendation/editrecommendations"
+         class="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
+        📌 View / Edit Request
+      </a>
+    </div>
   </div>
-
   {% else %}
 
   <div class="text-center py-20">
@@ -169,6 +174,14 @@
     <p class="text-gray-500">
       Your counselor hasn’t submitted any recommendations yet.
     </p>
+
+    
+  </div>
+  <div class="flex justify-center gap-4">
+    <a href="/student/recommendation/editrecommendations"
+         class="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition">
+        📌 View / Edit Request
+    </a>
   </div>
 
   {% endif %}

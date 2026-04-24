@@ -672,7 +672,7 @@ def student_notifications():
     connection.close()
 
     # ✅ 5. Merge + sort by date
-    all_notifications = notifications + declined
+    all_notifications = list(notifications) + list(declined)
     all_notifications.sort(key=lambda x: x["CreatedAt"], reverse=True)
 
     return render_template(
