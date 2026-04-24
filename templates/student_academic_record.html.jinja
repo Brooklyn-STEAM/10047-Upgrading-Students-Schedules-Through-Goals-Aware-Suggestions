@@ -14,6 +14,9 @@
 
     <div class="flex-grow">
         {% include "components/navbar.html.jinja" %}
+        <div id="flashContainer" class="mt-4 max-w-xl mx-auto"></div>
+
+
 
         <div class="container mx-auto my-10 px-4 max-w-6xl">
 
@@ -214,11 +217,8 @@
                         <p id="trackRec" class="mt-2 text-gray-700 font-medium"></p>
                     </div>
 
-                    <!-- Full Page Button -->
-                    <button
-                        class="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition shadow-sm">
-                        View Full Recommendations
-                    </button>
+                    <!-- Full Page Button: temporarily removed. -->
+
                 </div>
             </div>
 
@@ -226,6 +226,27 @@
 
         </div>
     </div>
+
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center">
+        <div class="bg-white w-full max-w-md p-6 rounded-lg shadow-lg">
+            <h2 class="text-lg font-semibold mb-3">Report an Issue</h2>
+            <p id="reportErrorText" class="text-sm text-gray-600 mb-3"></p>
+
+            <textarea id="reportDetails" class="w-full border rounded p-2 text-sm" rows="4"
+                placeholder="Describe what happened..."></textarea>
+
+            <div class="flex justify-end gap-2 mt-4">
+                <button onclick="closeReportModal()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                    Cancel
+                </button>
+                <button onclick="submitIssueReport()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Submit
+                </button>
+            </div>
+        </div>
+    </div>
+
     {% include "components/footer.html.jinja" %}
     <script>
 
@@ -1178,6 +1199,87 @@
         const mainCategories = Object.keys(courseOptions);
 
 
+    // Flash messages with the transcript
+        function showFlash(message, category = "success") {
+            const container = document.getElementById("flashContainer");
+
+            const styles = {
+                success: "bg-emerald-100 text-emerald-800 border border-emerald-300",
+                danger: "bg-red-100 text-red-800 border border-red-300",
+                warning: "bg-yellow-100 text-yellow-800 border border-yellow-300",
+                info: "bg-gray-100 text-gray-800 border border-gray-300"
+            };
+
+            const div = document.createElement("div");
+            div.className = `px-4 py-3 rounded-lg text-sm font-medium shadow ${styles[category] || styles.info}`;
+            div.innerText = message;
+
+            container.appendChild(div);
+
+            // Auto-dismiss ONLY for success/info
+            if (category === "success" || category === "info") {
+                setTimeout(() => {
+                    div.style.opacity = "0";
+                    div.style.transition = "opacity 0.5s";
+                    setTimeout(() => div.remove(), 500);
+                }, 2500);
+            }
+        }
+
+        function showErrorWithReport(message) {
+            const container = document.getElementById("flashContainer");
+
+            const div = document.createElement("div");
+            div.className = "px-4 py-3 rounded-lg text-sm font-medium shadow bg-red-100 text-red-800 border border-red-300 flex justify-between items-center";
+
+            div.innerHTML = `
+        <span>${message}</span>
+        <button onclick="openReportModal('${message.replace(/'/g, "\\'")}')" 
+                class="ml-4 px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700">
+            Report Issue
+        </button>
+    `;
+
+            container.appendChild(div);
+        }
+
+        function openReportModal(errorMessage) {
+            document.getElementById("reportErrorText").innerText =
+                "Error: " + errorMessage;
+            document.getElementById("reportModal").classList.remove("hidden");
+            document.getElementById("reportModal").classList.add("flex");
+        }
+
+        function closeReportModal() {
+            document.getElementById("reportModal").classList.add("hidden");
+            document.getElementById("reportModal").classList.remove("flex");
+        }
+
+        async function submitIssueReport() {
+            const details = document.getElementById("reportDetails").value.trim();
+
+            if (!details) {
+                alert("Please describe the issue before submitting.");
+                return;
+            }
+
+            // Send to backend
+            await fetch("/report-issue", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    details: details,
+                    page: "student_transcript",
+                    timestamp: new Date().toISOString()
+                })
+            });
+
+            closeReportModal();
+            showFlash("Issue reported. Thank you!", "success");
+        }
+
+
+
 
         // STEP NAVIGATION
         function goToStep2() {
@@ -1874,11 +1976,11 @@
                 });
 
                 const data = await response.json();
-                alert(data.message);
+                showFlash(data.message, "success");
 
             } catch (err) {
                 console.error(err);
-                alert("Error saving transcript. See console.");
+                showErrorWithReport("Error saving transcript.");
             }
         }
 
