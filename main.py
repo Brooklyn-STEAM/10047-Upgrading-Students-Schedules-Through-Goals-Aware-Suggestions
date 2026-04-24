@@ -2039,4 +2039,12 @@ def not_found(error):
     return render_template("404.html.jinja"), 404
 
 
+#This route basically lets user report issues, if there are any issue that might pop up on the transcript page, it will let user report it.
+@app.route("/report-issue", methods=["POST"])
+def report_issue():
+    data = request.get_json()
+    print("ISSUE REPORTED:", data)  # or save to DB, send email, etc.
+    return jsonify({"status": "ok"})
+
+
 
