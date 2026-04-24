@@ -534,21 +534,53 @@ def dashboard():
 @app.route("/student/toggle_counselor_edit", methods=["POST"])
 @login_required
 def toggle_counselor_edit():
-    allow_edit = 1 if request.form.get("allow_edit") == "1" else 0
+    allow_edit = 1 if request.form.get("allow_edit") else 0
 
     conn = connect_db()
-    cur = conn.cursor()
+    cur = conn.cursor(pymysql.cursors.DictCursor)
 
+    # 1. Update toggle
     cur.execute("""
         UPDATE StudentProfile
         SET AllowCounselorEdit = %s
         WHERE UserID = %s
     """, (allow_edit, current_user.id))
 
+    # 2. Get counselor
+    cur.execute("""
+        SELECT CounselorUserID
+        FROM StudentProfile
+        WHERE UserID = %s
+    """, (current_user.id,))
+
+    result = cur.fetchone()
+
+    print("DEBUG result:", result)  # 🔥 TEMP DEBUG
+
+    counselor_id = result["CounselorUserID"] if result else None
+
+    # 3. Insert notification
+    if allow_edit == 1 and counselor_id is not None:
+
+        print("INSERTING NOTIFICATION")  # 🔥 TEMP DEBUG
+
+        cur.execute("""
+            INSERT INTO CounselorNotification
+            (CounselorID, StudentID, Type, Message, Seen, CreatedAt)
+            VALUES (%s, %s, %s, %s, %s, NOW())
+        """, (
+            counselor_id,
+            current_user.id,
+            "edit",
+            "Student has allowed you to edit their recommendations.",
+            0
+        ))
+
     conn.commit()
     cur.close()
     conn.close()
 
+    flash("Counselor edit permission updated.", "success")
     return redirect("/student/dashboard")
 
 
@@ -951,6 +983,7 @@ def set_request_limit():
     conn.commit()
     conn.close()
 
+    flash("Request limit updated successfully.", "success")
     return redirect("/counselor/dashboard")
 
 @app.route("/counselorprofile/<int:counselor_id>")
@@ -1267,48 +1300,62 @@ def decline_academic_record_processing(user_id):
         abort(403)
 
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    # Step 1: Verify student belongs to counselor
-    cursor.execute("""
-        SELECT UserID
-        FROM StudentProfile
-        WHERE UserID = %s AND CounselorUserID = %s
-    """, (user_id, current_user.id))
+    try:
+        # ✅ Validate relationship (use Recommendation as source of truth)
+        cursor.execute("""
+            SELECT 1
+            FROM Recommendation
+            WHERE UserID = %s AND CounselorID = %s
+        """, (user_id, current_user.id))
 
-    student = cursor.fetchone()
+        student = cursor.fetchone()
 
-    # Step 2: Get reason
-    reason = request.form.get("reason", "")
+        if not student:
+            flash("Unauthorized action.", "danger")
+            return redirect("/counselor/dashboard")
 
-    # Step 3: Insert into Declined
-    cursor.execute("""
-        INSERT INTO Declined (UserID, StudentID, Reason)
-        VALUES (%s, %s, %s)
-    """, (current_user.id, user_id, reason))
+        # ✅ Get reason safely
+        reason = request.form.get("reason", "").strip()
 
-    # Step 4: Delete from Recommendation
-    cursor.execute("""
-        DELETE FROM Recommendation
-        WHERE CounselorID = %s AND UserID = %s
-    """, (current_user.id, user_id))
+        # ✅ Insert into Declined
+        cursor.execute("""
+            INSERT INTO Declined (UserID, StudentID, Reason)
+            VALUES (%s, %s, %s)
+        """, (current_user.id, user_id, reason))
 
-    # ✅ NEW: Delete from CounselorStudent
-    cursor.execute("""
-        DELETE FROM CounselorStudent
-        WHERE CounselorUserID = %s AND StudentUserID = %s
-    """, (current_user.id, user_id))
+        # ✅ Delete from Recommendation
+        cursor.execute("""
+            DELETE FROM Recommendation
+            WHERE CounselorID = %s AND UserID = %s
+        """, (current_user.id, user_id))
 
-    # OPTIONAL (recommended): unassign counselor
-    cursor.execute("""
-        UPDATE StudentProfile
-        SET CounselorUserID = NULL
-        WHERE UserID = %s
-    """, (user_id,))
+        # ✅ Delete mapping
+        cursor.execute("""
+            DELETE FROM CounselorStudent
+            WHERE CounselorUserID = %s AND StudentUserID = %s
+        """, (current_user.id, user_id))
 
-    connection.commit()
-    cursor.close()
-    connection.close()
+        # ✅ Unassign counselor (optional but consistent)
+        cursor.execute("""
+            UPDATE StudentProfile
+            SET CounselorUserID = NULL
+            WHERE UserID = %s
+        """, (user_id,))
+
+        connection.commit()
+
+        flash("Student removed successfully.", "success")
+
+    except Exception as e:
+        print("ERROR:", e)
+        connection.rollback()
+        flash("Something went wrong while removing the student.", "danger")
+
+    finally:
+        cursor.close()
+        connection.close()
 
     return redirect("/counselor/dashboard")
 
@@ -1335,6 +1382,7 @@ def edit_application(app_id):
     connection.commit()
     connection.close()
 
+    flash("Application updated successfully!", "success")
     return redirect("/counselor/recommendation")
 
 
@@ -1356,6 +1404,7 @@ def delete_application(application_id):
     connection.commit()
     connection.close()
 
+    flash("Application deleted successfully!", "success")
     return redirect("/counselor/recommendation")
 
 
@@ -1592,7 +1641,8 @@ def adding_app(user_id):
     connection.commit()
     connection.close()
 
-    return redirect("/counselor/dashboard")
+    flash("Application added successfully!", "success")
+    return redirect("/counselor/recommendation")
 
 
 
