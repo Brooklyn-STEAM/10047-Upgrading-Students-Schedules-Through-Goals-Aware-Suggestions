@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
-  <title>CourseTrack - Counselor Dashboard</title>
+  <title>CourseTrack - Counselor Recommendation</title>
   <link href="/static/styles.css" rel="stylesheet">
 </head>
 
@@ -91,16 +91,25 @@
         <td class="px-6 py-4 text-center">
           <div class="flex justify-center gap-2">
 
+            <!-- Add Application -->
             <a href="/counselor/recommendation/addapplication/{{ x['UserID'] }}" 
-               onclick="event.stopPropagation();"
-               class="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600">
+              onclick="event.stopPropagation();"
+              class="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600">
               + Add
             </a>
 
+            <!-- Chat -->
             <a href="{{ url_for('chat', user_id=x['UserID']) }}"
-               onclick="event.stopPropagation();"
-               class="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600">
+              onclick="event.stopPropagation();"
+              class="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600">
               Chat
+            </a>
+
+            <!-- 🔥 NEW: Remove Student -->
+            <a href="/counselor/dashboard/decline/{{ x['UserID'] }}"
+              onclick="event.stopPropagation();"
+              class="px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600">
+              Remove
             </a>
 
           </div>
