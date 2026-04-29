@@ -31,24 +31,53 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.context_processor
-def inject_notification_count():
-    if current_user.is_authenticated:
-        connection = connect_db()
-        cursor = connection.cursor(pymysql.cursors.DictCursor)
+def inject_notifications():
+    if not current_user.is_authenticated:
+        return dict(
+            notification_count=0,
+            counselor_notification_count=0,
+            unread_messages=0
+        )
 
-        cursor.execute("""
+    conn = connect_db()
+    cur = conn.cursor(pymysql.cursors.DictCursor)
+
+    notification_count = 0
+    counselor_notification_count = 0
+    unread_messages = 0
+
+    # 🔔 Notifications
+    if current_user.role == "student":
+        cur.execute("""
             SELECT COUNT(*) AS count
             FROM Notification
             WHERE StudentID = %s AND Seen = FALSE
         """, (current_user.id,))
+        notification_count = cur.fetchone()["count"]
 
-        result = cursor.fetchone()["count"]
+    elif current_user.role == "counselor":
+        cur.execute("""
+            SELECT COUNT(*) AS count
+            FROM CounselorNotification
+            WHERE CounselorID = %s AND Seen = FALSE
+        """, (current_user.id,))
+        counselor_notification_count = cur.fetchone()["count"]
 
-        connection.close()
+    # 💬 Messages (both roles)
+    cur.execute("""
+        SELECT COUNT(*) AS count
+        FROM Message
+        WHERE ReceiverID = %s AND Seen = FALSE
+    """, (current_user.id,))
+    unread_messages = cur.fetchone()["count"]
 
-        return dict(notification_count=result)
+    conn.close()
 
-    return dict(notification_count=0)
+    return dict(
+        notification_count=notification_count,
+        counselor_notification_count=counselor_notification_count,
+        unread_messages=unread_messages
+    )
 
 @app.context_processor
 def inject_counselor_notification_count():
@@ -621,11 +650,28 @@ def student_notifications():
 
     notifications = cursor.fetchall()
 
+    cursor.execute("""
+        SELECT 
+            m.SenderID,
+            u.Name AS SenderName,
+            COUNT(*) AS Count,
+            MAX(m.CreatedAt) AS LastMessageTime
+        FROM Message m
+        JOIN User u ON u.ID = m.SenderID
+        WHERE m.ReceiverID = %s AND m.Seen = FALSE
+        GROUP BY m.SenderID
+        ORDER BY LastMessageTime DESC
+    """, (current_user.id,))
+
+    message_notifications = cursor.fetchall()
+
+
     connection.close()
 
     return render_template(
         "notif.html.jinja",
-        notifications=notifications
+        notifications=notifications,
+        message_notifications=message_notifications
     )
 
 @app.route("/student/notifications/read/<int:notification_id>")
@@ -986,11 +1032,28 @@ def counselor_notifications():
 
     notifications = cursor.fetchall()
 
+    # 💬 UNREAD MESSAGES FOR COUNSELOR
+    cursor.execute("""
+        SELECT 
+            m.SenderID,
+            u.Name AS SenderName,
+            COUNT(*) AS Count,
+            MAX(m.CreatedAt) AS LastMessageTime
+        FROM Message m
+        JOIN User u ON m.SenderID = u.ID
+        WHERE m.ReceiverID = %s AND m.Seen = FALSE
+        GROUP BY m.SenderID
+        ORDER BY LastMessageTime DESC
+    """, (current_user.id,))
+
+    message_notifications = cursor.fetchall()
+
     connection.close()
 
     return render_template(
         "notif2.html.jinja",
-        notifications=notifications
+        notifications=notifications,
+        message_notifications=message_notifications
     )
 
 @app.route("/counselor/recommendation")
@@ -1855,6 +1918,16 @@ def get_messages(user_id):
 
     conn = connect_db()
     cur = conn.cursor(pymysql.cursors.DictCursor)
+
+
+
+    cur.execute("""
+        UPDATE Message
+        SET Seen = TRUE
+        WHERE SenderID = %s AND ReceiverID = %s
+    """, (user_id, current_user.id))
+    conn.commit()
+
 
     # Get active counselor from StudentProfile
     cur.execute("""
