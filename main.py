@@ -32,6 +32,13 @@ def allowed_file(filename):
 
 @app.context_processor
 def inject_notification_count():
+
+    # Always initialize variables so they exist
+    notif_count = 0
+    declined_count = 0
+    unread_messages = 0
+
+    # Only students get these two counts
     if current_user.is_authenticated and current_user.role == "student":
         connection = connect_db()
         cursor = connection.cursor(pymysql.cursors.DictCursor)
@@ -52,23 +59,39 @@ def inject_notification_count():
         """, (current_user.id,))
         declined_count = cursor.fetchone()["count"]
 
-    # 💬 Messages (both roles)
-    cur.execute("""
-        SELECT COUNT(*) AS count
-        FROM Message
-        WHERE ReceiverID = %s AND Seen = FALSE
-    """, (current_user.id,))
-    unread_messages = cur.fetchone()["count"]
+        # 💬 Unread messages (students)
+        cursor.execute("""
+            SELECT COUNT(*) AS count
+            FROM Message
+            WHERE ReceiverID = %s AND Seen = FALSE
+        """, (current_user.id,))
+        unread_messages = cursor.fetchone()["count"]
 
-        total = notif_count + declined_count
+        cursor.close()
+        connection.close()
 
-        return dict(notification_count=total)
+    # If user is authenticated but NOT a student (e.g., counselor)
+    elif current_user.is_authenticated:
+        connection = connect_db()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute("""
+            SELECT COUNT(*) AS count
+            FROM Message
+            WHERE ReceiverID = %s AND Seen = FALSE
+        """, (current_user.id,))
+        unread_messages = cursor.fetchone()["count"]
+
+        cursor.close()
+        connection.close()
+
+    total = notif_count + declined_count
 
     return dict(
-        notification_count=notification_count,
-        counselor_notification_count=counselor_notification_count,
+        notification_count=total,
         unread_messages=unread_messages
     )
+
 
 @app.context_processor
 def inject_counselor_notification_count():
