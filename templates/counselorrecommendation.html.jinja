@@ -5,13 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
-  <title>CourseTrack - Counselor Dashboard</title>
+  <title>CourseTrack - Counselor Recommendation</title>
   <link href="/static/styles.css" rel="stylesheet">
 </head>
 
 <body class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100 min-h-screen flex flex-col">
 
 {% include "components/navbar.html.jinja" %}
+
+<!-- ✅ FLASH MESSAGES -->
+<div class="w-full max-w-[1400px] mx-auto px-6 mt-6 mb-4">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="space-y-3">
+        {% for category, message in messages %}
+          <div class="
+            px-4 py-3 rounded-lg text-sm font-medium shadow
+            {% if category == 'success' %}
+              bg-emerald-100 text-emerald-800 border border-emerald-300
+            {% elif category == 'danger' %}
+              bg-red-100 text-red-800 border border-red-300
+            {% elif category == 'warning' %}
+              bg-yellow-100 text-yellow-800 border border-yellow-300
+            {% else %}
+              bg-gray-100 text-gray-800 border border-gray-300
+            {% endif %}
+          ">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+</div>
 
 <main class="w-full max-w-[1400px] mx-auto px-6 py-12 flex-grow">
 
@@ -91,16 +119,25 @@
         <td class="px-6 py-4 text-center">
           <div class="flex justify-center gap-2">
 
+            <!-- Add Application -->
             <a href="/counselor/recommendation/addapplication/{{ x['UserID'] }}" 
-               onclick="event.stopPropagation();"
-               class="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600">
+              onclick="event.stopPropagation();"
+              class="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600">
               + Add
             </a>
 
+            <!-- Chat -->
             <a href="{{ url_for('chat', user_id=x['UserID']) }}"
-               onclick="event.stopPropagation();"
-               class="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600">
+              onclick="event.stopPropagation();"
+              class="px-3 py-2 bg-emerald-500 text-white text-sm rounded-lg hover:bg-emerald-600">
               Chat
+            </a>
+
+            <!-- 🔥 NEW: Remove Student -->
+            <a href="/counselor/dashboard/decline/{{ x['UserID'] }}"
+              onclick="event.stopPropagation();"
+              class="px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600">
+              Remove
             </a>
 
           </div>

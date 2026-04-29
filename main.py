@@ -31,37 +31,26 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.context_processor
-def inject_notifications():
-    if not current_user.is_authenticated:
-        return dict(
-            notification_count=0,
-            counselor_notification_count=0,
-            unread_messages=0
-        )
+def inject_notification_count():
+    if current_user.is_authenticated and current_user.role == "student":
+        connection = connect_db()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    conn = connect_db()
-    cur = conn.cursor(pymysql.cursors.DictCursor)
-
-    notification_count = 0
-    counselor_notification_count = 0
-    unread_messages = 0
-
-    # 🔔 Notifications
-    if current_user.role == "student":
-        cur.execute("""
+        # 🔔 Normal notifications
+        cursor.execute("""
             SELECT COUNT(*) AS count
             FROM Notification
             WHERE StudentID = %s AND Seen = FALSE
         """, (current_user.id,))
-        notification_count = cur.fetchone()["count"]
+        notif_count = cursor.fetchone()["count"]
 
-    elif current_user.role == "counselor":
-        cur.execute("""
+        # ❌ Declined notifications
+        cursor.execute("""
             SELECT COUNT(*) AS count
-            FROM CounselorNotification
-            WHERE CounselorID = %s AND Seen = FALSE
+            FROM Declined
+            WHERE StudentID = %s AND Seen = FALSE
         """, (current_user.id,))
-        counselor_notification_count = cur.fetchone()["count"]
+        declined_count = cursor.fetchone()["count"]
 
     # 💬 Messages (both roles)
     cur.execute("""
@@ -71,7 +60,9 @@ def inject_notifications():
     """, (current_user.id,))
     unread_messages = cur.fetchone()["count"]
 
-    conn.close()
+        total = notif_count + declined_count
+
+        return dict(notification_count=total)
 
     return dict(
         notification_count=notification_count,
@@ -99,6 +90,26 @@ def inject_counselor_notification_count():
         return dict(counselor_notification_count=count)
 
     return dict(counselor_notification_count=0)
+
+@app.context_processor
+def inject_navbar_profile():
+    profile = None
+    if current_user.is_authenticated:
+        connection = connect_db()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+        try:
+            if current_user.role == "student":
+                cursor.execute("SELECT ProfilePicture FROM StudentProfile WHERE UserID=%s", (current_user.id,))
+                profile = cursor.fetchone()
+            elif current_user.role == "counselor":
+                cursor.execute("SELECT ProfilePicture FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
+                profile = cursor.fetchone()
+        except Exception as e:
+            print("Navbar profile fetch error:", e)
+        finally:
+            cursor.close()
+            connection.close()
+    return dict(navbar_profile=profile) 
 
 config = Dynaconf(settings_file = ["settings.toml"])
 
@@ -533,21 +544,53 @@ def dashboard():
 @app.route("/student/toggle_counselor_edit", methods=["POST"])
 @login_required
 def toggle_counselor_edit():
-    allow_edit = 1 if request.form.get("allow_edit") == "1" else 0
+    allow_edit = 1 if request.form.get("allow_edit") else 0
 
     conn = connect_db()
-    cur = conn.cursor()
+    cur = conn.cursor(pymysql.cursors.DictCursor)
 
+    # 1. Update toggle
     cur.execute("""
         UPDATE StudentProfile
         SET AllowCounselorEdit = %s
         WHERE UserID = %s
     """, (allow_edit, current_user.id))
 
+    # 2. Get counselor
+    cur.execute("""
+        SELECT CounselorUserID
+        FROM StudentProfile
+        WHERE UserID = %s
+    """, (current_user.id,))
+
+    result = cur.fetchone()
+
+    print("DEBUG result:", result)  # 🔥 TEMP DEBUG
+
+    counselor_id = result["CounselorUserID"] if result else None
+
+    # 3. Insert notification
+    if allow_edit == 1 and counselor_id is not None:
+
+        print("INSERTING NOTIFICATION")  # 🔥 TEMP DEBUG
+
+        cur.execute("""
+            INSERT INTO CounselorNotification
+            (CounselorID, StudentID, Type, Message, Seen, CreatedAt)
+            VALUES (%s, %s, %s, %s, %s, NOW())
+        """, (
+            counselor_id,
+            current_user.id,
+            "edit",
+            "Student has allowed you to edit their recommendations.",
+            0
+        ))
+
     conn.commit()
     cur.close()
     conn.close()
 
+    flash("Counselor edit permission updated.", "success")
     return redirect("/student/dashboard")
 
 
@@ -626,28 +669,33 @@ def student_notifications():
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    # Mark all as seen
+    # ✅ 1. Mark ALL as seen (Notification)
     cursor.execute("""
         UPDATE Notification
         SET Seen = TRUE
         WHERE StudentID = %s AND Seen = FALSE
     """, (current_user.id,))
-    connection.commit()
 
-    # Fetch notifications
+    # ✅ 2. Mark ALL as seen (Declined)
     cursor.execute("""
-        SELECT 
-            Notification.ID,
-            Notification.Type,
-            Notification.Message,
-            Notification.CreatedAt,
-            User.Name AS CounselorName
-        FROM Notification
-        JOIN User ON Notification.CounselorID = User.ID
-        WHERE Notification.StudentID = %s
-        ORDER BY Notification.CreatedAt DESC
+        UPDATE Declined
+        SET Seen = TRUE
+        WHERE StudentID = %s AND Seen = FALSE
     """, (current_user.id,))
 
+    connection.commit()
+
+    # ✅ 3. Get normal notifications
+    cursor.execute("""
+        SELECT 
+            ID,
+            Type,
+            Message,
+            CreatedAt,
+            'normal' AS Source
+        FROM Notification
+        WHERE StudentID = %s
+    """, (current_user.id,))
     notifications = cursor.fetchall()
 
     cursor.execute("""
@@ -665,8 +713,24 @@ def student_notifications():
 
     message_notifications = cursor.fetchall()
 
+    # ✅ 4. Get declined notifications
+    cursor.execute("""
+        SELECT 
+            ID,
+            'declined' AS Type,
+            Reason AS Message,
+            CreatedAt,
+            'declined' AS Source
+        FROM Declined
+        WHERE StudentID = %s
+    """, (current_user.id,))
+    declined = cursor.fetchall()
 
     connection.close()
+
+    # ✅ 5. Merge + sort by date
+    all_notifications = list(notifications) + list(declined)
+    all_notifications.sort(key=lambda x: x["CreatedAt"], reverse=True)
 
     return render_template(
         "notif.html.jinja",
@@ -722,19 +786,53 @@ def add_counselor_form():
     connection = connect_db()
     cursor = connection.cursor()
 
-    # Link student to counselor
+    # ✅ Step 1: Get counselor limit
+    cursor.execute("""
+        SELECT RequestLimit 
+        FROM CounselorProfile 
+        WHERE UserID = %s
+    """, (counselor_id,))
+
+    row = cursor.fetchone()
+    request_limit = row["RequestLimit"] if row else None
+
+    # ✅ Step 2: Count current accepted students
+    cursor.execute("""
+        SELECT COUNT(*) AS count
+        FROM Recommendation
+        WHERE CounselorID = %s AND Status = 'accepted'
+    """, (counselor_id,))
+
+    accepted_count = cursor.fetchone()["count"]
+
+    # 🚫 Step 3: Block if full
+    if request_limit is not None and accepted_count >= request_limit:
+        connection.close()
+        flash("This counselor is no longer accepting requests.", "danger")
+        return redirect("/student/recommendation/addcounselor")
+
+    # ✅ Step 4: (optional but SMART) prevent duplicate request
+    cursor.execute("""
+        SELECT 1 FROM Recommendation
+        WHERE UserID = %s AND CounselorID = %s
+    """, (current_user.id, counselor_id))
+
+    if cursor.fetchone():
+        connection.close()
+        flash("You have already requested this counselor.", "warning")
+        return redirect("/student/recommendation")
+
+    # ✅ Step 5: Insert normally
     cursor.execute("""
         INSERT INTO CounselorStudent (CounselorUserID, StudentUserID)
         VALUES (%s, %s)
     """, (counselor_id, current_user.id))
 
-    # Save recommendation request
     cursor.execute("""
         INSERT INTO Recommendation (Grade, Comments, UserID, CounselorID)
         VALUES (%s, %s, %s, %s)
     """, (grade, comments, current_user.id, counselor_id))
 
-    # ✅ NEW: Insert counselor notification
     cursor.execute("""
         INSERT INTO CounselorNotification 
         (CounselorID, StudentID, Type, Message)
@@ -749,6 +847,7 @@ def add_counselor_form():
     connection.commit()
     connection.close()
 
+    flash("Counselor requested successfully! Please wait for their response.", "success")
     return redirect("/student/dashboard")
 
 
@@ -798,6 +897,7 @@ def delete_recommendation():
     cursor.close()
     connection.close()
 
+    flash("Recommendation deleted successfully.", "success")
     return redirect("/student/recommendation")
 
 @app.route("/student/recommendation/edit/<id>")
@@ -845,6 +945,7 @@ def edit_specific_recommendation_processing(id):
     connection.commit()
     connection.close()
 
+    flash("Recommendation updated successfully!", "success")
     return redirect("/student/recommendation/editrecommendations")
 
 #dashboard for counselors.
@@ -871,9 +972,45 @@ def counselor_dashboard():
 
     result = cursor.fetchall()
 
+    cursor.execute("""
+    SELECT RequestLimit 
+    FROM CounselorProfile 
+    WHERE UserID = %s
+    """, (current_user.id,))
+
+    row = cursor.fetchone()
+    request_limit = row["RequestLimit"] if row else None
+
     connection.close()
 
-    return render_template("counselor_dashboard.html.jinja", user=result)
+    return render_template(
+    "counselor_dashboard.html.jinja",
+    user=result,
+    request_limit=request_limit
+)
+
+@app.route("/counselor/set_request_limit", methods=["POST"])
+@login_required
+def set_request_limit():
+    if current_user.role != "counselor":
+        abort(403)
+
+    limit = request.form.get("limit")
+
+    conn = connect_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE CounselorProfile
+        SET RequestLimit = %s
+        WHERE UserID = %s
+    """, (limit, current_user.id))
+
+    conn.commit()
+    conn.close()
+
+    flash("Request limit updated successfully.", "success")
+    return redirect("/counselor/dashboard")
 
 @app.route("/counselorprofile/<int:counselor_id>")
 @login_required
@@ -1123,21 +1260,46 @@ def accept_student(user_id):
         connection.close()
         abort(404)
 
-    # ✅ Step 2: Update status to accepted
+    # ✅ Step 2: Get counselor request limit
+    cursor.execute("""
+        SELECT RequestLimit 
+        FROM CounselorProfile 
+        WHERE UserID = %s
+    """, (current_user.id,))
+
+    row = cursor.fetchone()
+    request_limit = row["RequestLimit"] if row else None
+
+    # ✅ Step 3: Count accepted students
+    cursor.execute("""
+        SELECT COUNT(*) AS count
+        FROM Recommendation
+        WHERE CounselorID = %s AND Status = 'accepted'
+    """, (current_user.id,))
+
+    accepted_count = cursor.fetchone()["count"]
+
+    # 🚫 Step 4: Enforce limit
+    if request_limit is not None and accepted_count >= request_limit:
+        connection.close()
+        flash("You have reached your maximum student limit.", "danger")
+        return redirect("/counselor/dashboard")
+
+    # ✅ Step 5: Accept student
     cursor.execute("""
         UPDATE Recommendation
         SET Status = 'accepted'
         WHERE UserID = %s AND CounselorID = %s
     """, (user_id, current_user.id))
 
-    # 🔔 Step 3: INSERT NOTIFICATION (ADD THIS)
+    # 🔔 Step 6: Notify student
     cursor.execute("""
         INSERT INTO Notification (StudentID, CounselorID, Type, Message, Seen)
         VALUES (%s, %s, 'accepted', %s, FALSE)
     """, (
         user_id,
         current_user.id,
-        f"You have been accepted by your counselor."
+        "You have been accepted by your counselor."
     ))
 
     connection.commit()
@@ -1181,48 +1343,62 @@ def decline_academic_record_processing(user_id):
         abort(403)
 
     connection = connect_db()
-    cursor = connection.cursor()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    # Step 1: Verify student belongs to counselor
-    cursor.execute("""
-        SELECT UserID
-        FROM StudentProfile
-        WHERE UserID = %s AND CounselorUserID = %s
-    """, (user_id, current_user.id))
+    try:
+        # ✅ Validate relationship (use Recommendation as source of truth)
+        cursor.execute("""
+            SELECT 1
+            FROM Recommendation
+            WHERE UserID = %s AND CounselorID = %s
+        """, (user_id, current_user.id))
 
-    student = cursor.fetchone()
+        student = cursor.fetchone()
 
-    # Step 2: Get reason
-    reason = request.form.get("reason", "")
+        if not student:
+            flash("Unauthorized action.", "danger")
+            return redirect("/counselor/dashboard")
 
-    # Step 3: Insert into Declined
-    cursor.execute("""
-        INSERT INTO Declined (UserID, StudentID, Reason)
-        VALUES (%s, %s, %s)
-    """, (current_user.id, user_id, reason))
+        # ✅ Get reason safely
+        reason = request.form.get("reason", "").strip()
 
-    # Step 4: Delete from Recommendation
-    cursor.execute("""
-        DELETE FROM Recommendation
-        WHERE CounselorID = %s AND UserID = %s
-    """, (current_user.id, user_id))
+        # ✅ Insert into Declined
+        cursor.execute("""
+            INSERT INTO Declined (UserID, StudentID, Reason)
+            VALUES (%s, %s, %s)
+        """, (current_user.id, user_id, reason))
 
-    # ✅ NEW: Delete from CounselorStudent
-    cursor.execute("""
-        DELETE FROM CounselorStudent
-        WHERE CounselorUserID = %s AND StudentUserID = %s
-    """, (current_user.id, user_id))
+        # ✅ Delete from Recommendation
+        cursor.execute("""
+            DELETE FROM Recommendation
+            WHERE CounselorID = %s AND UserID = %s
+        """, (current_user.id, user_id))
 
-    # OPTIONAL (recommended): unassign counselor
-    cursor.execute("""
-        UPDATE StudentProfile
-        SET CounselorUserID = NULL
-        WHERE UserID = %s
-    """, (user_id,))
+        # ✅ Delete mapping
+        cursor.execute("""
+            DELETE FROM CounselorStudent
+            WHERE CounselorUserID = %s AND StudentUserID = %s
+        """, (current_user.id, user_id))
 
-    connection.commit()
-    cursor.close()
-    connection.close()
+        # ✅ Unassign counselor (optional but consistent)
+        cursor.execute("""
+            UPDATE StudentProfile
+            SET CounselorUserID = NULL
+            WHERE UserID = %s
+        """, (user_id,))
+
+        connection.commit()
+
+        flash("Student removed successfully.", "success")
+
+    except Exception as e:
+        print("ERROR:", e)
+        connection.rollback()
+        flash("Something went wrong while removing the student.", "danger")
+
+    finally:
+        cursor.close()
+        connection.close()
 
     return redirect("/counselor/dashboard")
 
@@ -1249,6 +1425,7 @@ def edit_application(app_id):
     connection.commit()
     connection.close()
 
+    flash("Application updated successfully!", "success")
     return redirect("/counselor/recommendation")
 
 
@@ -1270,6 +1447,7 @@ def delete_application(application_id):
     connection.commit()
     connection.close()
 
+    flash("Application deleted successfully!", "success")
     return redirect("/counselor/recommendation")
 
 
@@ -1506,7 +1684,8 @@ def adding_app(user_id):
     connection.commit()
     connection.close()
 
-    return redirect("/counselor/dashboard")
+    flash("Application added successfully!", "success")
+    return redirect("/counselor/recommendation")
 
 
 
@@ -1751,25 +1930,7 @@ def counselor_save_transcript(student_user_id):
     return jsonify({"status": "success", "message": "Transcript updated by counselor."})
 
 
-@app.context_processor
-def inject_navbar_profile():
-    profile = None
-    if current_user.is_authenticated:
-        connection = connect_db()
-        cursor = connection.cursor(pymysql.cursors.DictCursor)
-        try:
-            if current_user.role == "student":
-                cursor.execute("SELECT ProfilePicture FROM StudentProfile WHERE UserID=%s", (current_user.id,))
-                profile = cursor.fetchone()
-            elif current_user.role == "counselor":
-                cursor.execute("SELECT ProfilePicture FROM CounselorProfile WHERE UserID=%s", (current_user.id,))
-                profile = cursor.fetchone()
-        except Exception as e:
-            print("Navbar profile fetch error:", e)
-        finally:
-            cursor.close()
-            connection.close()
-    return dict(navbar_profile=profile) 
+
 
 @app.route("/chat/<int:user_id>")
 @login_required
@@ -1979,6 +2140,14 @@ def get_messages(user_id):
 @app.errorhandler(404)
 def not_found(error):
     return render_template("404.html.jinja"), 404
+
+
+#This route basically lets user report issues, if there are any issue that might pop up on the transcript page, it will let user report it.
+@app.route("/report-issue", methods=["POST"])
+def report_issue():
+    data = request.get_json()
+    print("ISSUE REPORTED:", data)  # or save to DB, send email, etc.
+    return jsonify({"status": "ok"})
 
 
 
