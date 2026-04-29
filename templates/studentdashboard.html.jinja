@@ -58,39 +58,23 @@
         <h2 class="text-xl font-semibold text-emerald-800 mb-4">
           Counselor Decision Overview: {{ counselor_decision }}
           <br>
-        {% if counselor_id %}
-          <a href="{{ url_for('counselor_profile', counselor_id=counselor_id) }}"
-            class="text-emerald-600 underline">
-            Your counselor - {{ counselor_name }}
-          </a>
-        {% else %}
-          <span class="text-gray-400">No counselor assigned</span>
-        {% endif %}
+    
+      
+      
+{% if counselor_id %}
+Your counselor - 
+  <a href="{{ url_for('counselor_profile', counselor_id=counselor_id) }}"
+     class="text-emerald-600 underline">
+    {{ counselor_name }}
+  </a>
+{% else %}
+  <span class="text-gray-400">No counselor assigned</span>
+{% endif %}
+          
+         
         </h2>
       </div>
 
-      <!-- Academic Snapshot -->
-      <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100 mb-6">
-        <h2 class="text-xl font-semibold text-emerald-800 mb-4">
-          Academic Snapshot
-        </h2>
-
-        <div class="grid grid-cols-2 gap-4 text-gray-700">
-          <div class="p-4 bg-emerald-50 rounded-lg">
-            <p class="text-sm text-emerald-700">GPA</p>
-            <p class="text-2xl font-bold text-emerald-900">
-              {{ student.gpa }}
-            </p>
-          </div>
-
-          <div class="p-4 bg-emerald-50 rounded-lg">
-            <p class="text-sm text-emerald-700">Attendance</p>
-            <p class="text-2xl font-bold text-emerald-900">
-              {{ student.attendance }}%
-            </p>
-          </div>
-        </div>
-      </div>
 
 
       <!-- Counselor Editing Permission -->
@@ -117,33 +101,6 @@
         </form>
       </div>
 
-      <!-- Courses -->
-      <div class="bg-white rounded-xl shadow-lg p-6 border border-emerald-100">
-        <h2 class="text-xl font-semibold text-emerald-800 mb-4">
-          My Courses
-        </h2>
-
-        <div class="grid gap-4">
-          {% for course in courses %}
-          <div class="flex justify-between items-center p-5 
-                      rounded-lg border border-emerald-200 
-                      hover:bg-emerald-50 
-                      hover:shadow-md 
-                      hover:-translate-y-1
-                      transition-all duration-200">
-
-            <span class="text-lg font-medium text-gray-800">
-              {{ course.name }}
-            </span>
-
-            <span class="text-emerald-600 font-semibold">
-              {{ course.grade }}
-            </span>
-
-          </div>
-          {% endfor %}
-        </div>
-      </div>
 
     </div>
   </main>

@@ -91,9 +91,6 @@
           <!-- Profile Dropdown -->
           <div class="relative group z-50">
             <div class="flex items-center cursor-pointer">
-              <span class="hidden sm:inline text-sm font-medium">
-                Hello, {{ current_user.name }}
-              </span>
 
               <img src="{% if navbar_profile and navbar_profile.ProfilePicture %}/static/profile_pics/{{ navbar_profile.ProfilePicture }}{% else %}/static/images/profile-icon.png{% endif %}"
                    class="w-9 h-9 rounded-full border-2 border-white ml-2">

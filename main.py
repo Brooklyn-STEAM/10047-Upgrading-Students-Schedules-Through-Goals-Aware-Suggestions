@@ -52,13 +52,23 @@ def inject_notification_count():
         """, (current_user.id,))
         declined_count = cursor.fetchone()["count"]
 
-        connection.close()
+    # 💬 Messages (both roles)
+    cur.execute("""
+        SELECT COUNT(*) AS count
+        FROM Message
+        WHERE ReceiverID = %s AND Seen = FALSE
+    """, (current_user.id,))
+    unread_messages = cur.fetchone()["count"]
 
         total = notif_count + declined_count
 
         return dict(notification_count=total)
 
-    return dict(notification_count=0)
+    return dict(
+        notification_count=notification_count,
+        counselor_notification_count=counselor_notification_count,
+        unread_messages=unread_messages
+    )
 
 @app.context_processor
 def inject_counselor_notification_count():
@@ -688,6 +698,21 @@ def student_notifications():
     """, (current_user.id,))
     notifications = cursor.fetchall()
 
+    cursor.execute("""
+        SELECT 
+            m.SenderID,
+            u.Name AS SenderName,
+            COUNT(*) AS Count,
+            MAX(m.CreatedAt) AS LastMessageTime
+        FROM Message m
+        JOIN User u ON u.ID = m.SenderID
+        WHERE m.ReceiverID = %s AND m.Seen = FALSE
+        GROUP BY m.SenderID
+        ORDER BY LastMessageTime DESC
+    """, (current_user.id,))
+
+    message_notifications = cursor.fetchall()
+
     # ✅ 4. Get declined notifications
     cursor.execute("""
         SELECT 
@@ -709,7 +734,8 @@ def student_notifications():
 
     return render_template(
         "notif.html.jinja",
-        notifications=all_notifications
+        notifications=notifications,
+        message_notifications=message_notifications
     )
 
 @app.route("/student/notifications/read/<int:notification_id>")
@@ -1143,11 +1169,28 @@ def counselor_notifications():
 
     notifications = cursor.fetchall()
 
+    # 💬 UNREAD MESSAGES FOR COUNSELOR
+    cursor.execute("""
+        SELECT 
+            m.SenderID,
+            u.Name AS SenderName,
+            COUNT(*) AS Count,
+            MAX(m.CreatedAt) AS LastMessageTime
+        FROM Message m
+        JOIN User u ON m.SenderID = u.ID
+        WHERE m.ReceiverID = %s AND m.Seen = FALSE
+        GROUP BY m.SenderID
+        ORDER BY LastMessageTime DESC
+    """, (current_user.id,))
+
+    message_notifications = cursor.fetchall()
+
     connection.close()
 
     return render_template(
         "notif2.html.jinja",
-        notifications=notifications
+        notifications=notifications,
+        message_notifications=message_notifications
     )
 
 @app.route("/counselor/recommendation")
@@ -2036,6 +2079,16 @@ def get_messages(user_id):
 
     conn = connect_db()
     cur = conn.cursor(pymysql.cursors.DictCursor)
+
+
+
+    cur.execute("""
+        UPDATE Message
+        SET Seen = TRUE
+        WHERE SenderID = %s AND ReceiverID = %s
+    """, (user_id, current_user.id))
+    conn.commit()
+
 
     # Get active counselor from StudentProfile
     cur.execute("""

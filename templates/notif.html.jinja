@@ -28,9 +28,51 @@
     </a>
   </div>
 
-  {% if notifications and notifications|length > 0 %}
-
+{% if (notifications and notifications|length > 0) or (message_notifications and message_notifications|length > 0) %}
   <div class="space-y-4">
+  <!-- 💬 MESSAGE NOTIFICATIONS -->
+{% if message_notifications and message_notifications|length > 0 %}
+
+<div class="mb-8">
+  <h2 class="text-lg font-semibold text-gray-800 mb-3">
+    💬 New Messages
+  </h2>
+
+  <div class="space-y-3">
+
+    {% for msg in message_notifications %}
+
+    <a href="/chat/{{ msg['SenderID'] }}"
+       class="block rounded-xl p-5 shadow-sm hover:shadow-md transition border bg-blue-50 border-blue-200">
+
+      <div class="flex justify-between items-center mb-1">
+
+        <p class="font-semibold text-gray-800">
+          {{ msg['SenderName'] }}
+        </p>
+
+        <span class="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full">
+          {{ msg['Count'] }}
+        </span>
+
+      </div>
+
+      <p class="text-sm text-gray-700">
+        Sent you {{ msg['Count'] }} new message{{ 's' if msg['Count'] > 1 else '' }}
+      </p>
+
+      <p class="text-xs text-gray-400 mt-2">
+        {{ msg['LastMessageTime'] }}
+      </p>
+
+    </a>
+
+    {% endfor %}
+
+  </div>
+</div>
+
+{% endif %}
 
     {% for n in notifications %}
 
