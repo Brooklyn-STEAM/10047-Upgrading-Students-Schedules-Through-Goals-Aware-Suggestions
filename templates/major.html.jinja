@@ -1,0 +1,397 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <title>Find Your Major</title>
+</head>
+
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+
+  {% include "components/navbar.html.jinja" %}
+
+  <main class="flex-grow flex justify-center px-6 py-12">
+    <div class="w-full max-w-3xl">
+
+      <!-- Header -->
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-emerald-900">
+          Find Your Perfect Major
+        </h1>
+        <p class="text-emerald-700 mt-2">
+          Answer a few questions and we’ll help guide you.
+        </p>
+      </div>
+
+      <!-- Form Card -->
+    <form id="multiStepForm" class="bg-white rounded-2xl shadow-xl p-8 border border-emerald-100" action="/student/dashboard/find-major/processing" method="POST">
+
+    <!-- Progress Bar -->
+    <div class="mb-8">
+        <div class="flex justify-between text-sm text-emerald-700 mb-2">
+        <span>Step <span id="currentStep">1</span> of 5</span>
+        <span id="progressPercent">20%</span>
+        </div>
+        <div class="w-full bg-emerald-100 rounded-full h-3">
+        <div id="progressBar"
+            class="bg-emerald-600 h-3 rounded-full transition-all duration-300"
+            style="width: 20%"></div>
+        </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="space-y-6">
+
+        <!-- Step 1 -->
+        <div class="step">
+        <h2 class="text-xl font-semibold text-emerald-800 mb-3">
+            What subjects do you enjoy the most? (Select up to 3)
+        </h2>
+
+        <div class="grid grid-cols-2 gap-3">
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="math" class="subject-checkbox">
+            Math
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="science" class="subject-checkbox">
+            Science
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="technology" class="subject-checkbox">
+            Technology / Computer Science
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="engineering" class="subject-checkbox">
+            Engineering
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="english" class="subject-checkbox">
+            English / Writing
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="history" class="subject-checkbox">
+            History / Social Studies
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="business" class="subject-checkbox">
+            Business / Finance
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="economics" class="subject-checkbox">
+            Economics
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="art" class="subject-checkbox">
+            Art / Design
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="music" class="subject-checkbox">
+            Music / Performing Arts
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="health" class="subject-checkbox">
+            Health / Medicine
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="psychology" class="subject-checkbox">
+            Psychology
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="law" class="subject-checkbox">
+            Law / Government
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="education" class="subject-checkbox">
+            Education / Teaching
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="languages" class="subject-checkbox">
+            Foreign Languages
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="subjects" value="none" id="noneOption">
+            None
+            </label>
+
+        </div>
+
+        <p id="selectionWarning" class="text-sm text-red-500 mt-2 hidden">
+            You can only select up to 3 subjects.
+        </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step hidden">
+        <h2 class="text-xl font-semibold text-emerald-800 mb-3">
+            Preferred work environment?
+        </h2>
+
+        <div class="space-y-2">
+
+            <label class="flex items-center gap-3">
+            <input type="radio" name="env" value="office">
+            Corporate office (structured, professional)
+            </label>
+
+            <label class="flex items-center gap-3">
+            <input type="radio" name="env" value="remote">
+            Remote / Work from home
+            </label>
+
+            <label class="flex items-center gap-3">
+            <input type="radio" name="env" value="outdoor">
+            Outdoor / Field work
+            </label>
+
+            <label class="flex items-center gap-3">
+            <input type="radio" name="env" value="lab">
+            Lab / Research environment
+            </label>
+
+            <label class="flex items-center gap-3">
+            <input type="radio" name="env" value="creative">
+            Creative studio (design, media, art)
+            </label>
+
+            <label class="flex items-center gap-3">
+            <input type="radio" name="env" value="fast-paced">
+            Fast-paced / high-pressure environment
+            </label>
+
+            <label class="flex items-center gap-3">
+            <input type="radio" name="env" value="flexible">
+            Flexible / mix of environments
+            </label>
+
+        </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step hidden">
+        <h2 class="text-xl font-semibold text-emerald-800 mb-3">
+            Your strongest skills?
+        </h2>
+
+        <div class="grid grid-cols-2 gap-2 text-gray-700">
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="problem-solving">
+            Problem-solving / logical thinking
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="communication">
+            Communication / public speaking
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="creativity">
+            Creativity / artistic thinking
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="leadership">
+            Leadership / managing others
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="analytical">
+            Analytical / data skills
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="writing">
+            Writing / storytelling
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="technical">
+            Technical / programming skills
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="organization">
+            Organization / planning
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="teamwork">
+            Teamwork / collaboration
+            </label>
+
+            <label class="flex items-center gap-2">
+            <input type="checkbox" name="skills" value="empathy">
+            Empathy / helping others
+            </label>
+
+        </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="step hidden">
+        <h2 class="text-xl font-semibold text-emerald-800 mb-3">
+            Career goals?
+        </h2>
+        <textarea rows="4" class="w-full p-3 border rounded-lg"
+            placeholder="Describe your future goals..." name="career_goals"></textarea>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="step hidden">
+        <h2 class="text-xl font-semibold text-emerald-800 mb-3">
+            Salary importance?
+        </h2>
+        <input type="range" min="1" max="10" class="w-full accent-emerald-600" name="salary">
+        </div>
+
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex justify-between mt-8">
+        <button type="button" id="prevBtn"
+        class="px-4 py-2 bg-gray-200 rounded-lg hidden">
+        Back
+        </button>
+
+        <button type="button" id="nextBtn"
+        class="ml-auto px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+        Next
+        </button>
+    </div>
+
+    </form>
+
+    </div>
+  </main>
+
+  {% include "components/footer.html.jinja" %}
+
+</body>
+
+<script>
+  const steps = document.querySelectorAll(".step");
+  const nextBtn = document.getElementById("nextBtn");
+  const prevBtn = document.getElementById("prevBtn");
+  const progressBar = document.getElementById("progressBar");
+  const currentStepText = document.getElementById("currentStep");
+  const progressPercent = document.getElementById("progressPercent");
+
+  const subjectCheckboxes = document.querySelectorAll(".subject-checkbox");
+  const noneOption = document.getElementById("noneOption");
+  const warning = document.getElementById("selectionWarning");
+
+  let currentStep = 0;
+
+  // -------------------------
+  // STEP NAVIGATION
+  // -------------------------
+  function updateUI() {
+    steps.forEach((step, index) => {
+      step.classList.toggle("hidden", index !== currentStep);
+    });
+
+    prevBtn.classList.toggle("hidden", currentStep === 0);
+
+    if (currentStep === steps.length - 1) {
+      nextBtn.textContent = "Submit";
+    } else {
+      nextBtn.textContent = "Next";
+    }
+
+    let percent = ((currentStep + 1) / steps.length) * 100;
+    progressBar.style.width = percent + "%";
+    currentStepText.textContent = currentStep + 1;
+    progressPercent.textContent = Math.round(percent) + "%";
+  }
+
+  nextBtn.addEventListener("click", () => {
+
+    // -------------------------
+    // VALIDATION FOR STEP 1
+    // -------------------------
+    if (currentStep === 0) {
+      const checked = document.querySelectorAll(".subject-checkbox:checked");
+
+      if (checked.length === 0 && !noneOption.checked) {
+        warning.textContent = "Please select at least one option or 'None'.";
+        warning.classList.remove("hidden");
+        return;
+      }
+    }
+
+    // Move forward
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+      updateUI();
+    } else {
+      document.getElementById("multiStepForm").submit();
+    }
+  });
+
+  prevBtn.addEventListener("click", () => {
+    if (currentStep > 0) {
+      currentStep--;
+      updateUI();
+    }
+  });
+
+  // -------------------------
+  // SUBJECT SELECTION LOGIC
+  // -------------------------
+  subjectCheckboxes.forEach(cb => {
+    cb.addEventListener("change", () => {
+      let checked = document.querySelectorAll(".subject-checkbox:checked");
+
+      // Limit to 3 selections
+      if (checked.length > 3) {
+        cb.checked = false;
+        warning.textContent = "You can only select up to 3 subjects.";
+        warning.classList.remove("hidden");
+      } else {
+        warning.classList.add("hidden");
+      }
+
+      // If "None" is selected, uncheck everything else
+      if (noneOption.checked) {
+        subjectCheckboxes.forEach(box => box.checked = false);
+        noneOption.checked = true;
+      }
+
+      // If any subject is selected, uncheck "None"
+      if (checked.length > 0) {
+        noneOption.checked = false;
+      }
+    });
+  });
+
+  noneOption.addEventListener("change", () => {
+    if (noneOption.checked) {
+      subjectCheckboxes.forEach(cb => cb.checked = false);
+      warning.classList.add("hidden");
+    }
+  });
+
+  // Initial render
+  updateUI();
+</script>
+
+</html>

@@ -1,3 +1,5 @@
 settings.toml
 
+.env
+
 __pycache__/
