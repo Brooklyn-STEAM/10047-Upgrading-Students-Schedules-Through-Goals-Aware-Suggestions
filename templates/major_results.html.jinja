@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+  <title>Your Recommended Majors</title>
+</head>
+
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen">
+
+  {% include "components/navbar.html.jinja" %}
+
+  <main class="flex justify-center py-12 px-6">
+    <div class="max-w-4xl w-full">
+
+      <!-- Header -->
+      <div class="text-center mb-10">
+        <h1 class="text-4xl font-bold text-emerald-900 mb-2">
+          Your Best-Fit Majors 🎓
+        </h1>
+        <p class="text-emerald-700">
+          Based on your interests, skills, and goals, here are your top matches.
+        </p>
+      </div>
+
+      <!-- Cards -->
+      <div class="space-y-6">
+
+        {% for major in majors %}
+          {% set rank = loop.index %}
+
+          <div class="bg-white p-6 rounded-2xl shadow-lg border border-emerald-100 
+                      hover:shadow-xl transition duration-300">
+
+            <div class="flex items-center justify-between">
+
+              <!-- Left: Rank + Title -->
+              <div>
+                <p class="text-sm text-emerald-500 font-medium mb-1">
+                  {% if rank == 1 %}
+                    🥇 Top Match
+                  {% elif rank == 2 %}
+                    🥈 Great Fit
+                  {% else %}
+                    🥉 Strong Option
+                  {% endif %}
+                </p>
+
+                <h2 class="text-2xl font-semibold text-emerald-900">
+                  {{ major }}
+                </h2>
+              </div>
+
+              <!-- Right: Rank Number -->
+              <div class="text-4xl font-bold text-emerald-100">
+                #{{ rank }}
+              </div>
+
+            </div>
+
+            <!-- Optional description placeholder -->
+            <p class="text-gray-600 mt-3 text-sm">
+              This major aligns well with your selected interests and strengths.
+            </p>
+
+          </div>
+        {% endfor %}
+
+      </div>
+
+      <!-- Actions -->
+      <div class="mt-10 flex justify-center gap-4">
+
+        <a href="/student/dashboard/find-major"
+           class="px-5 py-2 bg-white border border-emerald-200 rounded-lg hover:bg-emerald-50 transition">
+          Retake Quiz
+        </a>
+
+        <a href="/student/dashboard"
+           class="px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+          Back to Dashboard
+        </a>
+
+      </div>
+
+    </div>
+  </main>
+
+  {% include "components/footer.html.jinja" %}
+
+</body>
+</html>

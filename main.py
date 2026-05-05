@@ -5,6 +5,8 @@ from flask import request, redirect, url_for, flash
 from flask_login import current_user
 from flask import jsonify
 
+from dotenv import load_dotenv
+from openai import OpenAI
 from werkzeug.utils import secure_filename
 
 
@@ -20,12 +22,38 @@ from course_assigner import (
     suggest_tracks,
 )
 
+load_dotenv()
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 app = Flask(__name__)
 
 UPLOAD_FOLDER = "static/profile_pics"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+def ai_recommend_majors(subjects, environment, skills, goals, salary):
+    prompt = f"""
+    A student answered the following:
+
+    Subjects: {subjects}
+    Preferred environment: {environment}
+    Skills: {skills}
+    Career goals: {goals}
+    Salary importance (1-10): {salary}
+
+    Based on this, suggest the top 3 most suitable college majors.
+    Only return a simple list of 3 majors.
+    """
+
+    response = client.chat.completions.create(
+        model="gpt-5.4-mini",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7,
+    )
+
+    return response.choices[0].message.content
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -563,6 +591,75 @@ def dashboard():
         counselor_id=counselor_id   # 🔥 THIS FIXES EVERYTHING
     )
 
+@app.route("/student/dashboard/find-major")
+@login_required
+def find_major():
+    return render_template("major.html.jinja")
+
+@app.route("/student/dashboard/find-major/processing", methods=["POST"])
+@login_required
+def finding_major():
+    subjects = request.form.getlist("subjects")
+    environment = request.form.get("env")
+    skills = request.form.getlist("skills")
+    career_goals = request.form.get("career_goals")
+    salary = request.form.get("salary")
+
+    subjects_str = ",".join(subjects)
+    skills_str = ",".join(skills)
+
+    # 🔥 AI call
+    recommended = ai_recommend_majors(
+        subjects, environment, skills, career_goals, salary
+    )
+
+    connection = connect_db()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        INSERT INTO student_major_responses
+        (user_id, subjects, environment, skills, career_goals, salary_importance, recommended_majors)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+    """, (
+        current_user.id,
+        subjects_str,
+        environment,
+        skills_str,
+        career_goals,
+        salary,
+        recommended
+    ))
+
+    response_id = cursor.lastrowid  # 🔑 IMPORTANT
+
+    connection.commit()
+    cursor.close()
+
+    # 👉 Redirect to results page with ID
+    return redirect(f"/student/dashboard/find-major/result/{response_id}")
+
+@app.route("/student/dashboard/find-major/result/<int:response_id>")
+@login_required
+def show_major_results(response_id):
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    cursor.execute("""
+        SELECT recommended_majors
+        FROM student_major_responses
+        WHERE id = %s AND user_id = %s
+    """, (response_id, current_user.id))
+
+    result = cursor.fetchone()
+    cursor.close()
+
+    if not result:
+        return "No results found", 404
+
+    # Split AI response into list
+    majors = result["recommended_majors"].split("\n")
+
+    return render_template("major_results.html.jinja", majors=majors)
 
 @app.route("/student/toggle_counselor_edit", methods=["POST"])
 @login_required
