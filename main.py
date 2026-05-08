@@ -1703,7 +1703,7 @@ def save_transcript():
         conn = connect_db()
         cur = conn.cursor()
 
-        # find StudentProfile
+        # Find StudentProfile
         cur.execute("SELECT ID FROM StudentProfile WHERE UserID = %s", (current_user.id,))
         profile = cur.fetchone()
 
@@ -1717,16 +1717,18 @@ def save_transcript():
         overall_gpa = data.get("GPA", None)
         grades_data = data.get("Grades", [])
 
-        # insert transcript (you’re using CourseID=NULL, so DB must have CourseID)
+        # Create transcript
         cur.execute(
-        "INSERT INTO Transcript (StudentID, CourseID, GPA, Curriculum, CreatedAt) "
-        "VALUES (%s, NULL, %s, %s, NOW())",
-        (student_profile_id, overall_gpa, data.get("Curriculum"))
-    )
+            """
+            INSERT INTO Transcript (StudentID, CourseID, GPA, Curriculum, CreatedAt)
+            VALUES (%s, NULL, %s, %s, NOW())
+            """,
+            (student_profile_id, overall_gpa, data.get("Curriculum"))
+        )
 
         transcript_id = cur.lastrowid
 
-        # insert grades + subjects
+        # Insert grades + subjects
         for grade in grades_data:
             grade_level = grade.get("GradeLevel")
             grade_gpa = grade.get("GPA")
@@ -1738,7 +1740,15 @@ def save_transcript():
             grade_id = cur.lastrowid
 
             for subject in grade.get("Subjects", []):
-                name = subject.get("Name")
+
+                # ⭐ FIX: Guarantee SubjectName is valid
+                name = (
+                    subject.get("Name")
+                    or subject.get("CustomCourseName")
+                    or subject.get("CourseName")
+                    or "Unknown"
+                )
+
                 letter = subject.get("Letter")
                 credits = subject.get("Credits")
                 marks = subject.get("Marks")
@@ -1748,9 +1758,11 @@ def save_transcript():
                 course_name = subject.get("CourseName")
                 custom_course_name = subject.get("CustomCourseName")
 
+                # ⭐ FIX: Ensure custom course name is filled when needed
                 if course_name == "Other" and not custom_course_name:
                     custom_course_name = name
 
+                # Insert subject
                 cur.execute(
                     """
                     INSERT INTO Subject 
@@ -1760,8 +1772,8 @@ def save_transcript():
                     """,
                     (
                         grade_id,
-                        name,
-                        letter,
+                        name,               # SubjectName
+                        letter,             # FinalGrade
                         credits,
                         marks,
                         preference,
@@ -1780,6 +1792,7 @@ def save_transcript():
     except Exception as e:
         print("FULL ERROR:", repr(e))
         return jsonify({"status": "error", "message": "Server error: " + repr(e)}), 500
+
 
 
 
@@ -1892,7 +1905,7 @@ def counselor_academic_records():
 
 
 
-#Fetch a specific student’s transcript (JSON)
+# Fetch a specific student’s transcript (JSON)
 @app.route("/counselor/student_transcript/<int:student_user_id>")
 @login_required
 def counselor_student_transcript(student_user_id):
@@ -1936,7 +1949,12 @@ def counselor_student_transcript(student_user_id):
     """, (student_profile_id,))
     transcript = cur.fetchone()
 
-    transcript_data = None
+    # Default transcript_data (in case no transcript exists)
+    transcript_data = {
+        "GPA": None,
+        "Curriculum": "USA",
+        "Grades": []
+    }
 
     if transcript:
         transcript_id = transcript["ID"]
@@ -1973,12 +1991,14 @@ def counselor_student_transcript(student_user_id):
 
             grade_list.append({
                 "GradeLevel": g["GradeLevel"],
-                "GPA": float(g["GPA"]) if "GPA" in g and g["GPA"] is not None else None,
+                "GPA": float(g["GPA"]) if g["GPA"] is not None else None,
                 "Subjects": subject_list
             })
 
+        # Build final transcript_data safely
         transcript_data = {
             "GPA": float(transcript["GPA"]) if transcript["GPA"] is not None else None,
+            "Curriculum": transcript["Curriculum"] if "Curriculum" in transcript and transcript["Curriculum"] else "USA",
             "Grades": grade_list
         }
 
@@ -1993,6 +2013,7 @@ def counselor_student_transcript(student_user_id):
         },
         "transcript": transcript_data
     })
+
 
 
 
@@ -2039,9 +2060,11 @@ def counselor_save_transcript(student_user_id):
 
     # Insert new transcript
     cur.execute("""
-        INSERT INTO Transcript (StudentID, CourseID, GPA, CreatedAt)
-        VALUES (%s, NULL, %s, NOW())
-    """, (student_profile_id, overall_gpa))
+    INSERT INTO Transcript (StudentID, CourseID, GPA, Curriculum, CreatedAt)
+    VALUES (%s, NULL, %s, %s, NOW())
+""", (student_profile_id, overall_gpa, data["Curriculum"]))
+
+
     transcript_id = cur.lastrowid
 
     max_grade_level = current_profile_grade
