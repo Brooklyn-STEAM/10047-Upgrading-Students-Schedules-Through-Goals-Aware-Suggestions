@@ -578,6 +578,19 @@ def dashboard():
         {"name": "Whatever", "grade": "N/A"},
     ]
 
+    # -----------------------------
+    # MAJOR RESULTS (LATEST)
+    # -----------------------------
+    cursor.execute("""
+        SELECT id
+        FROM student_major_responses
+        WHERE user_id = %s
+        ORDER BY id DESC
+        LIMIT 1
+    """, (current_user.id,))
+
+    major_result = cursor.fetchone()
+
     cursor.close()
     connection.close()
 
@@ -588,7 +601,8 @@ def dashboard():
         counselor_name=counselor_name,
         counselor_email=counselor_email,
         counselor_decision=counselor_decision,
-        counselor_id=counselor_id   # 🔥 THIS FIXES EVERYTHING
+        counselor_id=counselor_id,
+        major_result=major_result   
     )
 
 @app.route("/student/dashboard/find-major")
@@ -608,7 +622,7 @@ def finding_major():
     subjects_str = ",".join(subjects)
     skills_str = ",".join(skills)
 
-    # 🔥 AI call
+    # 🔥 AI recommendation
     recommended = ai_recommend_majors(
         subjects, environment, skills, career_goals, salary
     )
@@ -616,10 +630,18 @@ def finding_major():
     connection = connect_db()
     cursor = connection.cursor()
 
+    # 🔥 UPSERT (insert OR update)
     cursor.execute("""
         INSERT INTO student_major_responses
         (user_id, subjects, environment, skills, career_goals, salary_importance, recommended_majors)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE
+            subjects = VALUES(subjects),
+            environment = VALUES(environment),
+            skills = VALUES(skills),
+            career_goals = VALUES(career_goals),
+            salary_importance = VALUES(salary_importance),
+            recommended_majors = VALUES(recommended_majors)
     """, (
         current_user.id,
         subjects_str,
@@ -630,12 +652,20 @@ def finding_major():
         recommended
     ))
 
-    response_id = cursor.lastrowid  # 🔑 IMPORTANT
-
     connection.commit()
-    cursor.close()
 
-    # 👉 Redirect to results page with ID
+    # 🔑 Now fetch the existing row ID
+    cursor.execute("""
+        SELECT id FROM student_major_responses
+        WHERE user_id = %s
+    """, (current_user.id,))
+    
+    row = cursor.fetchone()
+    response_id = row["id"]
+
+    cursor.close()
+    connection.close()
+
     return redirect(f"/student/dashboard/find-major/result/{response_id}")
 
 @app.route("/student/dashboard/find-major/result/<int:response_id>")
@@ -664,35 +694,45 @@ def show_major_results(response_id):
 @app.route("/student/toggle_counselor_edit", methods=["POST"])
 @login_required
 def toggle_counselor_edit():
+
     allow_edit = 1 if request.form.get("allow_edit") else 0
 
     conn = connect_db()
     cur = conn.cursor(pymysql.cursors.DictCursor)
 
-    # 1. Update toggle
+    # -----------------------------------
+    # 1. UPDATE STUDENT SETTING
+    # -----------------------------------
     cur.execute("""
         UPDATE StudentProfile
         SET AllowCounselorEdit = %s
         WHERE UserID = %s
     """, (allow_edit, current_user.id))
 
-    # 2. Get counselor
+    # -----------------------------------
+    # 2. GET CONNECTED COUNSELOR
+    # -----------------------------------
     cur.execute("""
         SELECT CounselorUserID
-        FROM StudentProfile
-        WHERE UserID = %s
+        FROM CounselorStudent
+        WHERE StudentUserID = %s
+        ORDER BY ID DESC
+        LIMIT 1
     """, (current_user.id,))
 
     result = cur.fetchone()
 
-    print("DEBUG result:", result)  # 🔥 TEMP DEBUG
-
     counselor_id = result["CounselorUserID"] if result else None
 
-    # 3. Insert notification
-    if allow_edit == 1 and counselor_id is not None:
+    # -----------------------------------
+    # 3. CREATE NOTIFICATION
+    # -----------------------------------
+    if counselor_id:
 
-        print("INSERTING NOTIFICATION")  # 🔥 TEMP DEBUG
+        if allow_edit == 1:
+            message = f"{current_user.name} allowed you to edit their transcript."
+        else:
+            message = f"{current_user.name} revoked your transcript editing access."
 
         cur.execute("""
             INSERT INTO CounselorNotification
@@ -701,8 +741,8 @@ def toggle_counselor_edit():
         """, (
             counselor_id,
             current_user.id,
-            "edit",
-            "Student has allowed you to edit their recommendations.",
+            "transcript permission",
+            message,
             0
         ))
 
@@ -711,6 +751,7 @@ def toggle_counselor_edit():
     conn.close()
 
     flash("Counselor edit permission updated.", "success")
+
     return redirect("/student/dashboard")
 
 
