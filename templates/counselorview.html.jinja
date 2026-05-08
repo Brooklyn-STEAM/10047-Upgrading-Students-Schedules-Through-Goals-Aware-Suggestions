@@ -1,0 +1,185 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <link rel="icon"
+        type="image/png"
+        href="{{ url_for('static', filename='images/logo.png') }}">
+
+  <title>
+    {{ counselor.Name }} - Counselor Profile
+  </title>
+
+  <link href="/static/styles.css" rel="stylesheet">
+</head>
+
+<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+
+  {% include "components/navbar.html.jinja" %}
+
+  <main class="flex-grow flex justify-center px-6 py-12">
+
+    <div class="w-full max-w-4xl">
+
+      <!-- Header -->
+      <div class="mb-8">
+
+        <h1 class="text-3xl font-bold text-emerald-900">
+          Counselor Profile
+        </h1>
+
+        <p class="text-emerald-700 mt-2">
+          View counselor information and office details
+        </p>
+
+      </div>
+
+      {% set profile_pic =
+        url_for('static', filename='profile_pics/' ~ profile.ProfilePicture)
+        if profile and profile.ProfilePicture
+        else url_for('static', filename='default_profile.png')
+      %}
+
+      <!-- Main Card -->
+      <div class="bg-white rounded-2xl shadow-xl border border-emerald-100 overflow-hidden">
+
+        <!-- Top Banner -->
+        <div class="h-32 bg-gradient-to-r from-emerald-500 to-emerald-700"></div>
+
+        <div class="px-8 pb-8">
+
+          <!-- Profile Header -->
+          <div class="flex flex-col md:flex-row md:items-end md:justify-between -mt-16">
+
+            <div class="flex flex-col md:flex-row md:items-center gap-6">
+
+              <!-- Profile Picture -->
+              <img
+                src="{{ profile_pic }}"
+                alt="{{ counselor.Name }}"
+                class="w-36 h-36 rounded-full border-4 border-white object-cover bg-white shadow-lg"
+              >
+
+              <!-- Counselor Info -->
+              <div class="pt-4 md:pt-0">
+
+                <h2 class="text-3xl font-bold text-gray-900">
+                  {{ counselor.Name }}
+                </h2>
+
+                <p class="text-emerald-700 font-medium mt-1">
+                  School Counselor
+                </p>
+
+                <p class="text-gray-500 mt-1">
+                  {{ counselor.Email }}
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Information Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+
+            <!-- Email -->
+            <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+
+              <p class="text-sm font-medium text-emerald-700">
+                Email
+              </p>
+
+              <p class="mt-1 text-lg font-semibold text-gray-900">
+                {{ counselor.Email }}
+              </p>
+
+            </div>
+
+            <!-- Phone -->
+            <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+
+              <p class="text-sm font-medium text-emerald-700">
+                Phone
+              </p>
+
+              <p class="mt-1 text-lg font-semibold text-gray-900">
+                {{ profile.Phone if profile else 'N/A' }}
+              </p>
+
+            </div>
+
+            <!-- Office -->
+            <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+
+              <p class="text-sm font-medium text-emerald-700">
+                Office Location
+              </p>
+
+              <p class="mt-1 text-lg font-semibold text-gray-900">
+                {{ profile.Office if profile else 'N/A' }}
+              </p>
+
+            </div>
+
+            <!-- Office Hours -->
+            <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+
+              <p class="text-sm font-medium text-emerald-700">
+                Office Hours
+              </p>
+
+              <p class="mt-1 text-lg font-semibold text-gray-900">
+                {{ profile.OfficeHours if profile else 'N/A' }}
+              </p>
+
+            </div>
+
+          </div>
+
+          <!-- Professional Bio -->
+          <div class="mt-10">
+
+            <h3 class="text-2xl font-bold text-emerald-900 mb-4">
+              Professional Bio
+            </h3>
+
+            <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 text-gray-700 leading-relaxed">
+
+              {{ profile.Bio if profile and profile.Bio else 'No bio available yet.' }}
+
+            </div>
+
+          </div>
+
+          <!-- Back Button -->
+          <div class="mt-10">
+
+            <a
+              href="/student/recommendation/addcounselor"
+              class="inline-flex items-center px-5 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition shadow-md"
+            >
+              ← Back to Counselor Selection
+            </a>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  {% include "components/footer.html.jinja" %}
+
+</body>
+</html>
