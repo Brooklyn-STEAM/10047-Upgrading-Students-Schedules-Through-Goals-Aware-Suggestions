@@ -258,87 +258,141 @@ def calculate_course_assigner():
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
+
     if request.method == 'POST':
+
         email = request.form['email']
         password = request.form['password']
 
         connection = connect_db()
-        cursor = connection.cursor()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-        cursor.execute(
-            "SELECT * FROM `User` WHERE `Email` = %s",
-            (email,)
-        )
+        cursor.execute("""
+            SELECT *
+            FROM User
+            WHERE Email = %s
+        """, (email,))
 
         result = cursor.fetchone()
 
+        cursor.close()
         connection.close()
 
+        # -----------------------------
+        # USER NOT FOUND
+        # -----------------------------
         if result is None:
-            flash("No user found")
-        elif password != result['Password']:  # plain-text check
-            flash("Incorrect password")
-        else:
-            login_user(User(result))  # Your user class
-            if current_user.role == "student":
-                return redirect("/student/dashboard")
-            elif current_user.role == "counselor":
-                return redirect("/counselor/dashboard")
-            else:
-                return redirect("/")
+            flash("No account found with that email.", "danger")
+            return redirect("/login")
 
+        # -----------------------------
+        # WRONG PASSWORD
+        # -----------------------------
+        elif password != result['Password']:
+            flash("Incorrect password.", "danger")
+            return redirect("/login")
 
-    return render_template("/login.html.jinja")
+        # -----------------------------
+        # LOGIN SUCCESS
+        # -----------------------------
+        login_user(User(result))
+
+        flash("Successfully logged in!", "success")
+
+        if result['Role'] == "student":
+            return redirect("/student/dashboard")
+
+        elif result['Role'] == "counselor":
+            return redirect("/counselor/dashboard")
+
+        return redirect("/")
+
+    return render_template("login.html.jinja")
 
 
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
+
     if request.method == 'POST':
+
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
         role = request.form['role']
 
         conn = connect_db()
-        cursor = conn.cursor()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
 
-        # check duplicate
-        cursor.execute("SELECT * FROM User WHERE Email=%s", (email,))
-        if cursor.fetchone():
-            flash("Email already registered")
+        # -----------------------------
+        # CHECK IF EMAIL EXISTS
+        # -----------------------------
+        cursor.execute(
+            "SELECT * FROM User WHERE Email = %s",
+            (email,)
+        )
+
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            flash("An account with this email already exists.", "danger")
+
             cursor.close()
             conn.close()
-            return redirect("/login")
 
-        # insert user
-        cursor.execute(
-            "INSERT INTO User (Name, Email, Password, Role) VALUES (%s,%s,%s,%s)",
-            (name, email, password, role)
-        )
+            # Stay on register page
+            return redirect("/register")
+
+        # -----------------------------
+        # INSERT USER
+        # -----------------------------
+        cursor.execute("""
+            INSERT INTO User (Name, Email, Password, Role)
+            VALUES (%s, %s, %s, %s)
+        """, (name, email, password, role))
+
         user_id = cursor.lastrowid
 
-        # insert student profile
+        # -----------------------------
+        # STUDENT PROFILE
+        # -----------------------------
         if role == "student":
+
             student_type = request.form['student_type']
-            grade_val = 12 if student_type == "Graduate" else int(request.form['grade'])
+
+            grade_val = (
+                12 if student_type == "Graduate"
+                else int(request.form['grade'])
+            )
 
             cursor.execute("""
-                INSERT INTO StudentProfile (UserID, Grade, StudentType, CreatedAt)
+                INSERT INTO StudentProfile
+                (UserID, Grade, StudentType, CreatedAt)
                 VALUES (%s, %s, %s, NOW())
-            """, (user_id, grade_val, student_type))
-            
+            """, (
+                user_id,
+                grade_val,
+                student_type
+            ))
+
+        # -----------------------------
+        # COUNSELOR PROFILE
+        # -----------------------------
         elif role == "counselor":
+
             cursor.execute("""
-                INSERT INTO CounselorProfile (UserID, CreatedAt)
+                INSERT INTO CounselorProfile
+                (UserID, CreatedAt)
                 VALUES (%s, NOW())
             """, (user_id,))
 
         conn.commit()
+
         cursor.close()
         conn.close()
 
-        flash("Account created successfully! Please log in.")
+        flash("Account created successfully! Please log in.", "success")
+
         return redirect("/login")
 
     return render_template("register.html.jinja")
@@ -483,12 +537,12 @@ def edit_profile():
 
 
 
-@app.route("/logout", methods=['GET', 'POST'])
+@app.route("/logout", methods=['GET'])
 @login_required
 def logout():
     logout_user()
-    flash("Successfully logged out")
-    return redirect ("/")
+    flash("Successfully logged out.", "success")
+    return redirect("/")
 
 # Dashboard for students.
 @app.route("/student/dashboard")
@@ -937,6 +991,92 @@ def add_counselor():
         counselors=counselors,
     )
 
+@app.route("/search/counselors")
+@login_required
+def search_counselors():
+
+    query = request.args.get("q", "").strip()
+
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # If searching
+    if query:
+
+        cursor.execute("""
+            SELECT ID, Name, Email
+            FROM User
+            WHERE Role = 'counselor'
+            AND (
+                Name LIKE %s
+                OR Email LIKE %s
+            )
+            ORDER BY Name ASC
+        """, (
+            f"%{query}%",
+            f"%{query}%"
+        ))
+
+    # If empty → return ALL counselors
+    else:
+
+        cursor.execute("""
+            SELECT ID, Name, Email
+            FROM User
+            WHERE Role = 'counselor'
+            ORDER BY Name ASC
+        """)
+
+    counselors = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(counselors)
+
+@app.route("/student/recommendation/addcounselor/<int:counselor_id>")
+@login_required
+def counselor_view(counselor_id):
+
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # -----------------------------------
+    # GET COUNSELOR USER
+    # -----------------------------------
+    cursor.execute("""
+        SELECT *
+        FROM User
+        WHERE ID = %s
+        AND Role = 'counselor'
+    """, (counselor_id,))
+
+    counselor = cursor.fetchone()
+
+    if not counselor:
+        flash("Counselor not found.", "danger")
+        return redirect("/student/dashboard")
+
+    # -----------------------------------
+    # GET COUNSELOR PROFILE
+    # -----------------------------------
+    cursor.execute("""
+        SELECT *
+        FROM CounselorProfile
+        WHERE UserID = %s
+    """, (counselor_id,))
+
+    profile = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "counselorview.html.jinja",
+        counselor=counselor,
+        profile=profile
+    )
+
 @app.route("/student/recommendation/addcounselor/processing", methods=["POST"])
 @login_required
 def add_counselor_form():
@@ -1033,6 +1173,37 @@ def review_recommendation():
     connection.close()
     return render_template("edit.html.jinja" , information=information)
 
+@app.route("/student/recommendation/editrecommendation/<int:counselor_id>")
+@login_required
+def counselor_view2(counselor_id):
+
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    cursor.execute("""
+        SELECT *
+        FROM User
+        WHERE ID = %s AND Role='counselor'
+    """, (counselor_id,))
+    counselor = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT *
+        FROM CounselorProfile
+        WHERE UserID = %s
+    """, (counselor_id,))
+    profile = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    return render_template(
+        "counselorview2.html.jinja",
+        counselor=counselor,
+        profile=profile,
+        counselor_id=counselor_id   # 🔥 IMPORTANT
+    )
+
 @app.route("/student/recommendation/deleterecommendation", methods=["POST"])
 @login_required
 def delete_recommendation():
@@ -1061,30 +1232,41 @@ def delete_recommendation():
     flash("Recommendation deleted successfully.", "success")
     return redirect("/student/recommendation")
 
-@app.route("/student/recommendation/edit/<id>")
+@app.route("/student/recommendation/edit/<int:id>")
 @login_required
 def edit_specific_recommendation(id):
+
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
+    # 🔥 GET the actual recommendation row
     cursor.execute("""
-    SELECT ID, Name, Email FROM User
-    WHERE Role='counselor'
+        SELECT *
+        FROM Recommendation
+        WHERE ID = %s AND UserID = %s
+    """, (id, current_user.id))
+
+    user = cursor.fetchone()
+
+    if not user:
+        flash("Recommendation not found", "danger")
+        return redirect("/student/dashboard")
+
+    # counselors list
+    cursor.execute("""
+        SELECT ID, Name, Email FROM User
+        WHERE Role='counselor'
     """)
     recommendation = cursor.fetchall()
 
-    cursor.execute("""
-    SELECT * FROM Recommendation WHERE UserID = %s
-    """, (current_user.id,))
-    user = cursor.fetchone()
-
-
+    cursor.close()
     connection.close()
 
-    if not recommendation:
-        abort(404)
-
-    return render_template("editspecific.html.jinja", recommendation=recommendation , user=user)
+    return render_template(
+        "editspecific.html.jinja",
+        recommendation=recommendation,
+        user=user
+    )
 
 @app.route("/student/recommendation/edit/<id>/processing", methods=["POST"])
 @login_required

@@ -19,9 +19,35 @@
   <div class="w-full max-w-md p-10 bg-white shadow-xl rounded-2xl">
     <ul class=" bg-green-100 text-green-800
  rounded-lg shadow text-center space-y-2">
-      {% for message in get_flashed_messages() %}
-      <li>{{ message }}</li>
-      {% endfor %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="space-y-3 mb-4">
+
+          {% for category, message in messages %}
+
+            <div class="px-4 py-3 rounded-xl text-sm font-medium border shadow-sm
+
+              {% if category == 'danger' %}
+                bg-red-100 text-red-700 border-red-200
+
+              {% elif category == 'success' %}
+                bg-emerald-100 text-emerald-700 border-emerald-200
+
+              {% elif category == 'warning' %}
+                bg-yellow-100 text-yellow-700 border-yellow-200
+
+              {% else %}
+                bg-blue-100 text-blue-700 border-blue-200
+              {% endif %}
+            ">
+              {{ message }}
+            </div>
+
+          {% endfor %}
+
+        </div>
+      {% endif %}
+    {% endwith %}
     </ul>
 
 

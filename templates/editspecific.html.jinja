@@ -1,117 +1,303 @@
 <!doctype html>
 
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="icon" type="image/png" href="/static/images/logo.png">
-    <title>CourseTrack - Edit Recommendation</title>
-    <link href="/static/styles.css" rel="stylesheet">
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <body class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100 min-h-screen flex flex-col text-gray-800">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-    {% include "components/navbar.html.jinja" %}
+  <link rel="icon" type="image/png" href="/static/images/logo.png">
 
-    <main class="flex-grow px-4 py-16">
-      <div class="max-w-3xl mx-auto">
+  <title>CourseTrack - Edit Recommendation</title>
 
-        <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
-          <div>
-            <h1 class="text-4xl font-bold tracking-tight text-gray-900">
-              Edit Recommendation
-            </h1>
-            <p class="text-gray-500 mt-1">
-              Update your counselor request details
-            </p>
-          </div>
+  <link href="/static/styles.css" rel="stylesheet">
+</head>
 
-          <a href="/student/recommendation"
-             class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition shadow">
-            ← Cancel
-          </a>
-        </div>
+<body class="bg-gradient-to-br from-emerald-50 via-white to-emerald-100 min-h-screen flex flex-col text-gray-800">
 
-        <!-- Card -->
-        <div class="relative bg-white rounded-2xl shadow-xl border border-gray-200 p-8 overflow-hidden">
+{% include "components/navbar.html.jinja" %}
 
-          <!-- Top accent -->
-          <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400"></div>
+<main class="flex-grow px-4 py-16">
 
-          <!-- Form -->
-          <form action="/student/recommendation/edit/{{user['ID']}}/processing" method="post" class="flex flex-col gap-6">
+  <div class="max-w-3xl mx-auto">
 
-            <!-- Counselor Name -->
-            <div>
-              <label class="block text-sm font-medium text-gray-600 mb-1">
-              Select Your Counselor
-            </label>
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
 
-            <select name="counselor_id"
-                    required
-                    class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+      <div>
+        <h1 class="text-4xl font-bold tracking-tight text-gray-900">
+          Edit Recommendation
+        </h1>
 
-              <option value="">Choose a counselor</option>
+        <p class="text-gray-500 mt-1">
+          Update your counselor request details
+        </p>
+      </div>
+
+      <a href="/student/recommendation"
+         class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition shadow">
+        ← Cancel
+      </a>
+
+    </div>
+
+    <!-- CARD -->
+    <div class="relative bg-white rounded-2xl shadow-xl border border-gray-200 p-8 overflow-hidden">
+
+      <!-- Accent -->
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400"></div>
+
+      <!-- FORM -->
+      <form
+        action="/student/recommendation/edit/{{ user['ID'] }}/processing"
+        method="POST"
+        class="flex flex-col gap-6"
+      >
+
+        <!-- COUNSELOR SEARCH -->
+        <div>
+
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Search Counselor
+          </label>
+
+          <div id="searchContainer" class="relative">
+
+            <!-- Search -->
+            <input
+              type="text"
+              id="counselorSearch"
+              placeholder="Search by counselor name or email..."
+              autocomplete="off"
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-sm"
+            >
+
+            <!-- Hidden Selected -->
+            <input
+              type="hidden"
+              name="counselor_id"
+              id="selectedCounselor"
+              value="{{ user['CounselorUserID'] if user else '' }}"
+              required
+            >
+
+            <!-- Dropdown -->
+            <div
+              id="counselorResults"
+              class="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-y-auto hidden"
+            >
 
               {% for c in recommendation %}
-              <option value="{{ c.ID }}">
-                {{ c.Name }} ({{ c.Email }})
-              </option>
-              {% endfor %}
 
-            </select>
-            </div>
+              <button
+                type="button"
+                onclick="selectCounselor('{{ c.ID }}', '{{ c.Name }}', '{{ c.Email }}')"
+                class="counselor-option w-full text-left px-4 py-3 hover:bg-emerald-50 transition border-b border-gray-100"
+              >
 
-            <!-- Grade -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Grade
-              </label>
-              <select name="grade"
-                      class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                <option value="">Select grade</option>
-                <option>9</option>
-                <option>10</option>
-                <option>11</option>
-                <option>12</option>
-              </select>
-            </div>
+                <div class="font-medium text-gray-800">
+                  {{ c.Name }}
+                </div>
 
-            <!-- Comments -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Comments
-              </label>
-              <textarea name="comments"
-                        rows="4"
-                        placeholder="Write your comments here..."
-                        class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
-            </div>
+                <div class="text-sm text-gray-500">
+                  {{ c.Email }}
+                </div>
 
-            <!-- Buttons -->
-            <div class="flex flex-col sm:flex-row gap-3 pt-4">
-
-              <button type="submit"
-                class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md font-medium">
-                Save Changes
               </button>
 
-              <a href="/student/recommendation"
-                 class="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-medium">
-                Cancel
-              </a>
+              {% endfor %}
 
             </div>
 
-          </form>
+          </div>
+
         </div>
 
-      </div>
-    </main>
+        <!-- SELECTED COUNSELOR -->
+        <div
+          id="selectedCounselorCard"
+          class="{% if not user or not user['CounselorUserID'] %}hidden{% endif %} bg-emerald-50 border border-emerald-200 rounded-xl p-4"
+        >
 
-    {% include "components/footer.html.jinja" %}
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-  </body>
+            <div>
+
+              <p class="text-sm text-emerald-700 font-medium">
+                Selected Counselor
+              </p>
+
+              <h3
+                id="selectedCounselorName"
+                class="text-lg font-bold text-emerald-900"
+              >
+                {{ user['CounselorName'] if user else '' }}
+              </h3>
+
+              <p
+                id="selectedCounselorEmail"
+                class="text-sm text-emerald-700"
+              >
+                {{ user['CounselorEmail'] if user else '' }}
+              </p>
+
+            </div>
+
+            <!-- PROFILE BUTTON -->
+            <a
+              id="counselorProfileLink"
+              href="#"
+              class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition font-medium"
+            >
+              View Profile
+            </a>
+
+          </div>
+
+        </div>
+
+        <!-- Grade -->
+        <div>
+
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Grade
+          </label>
+
+          <select
+            name="grade"
+            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-sm"
+          >
+
+            <option value="">Select grade</option>
+
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+
+          </select>
+
+        </div>
+
+        <!-- Comments -->
+        <div>
+
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Comments
+          </label>
+
+          <textarea
+            name="comments"
+            rows="4"
+            placeholder="Write your comments here..."
+            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-sm resize-none"
+          ></textarea>
+
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-4">
+
+          <button
+            type="submit"
+            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md font-medium"
+          >
+            Save Changes
+          </button>
+
+          <a
+            href="/student/recommendation"
+            class="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-100 transition font-medium"
+          >
+            Cancel
+          </a>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</main>
+
+{% include "components/footer.html.jinja" %}
+
+<!-- JAVASCRIPT -->
+<script>
+
+  const searchInput = document.getElementById("counselorSearch");
+  const dropdown = document.getElementById("counselorResults");
+
+  const selectedCounselor = document.getElementById("selectedCounselor");
+
+  const counselorName = document.getElementById("selectedCounselorName");
+  const counselorEmail = document.getElementById("selectedCounselorEmail");
+
+  const profileLink = document.getElementById("counselorProfileLink");
+
+  // SHOW ALL RESULTS
+  searchInput.addEventListener("focus", () => {
+    dropdown.classList.remove("hidden");
+  });
+
+  // LIVE SEARCH
+  searchInput.addEventListener("input", function () {
+
+    const value = this.value.toLowerCase();
+
+    const items = dropdown.querySelectorAll(".counselor-option");
+
+    items.forEach(item => {
+
+      const text = item.textContent.toLowerCase();
+
+      if (text.includes(value)) {
+        item.style.display = "block";
+      } else {
+        item.style.display = "none";
+      }
+
+    });
+
+    dropdown.classList.remove("hidden");
+
+  });
+
+  // SELECT COUNSELOR
+  function selectCounselor(id, name, email) {
+
+    selectedCounselor.value = id;
+
+    counselorName.textContent = name;
+    counselorEmail.textContent = email;
+
+    searchInput.value = `${name} (${email})`;
+
+    profileLink.href = `/student/recommendation/editrecommendation/${id}`;
+
+    // SHOW CARD
+    document
+      .getElementById("selectedCounselorCard")
+      .classList.remove("hidden");
+
+    dropdown.classList.add("hidden");
+  }
+
+  // CLOSE DROPDOWN
+  document.addEventListener("click", function (e) {
+
+    const searchContainer = document.getElementById("searchContainer");
+
+    if (!searchContainer.contains(e.target)) {
+      dropdown.classList.add("hidden");
+    }
+
+  });
+
+</script>
+
+</body>
 </html>
