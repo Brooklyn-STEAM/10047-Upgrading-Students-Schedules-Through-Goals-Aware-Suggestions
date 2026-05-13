@@ -1177,19 +1177,19 @@ def review_recommendation():
 @login_required
 def counselor_view2(counselor_id):
 
+    recommendation_id = request.args.get("recommendation_id")
+
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
     cursor.execute("""
-        SELECT *
-        FROM User
+        SELECT * FROM User
         WHERE ID = %s AND Role='counselor'
     """, (counselor_id,))
     counselor = cursor.fetchone()
 
     cursor.execute("""
-        SELECT *
-        FROM CounselorProfile
+        SELECT * FROM CounselorProfile
         WHERE UserID = %s
     """, (counselor_id,))
     profile = cursor.fetchone()
@@ -1201,7 +1201,7 @@ def counselor_view2(counselor_id):
         "counselorview2.html.jinja",
         counselor=counselor,
         profile=profile,
-        counselor_id=counselor_id   # 🔥 IMPORTANT
+        recommendation_id=recommendation_id
     )
 
 @app.route("/student/recommendation/deleterecommendation", methods=["POST"])
@@ -1239,11 +1239,18 @@ def edit_specific_recommendation(id):
     connection = connect_db()
     cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-    # 🔥 GET the actual recommendation row
+    # GET recommendation + counselor information
     cursor.execute("""
-        SELECT *
+        SELECT
+            Recommendation.*,
+            User.Name AS CounselorName,
+            User.Email AS CounselorEmail,
+            User.ID AS CounselorUserID
         FROM Recommendation
-        WHERE ID = %s AND UserID = %s
+        LEFT JOIN User
+            ON Recommendation.CounselorID = User.ID
+        WHERE Recommendation.ID = %s
+        AND Recommendation.UserID = %s
     """, (id, current_user.id))
 
     user = cursor.fetchone()
