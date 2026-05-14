@@ -46,31 +46,52 @@
       Empowering Education Through Technology
     </p>
 
-    <!-- ✅ SMART BUTTON -->
-    <a href="{% if current_user.is_authenticated %}
-                {% if current_user.role == 'student' %}
-                    {{ url_for('dashboard') }}
-                {% elif current_user.role == 'counselor' %}
-                    {{ url_for('counselor_dashboard') }}
-                {% else %}
-                    {{ url_for('index') }}
-                {% endif %}
-             {% else %}
-                {{ url_for('login') }}
-             {% endif %}"
-       class="inline-flex items-center gap-2 bg-white text-emerald-800 font-semibold 
-              px-8 py-3 rounded-lg shadow-lg 
-              hover:bg-emerald-100 hover:scale-105 
-              transition duration-200">
+    <!-- BUTTON GROUP -->
+    <div class="flex flex-col items-center gap-4">
 
-      <i data-feather="log-in"></i>
+      <!-- MAIN BUTTON -->
+      <a href="{% if current_user.is_authenticated %}
+                  {% if current_user.role == 'student' %}
+                      {{ url_for('dashboard') }}
+                  {% elif current_user.role == 'counselor' %}
+                      {{ url_for('counselor_dashboard') }}
+                  {% else %}
+                      {{ url_for('index') }}
+                  {% endif %}
+              {% else %}
+                  {{ url_for('login') }}
+              {% endif %}"
 
-      {% if current_user.is_authenticated %}
-        Go to Dashboard
-      {% else %}
-        Get Started
-      {% endif %}
-    </a>
+        class="inline-flex items-center gap-2 bg-white text-emerald-800 font-semibold 
+                px-8 py-3 rounded-xl shadow-xl
+                hover:bg-emerald-100 hover:scale-105
+                transition-all duration-300">
+
+        <i data-feather="log-in"></i>
+
+        {% if current_user.is_authenticated %}
+          Go to Dashboard
+        {% else %}
+          Login
+        {% endif %}
+
+      </a>
+
+      <!-- REGISTER WITH CODE -->
+      <a href="/register/code"
+
+        class="inline-flex items-center gap-2 border border-white/40 bg-white/10 backdrop-blur-md text-white font-semibold
+                px-7 py-3 rounded-xl shadow-lg
+                hover:bg-white hover:text-emerald-800 hover:scale-105
+                transition-all duration-300">
+
+        <i data-feather="key"></i>
+
+        Register with Code
+
+      </a>
+
+    </div>
 
   </div>
 
