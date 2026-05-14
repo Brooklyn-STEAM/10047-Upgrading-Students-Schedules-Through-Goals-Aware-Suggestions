@@ -17,32 +17,37 @@
   <link href="/static/styles.css" rel="stylesheet">
 </head>
 
-
-<body class="bg-gradient-to-b from-emerald-50 to-emerald-100 min-h-screen flex flex-col">
+<body class="bg-gradient-to-b from-emerald-50 via-white to-emerald-100 min-h-screen flex flex-col overflow-x-hidden">
 
 {% include "components/navbar.html.jinja" %}
 
-<div class="w-full max-w-4xl mx-auto mt-6 mb-6 px-2 relative z-20">
+<!-- FLASH MESSAGES -->
+<div class="w-full max-w-5xl mx-auto mt-6 mb-2 px-4 relative z-20">
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div class="space-y-3">
+
         {% for category, message in messages %}
+
           <div class="
-            px-4 py-3 rounded-lg text-sm font-medium shadow
+            px-5 py-4 rounded-2xl text-sm font-medium shadow-lg backdrop-blur-xl border
+
             {% if category == 'success' %}
-              bg-emerald-100 text-emerald-800 border border-emerald-300
+              bg-emerald-100/80 text-emerald-800 border-emerald-300
             {% elif category == 'danger' %}
-              bg-red-100 text-red-800 border border-red-300
+              bg-red-100/80 text-red-800 border-red-300
             {% elif category == 'warning' %}
-              bg-yellow-100 text-yellow-800 border border-yellow-300
+              bg-yellow-100/80 text-yellow-800 border-yellow-300
             {% else %}
-              bg-gray-100 text-gray-800 border border-gray-300
+              bg-gray-100/80 text-gray-800 border-gray-300
             {% endif %}
           ">
             {{ message }}
           </div>
+
         {% endfor %}
+
       </div>
     {% endif %}
   {% endwith %}
@@ -51,202 +56,364 @@
 
 <main class="flex-grow flex justify-center px-6 py-12">
 
-<div class="w-full max-w-4xl relative">
+<div class="w-full max-w-5xl relative">
 
-<!-- Decorative background blob -->
-<div class="absolute -top-10 -right-10 w-72 h-72 bg-emerald-200 opacity-40 rounded-full blur-3xl"></div>
+  <!-- Background Glow -->
+  <div class="absolute -top-20 -right-20 w-96 h-96 bg-emerald-200 opacity-30 rounded-full blur-3xl"></div>
 
+  <!-- HEADER -->
+  <div class="mb-10 relative z-10">
 
-<!-- Dashboard Header -->
-<div class="mb-10 relative z-10">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
 
-<div class="flex items-center gap-4">
+      <!-- LEFT -->
+      <div class="flex items-center gap-5">
 
-<div class="bg-emerald-100 p-3 rounded-full">
-<i data-feather="users" class="text-emerald-700"></i>
-</div>
+        <div class="bg-white shadow-lg border border-emerald-200 p-4 rounded-2xl">
+          <i data-feather="users" class="text-emerald-700 w-8 h-8"></i>
+        </div>
 
-<div>
-<h1 class="text-3xl font-bold text-emerald-900">
-Welcome back, {{ current_user.name }} 
+        <div>
 
-</a>
-</h1>
+          <h1 class="text-4xl font-black text-emerald-950 leading-tight">
+            Welcome back, {{ current_user.name }}
+          </h1>
 
+          <p class="text-emerald-700 mt-2 text-lg">
+            Manage student applications and counselor access.
+          </p>
 
-<p class="text-emerald-700 mt-1">
-View your students requests for applications:
-</p>
-</div>
+        </div>
 
-</div>
-
-</div>
-
-<!-- Request Limit Control -->
-<div class="mb-6 relative z-10">
-
-  <div class="bg-white border border-emerald-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-    <!-- Left Info -->
-    <div>
-      <p class="text-sm text-gray-500">Request Limit</p>
-      <p class="text-lg font-semibold text-emerald-800">
-        Set how many student requests you are able to accept
-      </p>
-      <p class="text-lg font-semibold text-emerald-800">
-      Current limit: {{ request_limit if request_limit else "Unlimited" }}
-      </p>
-    </div>
-
-    <!-- Form -->
-    <form method="POST" action="/counselor/set_request_limit" class="flex items-center gap-3">
-
-      <input 
-        type="number" 
-        name="limit" 
-        min="1" 
-        placeholder="e.g. 10"
-        class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:outline-none"
-        required
-      >
-
-      <button 
-        type="submit"
-        class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">
-        Save
-      </button>
-
-    </form>
-
-  </div>
-
-</div>
-
-<!-- Student List -->
-{% if user %}
-
-<div class="bg-white rounded-xl shadow-xl p-6 border border-emerald-100 relative z-10">
-
-<div class="space-y-4">
-
-{% for x in user %}
-{% if x["Role"] == "student" %}
-
-<!-- Card (now a div instead of anchor) -->
-<a href="/counselor/dashboard/{{ x['student_profile_id'] }}">
-  <div class="flex justify-between items-center p-5 my-2
-    rounded-xl border border-emerald-200
-    hover:bg-emerald-50
-    hover:shadow-lg
-    hover:-translate-y-1
-    transition-all duration-200">
-  
-    <!-- Student Info -->
-    <div class="flex items-center gap-4">
-  
-      <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-        <i data-feather="user" class="text-emerald-700 w-5"></i>
       </div>
-  
-      <!-- Clickable name -->
-      <div
-         class="text-lg font-medium text-gray-800">
-        {{ x["Name"] }}
-  
-      </div>
-  
-    </div>
-  
-    <!-- Action Buttons -->
-    <div class="flex items-center gap-3">
-  
-      {% if x['Status'] == 'Pending' %}
-  
-        <!-- Accept -->
-        <a href="/counselor/dashboard/accept/{{ x['UserID'] }}"
-          class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg
-                  hover:bg-emerald-700 transition">
-          Accept
-        </a>
-  
-        <!-- Decline -->
-        <a href="/counselor/dashboard/decline/{{ x['UserID'] }}"
-          class="px-4 py-2 border border-red-500 text-red-500 text-sm font-semibold rounded-lg
-                  hover:bg-red-50 transition">
-          Decline
-        </a>
-  
-      {% elif x['Status'] == 'accepted' %}
-  
-        <!-- VIEW (arrow button) -->
-        
-          <div
-            class="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-100 hover:bg-emerald-200 transition">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                class="w-5 h-5 text-emerald-700"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 5l7 7-7 7" />
-            </svg>
+
+      <!-- RIGHT SIDE -->
+      <div class="relative overflow-hidden bg-white/80 backdrop-blur-xl border border-emerald-200 rounded-3xl px-6 py-6 shadow-xl min-w-[340px]">
+
+        <!-- Glow -->
+        <div class="absolute top-0 right-0 w-40 h-40 bg-emerald-200 opacity-30 blur-3xl rounded-full"></div>
+
+        <div class="relative z-10">
+
+          <div class="flex items-center gap-3 mb-3">
+
+            <div class="bg-emerald-100 p-2 rounded-xl">
+              <i data-feather="shield" class="w-5 h-5 text-emerald-700"></i>
+            </div>
+
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-gray-500 font-bold">
+                Counselor Access
+              </p>
+
+              <p class="text-sm text-gray-400">
+                Share this code with students
+              </p>
+            </div>
+
           </div>
-  
-        
-  
-      {% endif %}
-  
+
+          <!-- CODE CONTAINER -->
+          <div id="codeContainer">
+
+            {% if latest_code %}
+
+            <div class="flex items-center justify-between gap-3 mt-5">
+
+              <div
+                id="generatedCode"
+                class="text-4xl font-black tracking-[0.25em] text-emerald-700">
+
+                {{ latest_code }}
+
+              </div>
+
+              <button
+                onclick="copyCode()"
+                class="p-3 rounded-2xl bg-emerald-100 hover:bg-emerald-200 hover:scale-105 transition-all duration-200">
+
+                <i data-feather="copy" class="w-5 h-5 text-emerald-700"></i>
+
+              </button>
+
+            </div>
+
+            <div class="mt-5 px-4 py-3 rounded-2xl bg-gray-100 text-gray-500 text-sm font-semibold text-center">
+              Access code already generated
+            </div>
+
+            {% else %}
+
+            <p class="text-gray-400 text-sm mt-4">
+              Generate your permanent counselor invite code.
+            </p>
+
+            <button
+              id="generateBtn"
+              onclick="generateCode()"
+              class="mt-5 w-full px-5 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold rounded-2xl hover:shadow-xl hover:scale-[1.02] transition-all duration-200">
+
+              Generate Access Code
+
+            </button>
+
+            {% endif %}
+
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
-  
+
   </div>
-</a>
 
-{% endif %}
-{% endfor %}
+  <!-- REQUEST LIMIT -->
+  <div class="mb-8 relative z-10">
 
-</div>
+    <div class="bg-white/80 backdrop-blur-xl border border-emerald-200 rounded-3xl p-6 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-5">
 
-</div>
+      <div>
 
+        <p class="text-sm uppercase tracking-wide text-gray-400 font-bold">
+          Request Limit
+        </p>
 
+        <p class="text-2xl font-bold text-emerald-900 mt-1">
+          Control Student Requests
+        </p>
 
-{% else %}
+        <p class="text-emerald-700 mt-2">
+          Current limit:
+          <span class="font-bold">
+            {{ request_limit if request_limit else "Unlimited" }}
+          </span>
+        </p>
 
-<!-- Empty State -->
+      </div>
 
-<div class="bg-white rounded-xl shadow-xl p-10 border border-emerald-100 text-center relative z-10">
+      <form method="POST" action="/counselor/set_request_limit" class="flex items-center gap-3">
 
-<div class="flex justify-center mb-4">
+        <input
+          type="number"
+          name="limit"
+          min="1"
+          placeholder="10"
+          class="w-28 px-4 py-3 border border-gray-300 rounded-2xl focus:ring-4 focus:ring-emerald-200 focus:outline-none">
 
-<div class="bg-emerald-100 p-4 rounded-full">
-<i data-feather="search" class="text-emerald-600 w-8 h-8"></i>
-</div>
+        <button
+          type="submit"
+          class="px-5 py-3 bg-emerald-600 text-white font-semibold rounded-2xl hover:bg-emerald-700 hover:scale-105 transition-all duration-200">
 
-</div>
+          Save
 
-<p class="text-gray-700 text-lg font-semibold">
-No students found
-</p>
+        </button>
 
-<p class="text-gray-500 text-sm mt-2 max-w-md mx-auto">
-Assigned students will appear here once they have selected you as their counselor.
-</p>
+      </form>
 
-</div>
+    </div>
 
-{% endif %}
+  </div>
+
+  <!-- STUDENTS -->
+  {% if user %}
+
+  <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-6 border border-emerald-100 relative z-10">
+
+    <div class="space-y-4">
+
+      {% for x in user %}
+      {% if x["Role"] == "student" %}
+
+      <a href="/counselor/dashboard/{{ x['student_profile_id'] }}">
+
+        <div class="group flex justify-between items-center p-5 rounded-3xl border border-emerald-100 hover:border-emerald-300 hover:bg-emerald-50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+
+          <!-- LEFT -->
+          <div class="flex items-center gap-4">
+
+            <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition">
+
+              <i data-feather="user" class="text-emerald-700 w-6 h-6"></i>
+
+            </div>
+
+            <div>
+
+              <p class="text-lg font-bold text-gray-800">
+                {{ x["Name"] }}
+              </p>
+
+              <p class="text-sm text-gray-400">
+                Student Account
+              </p>
+
+            </div>
+
+          </div>
+
+          <!-- RIGHT -->
+          <div class="flex items-center gap-3">
+
+            {% if x['Status'] == 'Pending' %}
+
+            <a href="/counselor/dashboard/accept/{{ x['UserID'] }}"
+              class="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-2xl hover:bg-emerald-700 transition">
+
+              Accept
+
+            </a>
+
+            <a href="/counselor/dashboard/decline/{{ x['UserID'] }}"
+              class="px-5 py-2.5 border border-red-400 text-red-500 text-sm font-bold rounded-2xl hover:bg-red-50 transition">
+
+              Decline
+
+            </a>
+
+            {% elif x['Status'] == 'accepted' %}
+
+            <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-100 group-hover:bg-emerald-200 transition">
+
+              <svg xmlns="http://www.w3.org/2000/svg"
+                  class="w-5 h-5 text-emerald-700"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7" />
+
+              </svg>
+
+            </div>
+
+            {% endif %}
+
+          </div>
+
+        </div>
+
+      </a>
+
+      {% endif %}
+      {% endfor %}
+
+    </div>
+
+  </div>
+
+  {% else %}
+
+  <!-- EMPTY STATE -->
+  <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl p-12 border border-emerald-100 text-center relative z-10">
+
+    <div class="flex justify-center mb-5">
+
+      <div class="bg-emerald-100 p-5 rounded-3xl">
+        <i data-feather="search" class="text-emerald-600 w-10 h-10"></i>
+      </div>
+
+    </div>
+
+    <p class="text-2xl font-bold text-gray-800">
+      No students found
+    </p>
+
+    <p class="text-gray-500 text-sm mt-3 max-w-md mx-auto leading-relaxed">
+      Assigned students will appear here once they connect with you using your counselor access code.
+    </p>
+
+  </div>
+
+  {% endif %}
 
 </div>
 
 </main>
 
-
 {% include "components/footer.html.jinja" %}
 
-
 <script>
+
 feather.replace()
+
+async function generateCode() {
+
+  const button = document.getElementById("generateBtn")
+
+  button.disabled = true
+
+  button.innerHTML = `
+    <div class="flex items-center justify-center gap-2">
+      <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+      Generating...
+    </div>
+  `
+
+  try {
+
+    const response = await fetch("/counselor/generate_code", {
+      method: "POST"
+    })
+
+    const data = await response.json()
+
+    if (data.success) {
+
+      document.getElementById("codeContainer").innerHTML = `
+
+        <div class="flex items-center justify-between gap-3 mt-5">
+
+          <div
+            id="generatedCode"
+            class="text-4xl font-black tracking-[0.25em] text-emerald-700 animate-bounce">
+
+            ${data.code}
+
+          </div>
+
+          <button
+            onclick="copyCode()"
+            class="p-3 rounded-2xl bg-emerald-100 hover:bg-emerald-200 hover:scale-105 transition-all duration-200">
+
+            <i data-feather="copy" class="w-5 h-5 text-emerald-700"></i>
+
+          </button>
+
+        </div>
+
+        <div class="mt-5 px-4 py-3 rounded-2xl bg-emerald-100 text-emerald-700 text-sm font-bold text-center border border-emerald-200">
+          Code Generated Successfully
+        </div>
+
+      `
+
+      feather.replace()
+
+    }
+
+  } catch (error) {
+
+    console.error(error)
+
+  }
+
+}
+
+function copyCode() {
+
+  const code = document.getElementById("generatedCode").innerText
+
+  navigator.clipboard.writeText(code)
+
+  alert("Code copied to clipboard!")
+
+}
+
 </script>
 
 </body>
