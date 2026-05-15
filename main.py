@@ -8,6 +8,7 @@ from flask import jsonify
 from dotenv import load_dotenv
 from openai import OpenAI
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash
 
 
 import os
@@ -548,15 +549,133 @@ def edit_profile():
     connection.close()
     return render_template("editmyprofile.html.jinja", profile=profile)
 
-
-
-
 @app.route("/logout", methods=['GET'])
 @login_required
 def logout():
     logout_user()
     flash("Successfully logged out.", "success")
     return redirect("/")
+
+@app.route("/register/code", methods=["GET", "POST"])
+def register_with_code():
+
+    if request.method == "POST":
+
+        name = request.form.get("name")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        student_type = request.form.get("student_type")
+        grade = request.form.get("grade")
+        code = request.form.get("code").strip().upper()
+
+        connection = connect_db()
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        # Check if counselor code exists
+        cursor.execute("""
+            SELECT CounselorID
+            FROM CounselorCodes
+            WHERE GeneratedCode = %s
+        """, (code,))
+
+        counselor = cursor.fetchone()
+
+        if not counselor:
+
+            flash("Invalid counselor code.", "danger")
+            connection.close()
+
+            return redirect("/register/code")
+
+        # Check if email already exists
+        cursor.execute("""
+            SELECT *
+            FROM User
+            WHERE Email = %s
+        """, (email,))
+
+        existing = cursor.fetchone()
+
+        if existing:
+
+            flash("Email already exists.", "danger")
+            connection.close()
+
+            return redirect("/register/code")
+
+        # Hash password
+        hashed_password = generate_password_hash(password)
+
+        # Create user account
+        cursor.execute("""
+            INSERT INTO User (
+                Name,
+                Email,
+                Password,
+                Role
+            )
+            VALUES (%s, %s, %s, %s)
+        """, (
+            name,
+            email,
+            hashed_password,
+            "student"
+        ))
+
+        user_id = cursor.lastrowid
+
+        # Create student profile
+        cursor.execute("""
+            INSERT INTO StudentProfile (
+                UserID,
+                StudentType,
+                Grade
+            )
+            VALUES (%s, %s, %s)
+        """, (
+            user_id,
+            student_type,
+            grade if student_type != "Graduate" else None
+        ))
+
+        # Connect counselor + student
+        cursor.execute("""
+            INSERT INTO CounselorStudent (
+                CounselorUserID,
+                StudentUserID
+            )
+            VALUES (%s, %s)
+        """, (
+            counselor["CounselorID"],
+            user_id
+        ))
+
+        # Automatically create accepted recommendation
+        cursor.execute("""
+            INSERT INTO Recommendation (
+                UserID,
+                CounselorID,
+                Grade,
+                Comments,
+                Status
+            )
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            user_id,
+            counselor["CounselorID"],
+            grade if student_type != "Graduate" else 0,
+            "Student automatically connected through counselor invitation code.",
+            "accepted"
+        ))
+
+        connection.commit()
+        connection.close()
+
+        flash("Account created successfully!", "success")
+
+        return redirect("/login")
+
+    return render_template("codeinput.html.jinja")
 
 # Dashboard for students.
 @app.route("/student/dashboard")
@@ -1345,13 +1464,72 @@ def counselor_dashboard():
     row = cursor.fetchone()
     request_limit = row["RequestLimit"] if row else None
 
+    cursor.execute("""
+    SELECT GeneratedCode
+    FROM CounselorCodes
+    WHERE CounselorID = %s
+    ORDER BY CreatedAt DESC
+    LIMIT 1
+    """, (current_user.id,))
+
+    code_row = cursor.fetchone()
+    latest_code = code_row["GeneratedCode"] if code_row else None
+
     connection.close()
 
     return render_template(
     "counselor_dashboard.html.jinja",
     user=result,
-    request_limit=request_limit
+    request_limit=request_limit,
+    latest_code=latest_code
 )
+
+@app.route("/counselor/generate_code", methods=["POST"])
+@login_required
+def generate_code():
+
+    if current_user.role != "counselor":
+        return {"success": False}, 403
+
+    connection = connect_db()
+    cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+    # Check existing code
+    cursor.execute("""
+        SELECT GeneratedCode
+        FROM CounselorCodes
+        WHERE CounselorID = %s
+    """, (current_user.id,))
+
+    existing_code = cursor.fetchone()
+
+    if existing_code:
+        connection.close()
+
+        return {
+            "success": False,
+            "message": "Code already exists."
+        }
+
+    import random
+    import string
+
+    generated_code = ''.join(
+        random.choices(string.ascii_uppercase + string.digits, k=8)
+    )
+
+    cursor.execute("""
+        INSERT INTO CounselorCodes (CounselorID, GeneratedCode)
+        VALUES (%s, %s)
+    """, (current_user.id, generated_code))
+
+    connection.commit()
+    connection.close()
+
+    return {
+        "success": True,
+        "code": generated_code
+    }
 
 @app.route("/counselor/set_request_limit", methods=["POST"])
 @login_required
