@@ -8,7 +8,6 @@ from flask import jsonify
 from dotenv import load_dotenv
 from openai import OpenAI
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash
 
 
 import os
@@ -603,9 +602,6 @@ def register_with_code():
 
             return redirect("/register/code")
 
-        # Hash password
-        hashed_password = generate_password_hash(password)
-
         # Create user account
         cursor.execute("""
             INSERT INTO User (
@@ -618,7 +614,7 @@ def register_with_code():
         """, (
             name,
             email,
-            hashed_password,
+            password,
             "student"
         ))
 
