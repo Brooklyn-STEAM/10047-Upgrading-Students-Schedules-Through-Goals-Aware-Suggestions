@@ -20,6 +20,7 @@ from course_assigner import (
     compute_category_scores,
     recommend_courses_hybrid,
     suggest_tracks,
+    generate_ai_reason,
 )
 
 load_dotenv()
@@ -247,8 +248,21 @@ def calculate_course_assigner():
     return jsonify({
         "categoryScores": category_scores,
         "topCategories": top_categories,
-        "recommendedHighSchoolCourses": recommended_hs,
-        "recommendedCollegeCourses": recommended_college,
+        "recommendedHighSchoolCourses": [
+    {
+        "course": c,
+        "reason": generate_ai_reason(c, transcript, category_scores)
+    }
+    for c in recommended_hs
+],
+"recommendedCollegeCourses": [
+    {
+        "course": c,
+        "reason": generate_ai_reason(c, transcript, category_scores)
+    }
+    for c in recommended_college
+],
+
         "suggestedTracks": suggested_tracks
     })
 
