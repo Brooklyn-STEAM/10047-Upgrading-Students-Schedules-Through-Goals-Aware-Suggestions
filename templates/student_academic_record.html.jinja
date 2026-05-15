@@ -217,7 +217,12 @@
                         <p id="trackRec" class="mt-2 text-gray-700 font-medium"></p>
                     </div>
 
-                    <!-- Full Page Button: temporarily removed. -->
+                    <button id="viewFullRecBtn"
+                        class="mt-3 w-full py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+                        View Full Recommendations
+                    </button>
+
+
 
                 </div>
             </div>
@@ -246,6 +251,22 @@
             </div>
         </div>
     </div>
+
+    <!-- Students can view full recommendations with brief explanations. -->
+    <div id="fullRecModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden z-50">
+        <div class="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6">
+
+            <h2 class="text-xl font-semibold mb-4">Full Recommendations</h2>
+
+            <div id="fullRecContent" class="space-y-4 max-h-[60vh] overflow-y-auto"></div>
+
+            <button id="closeFullRecBtn"
+                class="mt-6 w-full py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition">
+                Close
+            </button>
+        </div>
+    </div>
+
 
     {% include "components/footer.html.jinja" %}
     <script>
@@ -1199,7 +1220,7 @@
         const mainCategories = Object.keys(courseOptions);
 
 
-    // Flash messages with the transcript
+        // Flash messages with the transcript
         function showFlash(message, category = "success") {
             const container = document.getElementById("flashContainer");
 
@@ -1685,7 +1706,7 @@
 
 
 
-        
+
         function onCategoryChange(select, g, options = {}) {
             const row = select.closest("tr");
             const courseSelect = row.children[1].querySelector("select");
@@ -1800,6 +1821,7 @@
 
             panel.classList.remove("hidden");
 
+            // If no categories, show empty state
             if (!data.topCategories || data.topCategories.length === 0) {
                 emptyState.classList.remove("hidden");
                 resultsPanel.classList.add("hidden");
@@ -1809,7 +1831,7 @@
             emptyState.classList.add("hidden");
             resultsPanel.classList.remove("hidden");
 
-            // Top categories
+            // ⭐ Top categories
             const topCatDiv = document.getElementById("topCategories");
             topCatDiv.innerHTML = "";
             data.topCategories.slice(0, 3).forEach(cat => {
@@ -1820,34 +1842,51 @@
                 topCatDiv.innerHTML += badge;
             });
 
-            // High school recs
+            // ⭐ High school recs (updated for AI object structure)
             const hsList = document.getElementById("hsRecs");
             hsList.innerHTML = "";
-            data.recommendedHighSchoolCourses.slice(0, 3).forEach(c => {
+            data.recommendedHighSchoolCourses.slice(0, 3).forEach(r => {
                 hsList.innerHTML += `
             <li class="flex items-center gap-2">
                 <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-                ${c}
+                ${r.course}
             </li>`;
             });
 
-            // College recs
+            // ⭐ College recs (updated for AI object structure)
             const colList = document.getElementById("collegeRecs");
             colList.innerHTML = "";
-            data.recommendedCollegeCourses.slice(0, 3).forEach(c => {
+            data.recommendedCollegeCourses.slice(0, 3).forEach(r => {
                 colList.innerHTML += `
             <li class="flex items-center gap-2">
                 <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                ${c}
+                ${r.course}
             </li>`;
             });
 
-            // Track
+            // ⭐ Track (unchanged)
             document.getElementById("trackRec").innerText =
                 data.suggestedTracks?.[0] || "—";
         }
 
 
+
+        function renderFullRecommendations(recs) {
+            const container = document.getElementById("fullRecContent");
+            container.innerHTML = "";
+
+            recs.forEach(r => {
+                const div = document.createElement("div");
+                div.className = "p-4 border rounded-lg bg-gray-50";
+
+                div.innerHTML = `
+            <div class="font-semibold text-gray-900">${r.course}</div>
+            <div class="text-sm text-gray-600 mt-1">${r.reason}</div>
+        `;
+
+                container.appendChild(div);
+            });
+        }
 
 
         async function saveChanges() {
@@ -1955,6 +1994,8 @@
 
                 // ⭐ Phase 2 UI update
                 showRecommendations(assignerData);
+                renderFullRecommendations(assignerData.recommendedHighSchoolCourses);
+
 
             } catch (err) {
                 console.error("Error calling Course Assigner:", err);
@@ -2154,6 +2195,25 @@
         if (savedTranscript) {
             loadSavedTranscript(savedTranscript);
         }
+
+
+        document.getElementById("viewFullRecBtn").addEventListener("click", openFullRecModal);
+        document.getElementById("closeFullRecBtn").addEventListener("click", closeFullRecModal);
+
+
+
+        function openFullRecModal() {
+            const modal = document.getElementById("fullRecModal");
+            modal.classList.remove("hidden");
+            modal.style.opacity = "1";
+        }
+
+        function closeFullRecModal() {
+            const modal = document.getElementById("fullRecModal");
+            modal.style.opacity = "0";
+            setTimeout(() => modal.classList.add("hidden"), 200);
+        }
+
 
     </script>
 

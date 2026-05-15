@@ -2,6 +2,11 @@
 
 from collections import defaultdict
 
+
+from openai import OpenAI
+client = OpenAI()
+
+
 # ============================================================
 #  GLOBAL COURSE CATALOG (FULL GLOBAL CATALOG)
 # ============================================================
@@ -2159,5 +2164,18 @@ def get_science_base_subject(name):
     return name.strip()
 
 
+#ai generates the reason/explanations for per recommended courses.
+def generate_ai_reason(course, transcript, category_scores):
+    prompt = f"""
+    You are an academic advisor. A student has the following category strengths: {category_scores}.
+    Their transcript is: {transcript}.
+    Explain in 1-2 friendly, encouraging sentences why the course '{course}' is a good recommendation.
+    Keep it simple, positive, and personalized.
+    """
 
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
 
+    return response.choices[0].message.content.strip()
