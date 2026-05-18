@@ -23,6 +23,11 @@ from course_assigner import (
     generate_ai_reason,
 )
 
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
+
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -302,7 +307,10 @@ def login():
         # -----------------------------
         # WRONG PASSWORD
         # -----------------------------
-        elif password != result['Password']:
+        elif not check_password_hash(
+            result['Password'],
+            password
+        ):
             flash("Incorrect password.", "danger")
             return redirect("/login")
 
@@ -333,7 +341,17 @@ def register():
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         role = request.form['role']
+
+        # -----------------------------
+        # CHECK PASSWORD MATCH
+        # -----------------------------
+        if password != confirm_password:
+
+            flash("Passwords do not match.", "danger")
+
+            return redirect("/register")
 
         conn = connect_db()
         cursor = conn.cursor(pymysql.cursors.DictCursor)
@@ -349,21 +367,28 @@ def register():
         existing_user = cursor.fetchone()
 
         if existing_user:
+
             flash("An account with this email already exists.", "danger")
 
             cursor.close()
             conn.close()
 
-            # Stay on register page
             return redirect("/register")
 
         # -----------------------------
         # INSERT USER
         # -----------------------------
+        hashed_password = generate_password_hash(password)
+
         cursor.execute("""
             INSERT INTO User (Name, Email, Password, Role)
             VALUES (%s, %s, %s, %s)
-        """, (name, email, password, role))
+        """, (
+            name,
+            email,
+            hashed_password,
+            role
+        ))
 
         user_id = cursor.lastrowid
 
@@ -563,14 +588,27 @@ def register_with_code():
         name = request.form.get("name")
         email = request.form.get("email")
         password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+
         student_type = request.form.get("student_type")
         grade = request.form.get("grade")
         code = request.form.get("code").strip().upper()
 
+        # -----------------------------
+        # CHECK PASSWORD MATCH
+        # -----------------------------
+        if password != confirm_password:
+
+            flash("Passwords do not match.", "danger")
+
+            return redirect("/register/code")
+
         connection = connect_db()
         cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-        # Check if counselor code exists
+        # -----------------------------
+        # CHECK IF COUNSELOR CODE EXISTS
+        # -----------------------------
         cursor.execute("""
             SELECT CounselorID
             FROM CounselorCodes
@@ -582,11 +620,14 @@ def register_with_code():
         if not counselor:
 
             flash("Invalid counselor code.", "danger")
+
             connection.close()
 
             return redirect("/register/code")
 
-        # Check if email already exists
+        # -----------------------------
+        # CHECK IF EMAIL EXISTS
+        # -----------------------------
         cursor.execute("""
             SELECT *
             FROM User
@@ -598,11 +639,14 @@ def register_with_code():
         if existing:
 
             flash("Email already exists.", "danger")
+
             connection.close()
 
             return redirect("/register/code")
 
-        # Create user account
+        # -----------------------------
+        # CREATE USER ACCOUNT
+        # -----------------------------
         cursor.execute("""
             INSERT INTO User (
                 Name,
@@ -614,13 +658,15 @@ def register_with_code():
         """, (
             name,
             email,
-            password,
+            generate_password_hash(password),
             "student"
         ))
 
         user_id = cursor.lastrowid
 
-        # Create student profile
+        # -----------------------------
+        # CREATE STUDENT PROFILE
+        # -----------------------------
         cursor.execute("""
             INSERT INTO StudentProfile (
                 UserID,
@@ -634,7 +680,9 @@ def register_with_code():
             grade if student_type != "Graduate" else None
         ))
 
-        # Connect counselor + student
+        # -----------------------------
+        # CONNECT COUNSELOR + STUDENT
+        # -----------------------------
         cursor.execute("""
             INSERT INTO CounselorStudent (
                 CounselorUserID,
@@ -646,7 +694,9 @@ def register_with_code():
             user_id
         ))
 
-        # Automatically create accepted recommendation
+        # -----------------------------
+        # CREATE RECOMMENDATION
+        # -----------------------------
         cursor.execute("""
             INSERT INTO Recommendation (
                 UserID,
